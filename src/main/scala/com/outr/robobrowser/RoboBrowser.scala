@@ -6,7 +6,7 @@ import com.machinepublishers.jbrowserdriver.{JBrowserDriver, Settings, Timezone,
 import io.youi.http.cookie.ResponseCookie
 import io.youi.net.URL
 import org.openqa.selenium.By
-import org.powerscala.io._
+import io.youi.stream._
 
 import scala.collection.JavaConverters._
 
