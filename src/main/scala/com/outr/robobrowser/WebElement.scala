@@ -9,6 +9,7 @@ class WebElement(e: org.openqa.selenium.WebElement) extends AbstractElement {
   def click(): Unit = e.click()
   def submit(): Unit = e.submit()
 
+  def tagName: String = e.getTagName
   def text: String = e.getText
   def attribute(name: String): String = e.getAttribute(name)
 
