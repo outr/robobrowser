@@ -18,6 +18,7 @@ class RoboBrowser(timeZone: TimeZone = TimeZone.getDefault,
     .userAgent(device.userAgent)
     .screen(new Dimension(device.width, device.height))
     .timezone(Timezone.byName(timeZone.getID))
+    .cache(false)
     .build()
   private lazy val driver = new JBrowserDriver(settings)
 
@@ -43,6 +44,7 @@ class RoboBrowser(timeZone: TimeZone = TimeZone.getDefault,
   }
 
   override def by(by: By): List[WebElement] = driver.findElements(by).asScala.toList.map(new WebElement(_))
+  override def by(cssSelector: String): List[WebElement] = driver.findElementsByCssSelector(cssSelector).asScala.toList.map(new WebElement(_))
 
   def cookies: List[ResponseCookie] = driver.manage().getCookies.asScala.toList.map { cookie =>
     ResponseCookie(
