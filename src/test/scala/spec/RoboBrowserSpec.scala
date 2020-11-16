@@ -1,9 +1,7 @@
 package spec
 
 import java.io.File
-import java.util.TimeZone
 
-import com.machinepublishers.jbrowserdriver.Timezone
 import com.outr.robobrowser.RoboBrowser
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -15,7 +13,6 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
     lazy val screenshot = new File("screenshot.png")
 
     "load Google" in {
-      println(s"Timezone: ${TimeZone.getDefault.getID}")
       browser.load(url"https://google.com")
       browser.url should be(url"https://www.google.com")
       browser.title should be("Google")
@@ -25,7 +22,6 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       input.tagName should be("input")
       input.sendInput("robobrowser")
       input.submit()
-      browser.pageWait()
       browser.title should be("robobrowser - Google Search")
     }
     "create a screenshot" in {

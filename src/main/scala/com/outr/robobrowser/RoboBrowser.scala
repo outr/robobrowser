@@ -1,36 +1,60 @@
 package com.outr.robobrowser
 
 import java.io.File
-import java.util.{Date, TimeZone}
+import java.util.Date
 
-import com.machinepublishers.jbrowserdriver.{JBrowserDriver, Settings, Timezone}
 import io.youi.http.cookie.ResponseCookie
 import io.youi.net.URL
-import org.openqa.selenium.{By, Cookie, Dimension, OutputType}
+import org.openqa.selenium.{By, Cookie, OutputType, WebDriver}
 import io.youi.stream._
+import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions}
+import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 
+import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
-class RoboBrowser(timeZone: TimeZone = TimeZone.getDefault,
-                  device: Device = Device.Chrome) extends AbstractElement {
-  private lazy val settings = Settings
-    .builder()
-    .userAgent(device.userAgent)
-    .screen(new Dimension(device.width, device.height))
-    .timezone(Timezone.byName(timeZone.getID))
-    .cache(false)
-    .build()
-  private lazy val driver = new JBrowserDriver(settings)
+class RoboBrowser(headless: Boolean = true, device: Device = Device.Chrome) extends AbstractElement {
+  private lazy val options = {
+    System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver")
+    val o = new ChromeOptions
+    if (headless) {
+      o.addArguments(
+        "--headless",
+        "--disable-gpu"
+      )
+    }
+    o.addArguments(
+      s"--window-size=${device.width},${device.height}",
+      "--ignore-certificate-errors"
+    )
+    device.userAgent.foreach { ua =>
+      o.addArguments(s"user-agent=$ua")
+    }
+    if (device.emulateMobile) {
+      val deviceMetrics = new java.util.HashMap[String, Any]
+      deviceMetrics.put("width", device.width)
+      deviceMetrics.put("height", device.height)
+      val mobileEmulation = new java.util.HashMap[String, Any]
+      mobileEmulation.put("deviceMetrics", deviceMetrics)
+      mobileEmulation.put("userAgent", device.userAgent)
+      o.setExperimentalOption("mobileEmulation", mobileEmulation)
+    }
+    o
+  }
+  private lazy val driver = new ChromeDriver(options)
 
   def load(url: URL): Unit = driver.get(url.toString())
-  def status: Int = driver.getStatusCode
   def url: URL = URL(driver.getCurrentUrl)
-  def pageWait(): Unit = driver.pageWait()
   def content: String = driver.getPageSource
   def save(file: File): Unit = IO.stream(content, file)
   def screenshot(file: File): Unit = {
     val bytes = driver.getScreenshotAs(OutputType.BYTES)
     IO.stream(bytes, file)
+  }
+
+  def waitFor(timeout: FiniteDuration, condition: => Boolean): Unit = {
+    val wait = new WebDriverWait(driver, timeout.toSeconds)
+    wait.until((_: WebDriver) => condition)
   }
 
   def title: String = driver.getTitle

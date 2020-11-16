@@ -21,7 +21,8 @@ developers in ThisBuild := List(
 )
 
 libraryDependencies ++= Seq(
-  "com.machinepublishers" % "jbrowserdriver" % "1.1.1",
+//  "com.machinepublishers" % "jbrowserdriver" % "1.1.1",
+  "org.seleniumhq.selenium" % "selenium-java" % "3.141.59",
   "io.youi" %% "youi-client" % "0.13.17",
   "org.scalatest" %% "scalatest" % "3.2.2" % "test"
 )

@@ -1,7 +1,7 @@
 package com.outr.robobrowser
 
 import org.openqa.selenium.By
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class WebElement(e: org.openqa.selenium.WebElement) extends AbstractElement {
   override def by(by: By): List[WebElement] = e.findElements(by).asScala.toList.map(new WebElement(_))
