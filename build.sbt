@@ -1,8 +1,8 @@
 name := "robobrowser"
 organization := "com.outr"
-version := "1.0.0-SNAPSHOT"
-scalaVersion := "2.13.3"
-crossScalaVersions := Seq("2.13.3", "2.12.12")
+version := "1.0.0"
+scalaVersion := "2.13.5"
+crossScalaVersions := Seq("2.13.5", "2.12.13")
 
 publishTo in ThisBuild := sonatypePublishTo.value
 sonatypeProfileName in ThisBuild := "com.outr"
@@ -21,9 +21,8 @@ developers in ThisBuild := List(
 )
 
 libraryDependencies ++= Seq(
-//  "com.machinepublishers" % "jbrowserdriver" % "1.1.1",
   "org.seleniumhq.selenium" % "selenium-java" % "3.141.59",
-  "io.youi" %% "youi-client" % "0.13.17",
+  "io.youi" %% "youi-client" % "0.14.0",
   "org.scalatest" %% "scalatest" % "3.2.2" % "test"
 )
 
