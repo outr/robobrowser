@@ -68,7 +68,6 @@ class RoboBrowser(headless: Boolean = true, device: Device = Device.Chrome) exte
   }
 
   override def by(by: By): List[WebElement] = driver.findElements(by).asScala.toList.map(new WebElement(_))
-  override def by(cssSelector: String): List[WebElement] = driver.findElementsByCssSelector(cssSelector).asScala.toList.map(new WebElement(_))
 
   def cookies: List[ResponseCookie] = driver.manage().getCookies.asScala.toList.map { cookie =>
     ResponseCookie(

@@ -18,7 +18,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       browser.title should be("Google")
     }
     "do a Google search" in {
-      val input = browser.oneByName("q")
+      val input = browser.oneBy("[name=\"q\"]")
       input.tagName should be("input")
       input.sendInput("robobrowser")
       input.submit()

@@ -4,19 +4,14 @@ import org.openqa.selenium.By
 
 trait AbstractElement {
   def by(by: By): List[WebElement]
-  def by(cssSelector: String): List[WebElement]
-  def byId(id: String): WebElement = by(By.id(id)).headOption.getOrElse(throw new RuntimeException(s"Not found by id: $id"))
-  def byClass(className: String): List[WebElement] = by(By.className(className))
-  def byName(name: String): List[WebElement] = by(By.name(name))
-  def byTag(tagName: String): List[WebElement] = by(By.tagName(tagName))
 
-  def firstBy(cssSelector: String): WebElement = by(cssSelector).headOption.getOrElse(throw new RuntimeException(s"Nothing found by CSS selector: $cssSelector"))
-  def firstByClass(className: String): WebElement = byClass(className).headOption.getOrElse(throw new RuntimeException(s"Nothing found by class: $className"))
-  def firstByName(name: String): WebElement = byName(name).headOption.getOrElse(throw new RuntimeException(s"Nothing found by name: $name"))
-
-  def oneByName(name: String): WebElement = byName(name) match {
+  final def by(cssSelector: String): List[WebElement] = by(By.cssSelector(cssSelector))
+  final def oneBy(by: By): WebElement = this.by(by) match {
     case element :: Nil => element
-    case Nil => throw new RuntimeException(s"Nothing found by name: $name")
-    case list => throw new RuntimeException(s"More than one found by name: $name ($list)")
+    case Nil => throw new RuntimeException(s"Nothing found by selector: ${by.toString}")
+    case list => throw new RuntimeException(s"More than one found by selector: ${by.toString} ($list)")
   }
+  final def oneBy(cssSelector: String): WebElement = oneBy(By.cssSelector(cssSelector))
+  def firstBy(by: By): Option[WebElement] = this.by(by).headOption
+  def firstBy(cssSelector: String): Option[WebElement] = this.by(cssSelector).headOption
 }

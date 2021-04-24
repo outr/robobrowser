@@ -1,6 +1,6 @@
 name := "robobrowser"
 organization := "com.outr"
-version := "1.0.0"
+version := "1.0.1-SNAPSHOT"
 scalaVersion := "2.13.5"
 crossScalaVersions := Seq("2.13.5", "2.12.13")
 
