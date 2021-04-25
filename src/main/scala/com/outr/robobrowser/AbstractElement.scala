@@ -14,4 +14,7 @@ trait AbstractElement {
   final def oneBy(cssSelector: String): WebElement = oneBy(By.cssSelector(cssSelector))
   def firstBy(by: By): Option[WebElement] = this.by(by).headOption
   def firstBy(cssSelector: String): Option[WebElement] = this.by(cssSelector).headOption
+
+  def outerHTML: String
+  def innerHTML: String
 }

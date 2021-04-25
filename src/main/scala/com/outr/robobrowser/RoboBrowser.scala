@@ -89,5 +89,13 @@ class RoboBrowser(headless: Boolean = true, device: Device = Device.Chrome) exte
     }
   }
 
+  override def outerHTML: String = content
+
+  override def innerHTML: String = {
+    val head = by("head").headOption.map(_.outerHTML).getOrElse("")
+    val body = by("body").headOption.map(_.outerHTML).getOrElse("")
+    s"$head$body"
+  }
+
   def dispose(): Unit = driver.quit()
 }
