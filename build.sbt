@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "selenium-java" % "3.141.59",
   "io.youi" %% "youi-client" % "0.14.0",
   "org.jsoup" % "jsoup" % "1.13.1",
-  "org.scalatest" %% "scalatest" % "3.2.2" % "test"
+  "org.scalatest" %% "scalatest" % "3.2.8" % "test"
 )
 
 fork := true
