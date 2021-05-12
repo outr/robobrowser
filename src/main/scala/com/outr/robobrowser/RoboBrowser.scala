@@ -25,7 +25,9 @@ class RoboBrowser(headless: Boolean = true, device: Device = Device.Chrome) exte
     }
     o.addArguments(
       s"--window-size=${device.width},${device.height}",
-      "--ignore-certificate-errors"
+      "--ignore-certificate-errors",
+      "--no-sandbox",
+      "--disable-dev-shm-usage"
     )
     device.userAgent.foreach { ua =>
       o.addArguments(s"user-agent=$ua")
