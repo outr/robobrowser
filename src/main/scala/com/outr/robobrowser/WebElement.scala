@@ -17,6 +17,7 @@ class WebElement(e: org.openqa.selenium.WebElement) extends AbstractElement {
   def tagName: String = e.getTagName
   def text: String = e.getText
   def attribute(name: String): String = e.getAttribute(name)
+  def classes: Set[String] = attribute("class").split(' ').toSet
 
   def sendInput(text: String): Unit = {
     e.click()

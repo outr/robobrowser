@@ -2,35 +2,47 @@ package com.outr.robobrowser
 
 import java.io.File
 import java.util.Date
-
 import io.youi.http.cookie.ResponseCookie
 import io.youi.net.URL
-import org.openqa.selenium.{By, Cookie, OutputType, WebDriver}
+import org.openqa.selenium.{By, Cookie, JavascriptExecutor, OutputType, TakesScreenshot, WebDriver}
 import io.youi.stream._
-import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions}
-import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
+import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.interactions.HasInputDevices
+import org.openqa.selenium.support.ui.WebDriverWait
 
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
-class RoboBrowser(headless: Boolean = true, device: Device = Device.Chrome) extends AbstractElement {
+class RoboBrowser(device: Device = Device.Chrome,
+                  loader: DriverLoader = DriverLoader.Chrome()) extends AbstractElement {
   private lazy val options = {
-    System.setProperty("webdriver.chrome.driver", "/usr/bin/chromedriver")
     val o = new ChromeOptions
-    if (headless) {
-      o.addArguments(
+    configureOptions(o)
+    o
+  }
+  private lazy val _driver: WebDriver = loader(options)
+
+  protected final def driver: WebDriver = {
+    init()
+    _driver
+  }
+
+  protected def configureOptions(options: ChromeOptions): Unit = {
+    if (loader.headless) {
+      options.addArguments(
         "--headless",
         "--disable-gpu"
       )
     }
-    o.addArguments(
+    options.addArguments(
       s"--window-size=${device.width},${device.height}",
       "--ignore-certificate-errors",
       "--no-sandbox",
       "--disable-dev-shm-usage"
     )
     device.userAgent.foreach { ua =>
-      o.addArguments(s"user-agent=$ua")
+      options.addArguments(s"user-agent=$ua")
     }
     if (device.emulateMobile) {
       val deviceMetrics = new java.util.HashMap[String, Any]
@@ -39,18 +51,25 @@ class RoboBrowser(headless: Boolean = true, device: Device = Device.Chrome) exte
       val mobileEmulation = new java.util.HashMap[String, Any]
       mobileEmulation.put("deviceMetrics", deviceMetrics)
       mobileEmulation.put("userAgent", device.userAgent)
-      o.setExperimentalOption("mobileEmulation", mobileEmulation)
+      options.setExperimentalOption("mobileEmulation", mobileEmulation)
     }
-    o
   }
-  private lazy val driver = new ChromeDriver(options)
+
+  private val _initialized = new AtomicBoolean(false)
+  final def initialized: Boolean = _initialized.get()
+
+  protected def initialize(): Unit = {}
+
+  final def init(): Unit = if (_initialized.compareAndSet(false, true)) {
+    initialize()
+  }
 
   def load(url: URL): Unit = driver.get(url.toString())
   def url: URL = URL(driver.getCurrentUrl)
   def content: String = driver.getPageSource
   def save(file: File): Unit = IO.stream(content, file)
   def screenshot(file: File): Unit = {
-    val bytes = driver.getScreenshotAs(OutputType.BYTES)
+    val bytes = driver.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES)
     IO.stream(bytes, file)
   }
 
@@ -61,11 +80,11 @@ class RoboBrowser(headless: Boolean = true, device: Device = Device.Chrome) exte
 
   def title: String = driver.getTitle
 
-  def execute(script: String, args: AnyRef*): AnyRef = driver.executeScript(script, args: _*)
+  def execute(script: String, args: AnyRef*): AnyRef = driver.asInstanceOf[JavascriptExecutor].executeScript(script, args: _*)
 
   object keyboard {
     object arrow {
-      def down(): Unit = driver.getKeyboard.sendKeys("""\xEE\x80\x95""")
+      def down(): Unit = driver.asInstanceOf[HasInputDevices].getKeyboard.sendKeys("""\xEE\x80\x95""")
     }
   }
 
