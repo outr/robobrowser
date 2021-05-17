@@ -23,12 +23,6 @@ class AntiCaptchaSpec extends AnyWordSpec with Matchers {
     lazy val browser = new RoboBrowser(loader = DriverLoader.Remote()) with AntiCaptcha {
       override protected def antiCaptchaApiKey: String = key
     }
-
-    "load Google" in {
-      browser.load(url"https://google.com")
-      browser.url should be(url"https://www.google.com")
-      browser.title should be("Google")
-    }
     "load reCAPTCHA 2 to verify" in {
       browser.load(url"https://antcpt.com/eng/information/demo-form/recaptcha-2.html")
       browser.oneBy("[name='demo_text']").sendInput("Test input")

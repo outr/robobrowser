@@ -1,6 +1,6 @@
 package com.outr.robobrowser
 
-import java.io.File
+import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
 import io.youi.http.cookie.ResponseCookie
 import io.youi.net.URL
@@ -8,11 +8,14 @@ import org.openqa.selenium.{By, Cookie, JavascriptExecutor, OutputType, TakesScr
 import io.youi.stream._
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.interactions.HasInputDevices
+import org.openqa.selenium.logging.{LogEntry, LogType}
 import org.openqa.selenium.support.ui.WebDriverWait
 
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
+
+import perfolation._
 
 class RoboBrowser(device: Device = Device.Chrome,
                   loader: DriverLoader = DriverLoader.Chrome()) extends AbstractElement {
@@ -108,6 +111,34 @@ class RoboBrowser(device: Device = Device.Chrome,
     cookies.foreach { c =>
       options.addCookie(new Cookie(c.name, c.value, c.domain.orNull, c.path.orNull, c.expires.map(new Date(_)).orNull, c.secure, c.httpOnly))
     }
+  }
+
+  def logs(`type`: String = LogType.BROWSER): List[LogEntry] = driver.manage().logs().get(`type`).asScala.toList.sortBy(_.getTimestamp)
+
+  def saveLogs(file: File, `type`: String = LogType.BROWSER): Unit = {
+    val w = new PrintWriter(new FileWriter(file))
+    try {
+      logs(`type`).foreach { e =>
+        val l = e.getTimestamp
+        val d = s"${l.t.Y}.${l.t.m}.${l.t.d} ${l.t.T}:${l.t.L}"
+        w.println(s"$d - ${e.getLevel.getName} - ${e.getMessage}")
+      }
+    } finally {
+      w.flush()
+      w.close()
+    }
+  }
+
+  /**
+   * Saves HTML, Screenshot, and Browser logs for current page
+   *
+   * @param directory the directory to write the data for
+   * @param name prefix name for each file created
+   */
+  def debug(directory: File, name: String): Unit = {
+    save(new File(directory, s"$name.html"))
+    screenshot(new File(directory, s"$name.png"))
+    saveLogs(new File(directory, s"$name.log"))
   }
 
   override def outerHTML: String = content
