@@ -6,8 +6,8 @@ import org.openqa.selenium.By
 import scala.jdk.CollectionConverters._
 import scala.language.implicitConversions
 
-class WebElement(e: org.openqa.selenium.WebElement) extends AbstractElement {
-  override def by(by: By): List[WebElement] = e.findElements(by).asScala.toList.map(new WebElement(_))
+class WebElement(e: org.openqa.selenium.WebElement, protected val instance: RoboBrowser) extends AbstractElement {
+  override def by(by: By): List[WebElement] = e.findElements(by).asScala.toList.map(new WebElement(_, instance))
 
   def click(): Unit = e.click()
   def submit(): Unit = e.submit()

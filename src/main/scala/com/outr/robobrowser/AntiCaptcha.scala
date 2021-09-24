@@ -51,7 +51,7 @@ trait AntiCaptcha extends RoboBrowser {
       by("iframe").exists(_.attribute("src").contains("hcaptcha.com"))
     if (hasCaptcha) {
       scribe.info("Captcha found! Waiting for solve...")
-      waitFor(120.seconds, firstBy(".antigate_solver.solved, .antigate_solver.error").nonEmpty)
+      waitFor(120.seconds)(firstBy(".antigate_solver.solved, .antigate_solver.error").nonEmpty)
       val solver = oneBy(".antigate_solver")
       val classes = solver.classes
       if (classes.contains("solved")) {

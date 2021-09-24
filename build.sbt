@@ -1,6 +1,6 @@
 name := "robobrowser"
 organization := "com.outr"
-version := "1.0.2-SNAPSHOT"
+version := "1.1.0-SNAPSHOT"
 scalaVersion := "2.13.6"
 crossScalaVersions := Seq("2.13.6")
 
@@ -21,8 +21,8 @@ developers := List(
 )
 
 libraryDependencies ++= Seq(
-  "org.seleniumhq.selenium" % "selenium-java" % "4.0.0-rc-1",
-  "io.youi" %% "youi-client" % "0.14.2",
+  "org.seleniumhq.selenium" % "selenium-java" % "3.141.59",
+  "io.youi" %% "youi-client" % "0.14.3-SNAPSHOT",
   "org.jsoup" % "jsoup" % "1.14.2",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"
 )

@@ -19,6 +19,8 @@ import perfolation._
 
 class RoboBrowser(device: Device = Device.Chrome,
                   loader: DriverLoader = DriverLoader.Chrome()) extends AbstractElement {
+  override protected def instance: RoboBrowser = this
+
   private lazy val options = {
     val o = new ChromeOptions
     configureOptions(o)
@@ -38,6 +40,8 @@ class RoboBrowser(device: Device = Device.Chrome,
         "--disable-gpu"
       )
     }
+    options.addArguments("use-fake-device-for-media-stream")
+    options.addArguments("use-fake-ui-for-media-stream")
     options.addArguments(
       s"--window-size=${device.width},${device.height}",
       "--ignore-certificate-errors",
@@ -76,10 +80,12 @@ class RoboBrowser(device: Device = Device.Chrome,
     IO.stream(bytes, file)
   }
 
-  def waitFor(timeout: FiniteDuration, condition: => Boolean): Unit = {
+  def waitFor(timeout: FiniteDuration)(condition: => Boolean): Unit = {
     val wait = new WebDriverWait(driver, timeout.toSeconds)
     wait.until((_: WebDriver) => condition)
   }
+
+  def sleep(duration: FiniteDuration): Unit = Thread.sleep(duration.toMillis)
 
   def title: String = driver.getTitle
 
@@ -91,7 +97,7 @@ class RoboBrowser(device: Device = Device.Chrome,
     }
   }
 
-  override def by(by: By): List[WebElement] = driver.findElements(by).asScala.toList.map(new WebElement(_))
+  override def by(by: By): List[WebElement] = driver.findElements(by).asScala.toList.map(new WebElement(_, this))
 
   def cookies: List[ResponseCookie] = driver.manage().getCookies.asScala.toList.map { cookie =>
     ResponseCookie(
