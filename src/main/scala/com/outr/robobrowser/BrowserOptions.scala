@@ -12,8 +12,22 @@ trait BrowserOptions {
   def toCapabilities: SeleniumChromeOptions = {
     val options = new SeleniumChromeOptions
 
+    device.screenSize.foreach { s =>
+      options.addArguments(s"--window-size=${s.width},${s.height}")
+    }
+    device.identifier.foreach { id =>
+      options.setCapability("device", id)
+    }
+    device.osVersion.foreach { v =>
+      options.setCapability("os_version", v)
+    }
+    device.browserName.foreach { n =>
+      options.setCapability("browserName", n)
+    }
+    device.realMobile.foreach { b =>
+      options.setCapability("realMobile", b.toString)
+    }
     options.addArguments(
-      s"--window-size=${device.width},${device.height}",
       "--ignore-certificate-errors",
       "--no-sandbox",
       "--disable-dev-shm-usage"
@@ -31,8 +45,10 @@ trait BrowserOptions {
     }
     if (device.emulateMobile) {
       val deviceMetrics = new java.util.HashMap[String, Any]
-      deviceMetrics.put("width", device.width)
-      deviceMetrics.put("height", device.height)
+      device.screenSize.foreach { s =>
+        deviceMetrics.put("width", s.width)
+        deviceMetrics.put("height", s.height)
+      }
       val mobileEmulation = new java.util.HashMap[String, Any]
       mobileEmulation.put("deviceMetrics", deviceMetrics)
       mobileEmulation.put("userAgent", device.userAgent)

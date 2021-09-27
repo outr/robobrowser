@@ -32,7 +32,7 @@ trait RoboBrowser extends AbstractElement {
     createWebDriver(options)
   }
 
-  protected final def driver: WebDriver = {
+  protected def driver: WebDriver = {
     init()
     _driver
   }
