@@ -3,6 +3,7 @@ organization := "com.outr"
 version := "1.1.0-SNAPSHOT"
 scalaVersion := "2.13.6"
 crossScalaVersions := Seq("2.13.6")
+scalacOptions += "-deprecation"
 
 publishTo := sonatypePublishTo.value
 sonatypeProfileName := "com.outr"

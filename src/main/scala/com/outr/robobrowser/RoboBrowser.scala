@@ -4,7 +4,7 @@ import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
 import io.youi.http.cookie.ResponseCookie
 import io.youi.net.URL
-import org.openqa.selenium.{By, Cookie, JavascriptExecutor, OutputType, TakesScreenshot, WebDriver}
+import org.openqa.selenium.{By, Capabilities, Cookie, JavascriptExecutor, OutputType, TakesScreenshot, WebDriver}
 import io.youi.stream._
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.interactions.HasInputDevices
@@ -14,55 +14,34 @@ import org.openqa.selenium.support.ui.WebDriverWait
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
-
 import perfolation._
 
-class RoboBrowser(device: Device = Device.Chrome,
-                  loader: DriverLoader = DriverLoader.Chrome()) extends AbstractElement {
+// TODO: Make RoboBrowser abstract with RoboChrome, RoboRemote, abstract RoboAppium, RoboIOS, and RoboAndroid
+// TODO: Make the element type generic
+// TODO: Support supplying device information
+trait RoboBrowser extends AbstractElement {
   override protected def instance: RoboBrowser = this
 
-  private lazy val options = {
-    val o = new ChromeOptions
-    configureOptions(o)
-    o
+  def options: BrowserOptions
+
+  private val _initialized = new AtomicBoolean(false)
+
+  private lazy val _driver: WebDriver = {
+    val options = this.options.toCapabilities
+    configureOptions(options)
+    createWebDriver(options)
   }
-  private lazy val _driver: WebDriver = loader(options)
 
   protected final def driver: WebDriver = {
     init()
     _driver
   }
 
-  protected def configureOptions(options: ChromeOptions): Unit = {
-    if (loader.headless) {
-      options.addArguments(
-        "--headless",
-        "--disable-gpu"
-      )
-    }
-    options.addArguments("use-fake-device-for-media-stream")
-    options.addArguments("use-fake-ui-for-media-stream")
-    options.addArguments(
-      s"--window-size=${device.width},${device.height}",
-      "--ignore-certificate-errors",
-      "--no-sandbox",
-      "--disable-dev-shm-usage"
-    )
-    device.userAgent.foreach { ua =>
-      options.addArguments(s"user-agent=$ua")
-    }
-    if (device.emulateMobile) {
-      val deviceMetrics = new java.util.HashMap[String, Any]
-      deviceMetrics.put("width", device.width)
-      deviceMetrics.put("height", device.height)
-      val mobileEmulation = new java.util.HashMap[String, Any]
-      mobileEmulation.put("deviceMetrics", deviceMetrics)
-      mobileEmulation.put("userAgent", device.userAgent)
-      options.setExperimentalOption("mobileEmulation", mobileEmulation)
-    }
-  }
+  protected def configureOptions(options: ChromeOptions): Unit = {}
 
-  private val _initialized = new AtomicBoolean(false)
+  // TODO: Stop using ChromeOptions?
+  protected def createWebDriver(options: ChromeOptions): WebDriver
+
   final def initialized: Boolean = _initialized.get()
 
   protected def initialize(): Unit = {}

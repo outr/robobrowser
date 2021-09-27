@@ -1,15 +1,14 @@
 package spec
 
 import java.io.File
-
-import com.outr.robobrowser.RoboBrowser
+import com.outr.robobrowser.chrome.RoboChrome
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    lazy val browser = new RoboBrowser()
+    lazy val browser = new RoboChrome()
     lazy val screenshot = new File("screenshot.png")
 
     "load Google" in {

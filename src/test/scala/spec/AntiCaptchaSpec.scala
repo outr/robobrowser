@@ -1,5 +1,6 @@
 package spec
 
+import com.outr.robobrowser.remote.RoboRemote
 import com.outr.robobrowser.{AntiCaptcha, DriverLoader, RoboBrowser}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -20,7 +21,7 @@ class AntiCaptchaSpec extends AnyWordSpec with Matchers {
         s.close()
       }
     }
-    lazy val browser = new RoboBrowser(loader = DriverLoader.Remote()) with AntiCaptcha {
+    lazy val browser = new RoboRemote() with AntiCaptcha {
       override protected def antiCaptchaApiKey: String = key
     }
     "load reCAPTCHA 2 to verify" in {
