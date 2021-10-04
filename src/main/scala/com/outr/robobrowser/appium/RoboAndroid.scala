@@ -1,16 +1,16 @@
 package com.outr.robobrowser.appium
 
 import com.outr.robobrowser.RoboBrowser
-import io.appium.java_client.ios.{IOSDriver, IOSElement}
+import io.appium.java_client.android.{AndroidDriver, AndroidElement}
 import org.openqa.selenium.{By, WebDriver}
 import org.openqa.selenium.chrome.ChromeOptions
 
-class RoboIOS(override val options: IOSOptions = IOSOptions()) extends RoboBrowser {
-  override protected def driver: IOSDriver[IOSElement] = super.driver.asInstanceOf[IOSDriver[IOSElement]]
+class RoboAndroid(override val options: AndroidOptions = AndroidOptions()) extends RoboBrowser {
+  override protected def driver: AndroidDriver[AndroidElement] = super.driver.asInstanceOf[AndroidDriver[AndroidElement]]
 
   override protected def createWebDriver(options: ChromeOptions): WebDriver = {
     val url = new java.net.URL(this.options.url.toString())
-    new IOSDriver[IOSElement](url, options)
+    new AndroidDriver[AndroidElement](url, options)
   }
 
   def inNativeContext[Return](f: => Return): Return = {
