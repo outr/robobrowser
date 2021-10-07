@@ -17,6 +17,14 @@ trait BrowserStack extends RoboBrowser {
     options.setCapability("name", browserStackName)
     options.setCapability("build", browserStackBuild)
   }
+
+  def markPassed(reason: String): Unit = {
+    execute(s"browserstack_executor: {\"action\": \"setSessionStatus\", \"arguments\": {\"status\": \"passed\", \"reason\": \"$reason\"}}")
+  }
+
+  def markFailed(reason: String): Unit = {
+    execute(s"browserstack_executor: {\"action\": \"setSessionStatus\", \"arguments\": {\"status\": \"failed\", \"reason\": \"$reason\"}}")
+  }
 }
 
 object BrowserStack {

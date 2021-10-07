@@ -24,9 +24,10 @@ class RoboAndroid(override val options: AndroidOptions = AndroidOptions()) exten
   }
 
   def nativeAllow(): Boolean = inNativeContext {
-    firstBy(By.name("Allow")) match {
+    firstBy(By.xpath(".//android.widget.Button[@text='Allow']")) match {
       case Some(e) =>
         e.click()
+        nativeAllow()
         true
       case None => false
     }
