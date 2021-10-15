@@ -19,6 +19,19 @@ trait AbstractElement {
   def firstBy(by: By): Option[WebElement] = this.by(by).headOption
   def firstBy(cssSelector: String): Option[WebElement] = this.by(cssSelector).headOption
 
+  /**
+   * Special feature to work on zero, one, or many interacting as if it were a single element (similar to jQuery)
+   */
+  def on(by: By): WebElement = this.by(by) match {
+    case e :: Nil => e
+    case list => MultiElement(list)
+  }
+
+  /**
+   * Special feature to work on zero, one, or many interacting as if it were a single element (similar to jQuery)
+   */
+  def on(cssSelector: String): WebElement = on(By.cssSelector(cssSelector))
+
   def clickWhenAvailable(cssSelector: String, timeout: FiniteDuration = 15.seconds): WebElement = {
     instance.waitFor(timeout) {
       firstBy(cssSelector).nonEmpty

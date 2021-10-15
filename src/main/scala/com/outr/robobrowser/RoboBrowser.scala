@@ -76,7 +76,7 @@ trait RoboBrowser extends AbstractElement {
     }
   }
 
-  override def by(by: By): List[WebElement] = driver.findElements(by).asScala.toList.map(new WebElement(_, this))
+  override def by(by: By): List[WebElement] = driver.findElements(by).asScala.toList.map(new SeleniumWebElement(_, this))
 
   def cookies: List[ResponseCookie] = driver.manage().getCookies.asScala.toList.map { cookie =>
     ResponseCookie(
