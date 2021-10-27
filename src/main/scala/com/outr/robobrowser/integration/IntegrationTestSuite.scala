@@ -2,6 +2,9 @@ package com.outr.robobrowser.integration
 
 import com.outr.robobrowser.RoboBrowser
 import profig._
+import scribe.{Level, Logger}
+import scribe.format._
+import scribe.output.{Color, ColoredOutput}
 
 import scala.annotation.tailrec
 
@@ -14,9 +17,29 @@ trait IntegrationTestSuite {
     scenarios = scenarios ::: List(IntegrationTestsInstance(() => f))
   }
 
+  // TODO: Remove after available in Scribe
+  private def levelColor(block: FormatBlock): FormatBlock = FormatBlock { logRecord =>
+    val color = logRecord.level match {
+      case Level.Trace => Color.White
+      case Level.Debug => Color.Green
+      case Level.Info => Color.Blue
+      case Level.Warn => Color.Yellow
+      case Level.Error => Color.Red
+      case Level.Fatal => Color.Magenta
+      case _ => Color.Cyan
+    }
+    new ColoredOutput(color, block.format(logRecord))
+  }
+
   def main(args: Array[String]): Unit = {
     Profig.initConfiguration()
     Profig.merge(args.toList)
+
+    Logger.root
+      .clearHandlers()
+      .withHandler(formatter = formatter"${levelColor(message)}$mdc")
+      .replace()
+
     scribe.info(s"Starting execution of ${scenarios.length} scenarios...")
     // TODO: Support multi-threading
     val start = System.currentTimeMillis()
