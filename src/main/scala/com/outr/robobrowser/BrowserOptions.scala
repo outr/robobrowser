@@ -24,6 +24,9 @@ trait BrowserOptions {
     device.browserName.foreach { n =>
       options.setCapability("browserName", n)
     }
+    device.browser.foreach { b =>
+      options.setCapability("browser", b)
+    }
     device.realMobile.foreach { b =>
       options.setCapability("realMobile", b.toString)
     }

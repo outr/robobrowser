@@ -5,7 +5,7 @@ import io.appium.java_client.android.{AndroidDriver, AndroidElement}
 import org.openqa.selenium.{By, WebDriver}
 import org.openqa.selenium.chrome.ChromeOptions
 
-class RoboAndroid(override val options: AndroidOptions = AndroidOptions()) extends RoboBrowser {
+class RoboAndroid(override val options: AndroidOptions = AndroidOptions()) extends RoboBrowser with Appium {
   override protected def driver: AndroidDriver[AndroidElement] = super.driver.asInstanceOf[AndroidDriver[AndroidElement]]
 
   override protected def createWebDriver(options: ChromeOptions): WebDriver = {
@@ -13,7 +13,7 @@ class RoboAndroid(override val options: AndroidOptions = AndroidOptions()) exten
     new AndroidDriver[AndroidElement](url, options)
   }
 
-  def inNativeContext[Return](f: => Return): Return = {
+  override def inNativeContext[Return](f: => Return): Return = {
     val context = driver.getContext
     driver.context("NATIVE_APP")
     try {
@@ -23,13 +23,25 @@ class RoboAndroid(override val options: AndroidOptions = AndroidOptions()) exten
     }
   }
 
-  def nativeAllow(): Boolean = inNativeContext {
-    firstBy(By.xpath(".//android.widget.Button[@text='Allow']")) match {
-      case Some(e) =>
-        e.click()
-        nativeAllow()
-        true
-      case None => false
+  override def nativeAllow(reject: Boolean = false): Unit = {
+    inNativeContext {
+      val path = if (reject) {
+        RoboAndroid.RejectXPath
+      } else {
+        RoboAndroid.AllowXPath
+      }
+      firstBy(By.xpath(path)) match {
+        case Some(e) =>
+          e.click()
+          nativeAllow(reject)
+          true
+        case None => false
+      }
     }
   }
+}
+
+object RoboAndroid {
+  private lazy val AllowXPath: String = ".//android.widget.Button[@resource-id='com.android.chrome:id/positive_button' or @text='Allow' or @text=\"While using the app\"]"
+  private lazy val RejectXPath: String = ".//android.widget.Button[@resource-id='com.android.chrome:id/negative_button']"
 }
