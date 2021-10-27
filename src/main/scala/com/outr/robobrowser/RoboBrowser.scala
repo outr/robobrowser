@@ -16,10 +16,9 @@ import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 import perfolation._
 
-// TODO: Make RoboBrowser abstract with RoboChrome, RoboRemote, abstract RoboAppium, RoboIOS, and RoboAndroid
-// TODO: Make the element type generic
-// TODO: Support supplying device information
 trait RoboBrowser extends AbstractElement {
+  private var _disposed: Boolean = false
+
   override protected def instance: RoboBrowser = this
 
   def options: BrowserOptions
@@ -134,5 +133,12 @@ trait RoboBrowser extends AbstractElement {
     s"$head$body"
   }
 
-  def dispose(): Unit = driver.quit()
+  def isDisposed: Boolean = _disposed
+
+  def dispose(): Unit = synchronized {
+    if (!isDisposed) {
+      _disposed = true
+      driver.quit()
+    }
+  }
 }
