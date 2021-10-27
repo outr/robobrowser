@@ -22,7 +22,7 @@ developers := List(
 )
 
 libraryDependencies ++= Seq(
-  "org.seleniumhq.selenium" % "selenium-java" % "3.141.59",
+  "org.seleniumhq.selenium" % "selenium-java" % "4.0.0",
   "io.youi" %% "youi-client" % "0.14.3",
   "org.jsoup" % "jsoup" % "1.14.2",
   "io.appium" % "java-client" % "7.5.1",
