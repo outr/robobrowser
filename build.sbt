@@ -25,7 +25,7 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "selenium-java" % "3.141.59",
   "io.youi" %% "youi-client" % "0.14.3",
   "org.jsoup" % "jsoup" % "1.14.2",
-  "io.appium" % "java-client" % "7.5.1",
+  "io.appium" % "java-client" % "7.6.0",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"
 )
 
