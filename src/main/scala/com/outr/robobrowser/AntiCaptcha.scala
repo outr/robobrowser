@@ -8,6 +8,7 @@ import scala.concurrent.duration.DurationInt
 
 trait AntiCaptcha extends RoboBrowser {
   protected def antiCaptchaApiKey: String
+  protected def antiCaptchaVersion: String = "0.60"
 
   override protected def configureOptions(options: ChromeOptions): Unit = {
     super.configureOptions(options)
@@ -16,7 +17,7 @@ trait AntiCaptcha extends RoboBrowser {
 
     // Copy the CRX file to temporary files
     val crx = File.createTempFile("anticaptcha", ".crx")
-    Files.copy(getClass.getClassLoader.getResourceAsStream("anticaptcha-plugin_v0.54.crx"), crx.toPath, StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(getClass.getClassLoader.getResourceAsStream(s"anticaptcha-plugin_v$antiCaptchaVersion.crx"), crx.toPath, StandardCopyOption.REPLACE_EXISTING)
     crx.deleteOnExit()
 
     // Add the file as an extension
@@ -51,13 +52,21 @@ trait AntiCaptcha extends RoboBrowser {
       by("iframe").exists(_.attribute("src").contains("hcaptcha.com"))
     if (hasCaptcha) {
       scribe.info("Captcha found! Waiting for solve...")
-      waitFor(120.seconds)(firstBy(".antigate_solver.solved, .antigate_solver.error").nonEmpty)
-      val solver = oneBy(".antigate_solver")
-      val classes = solver.classes
-      if (classes.contains("solved")) {
+      waitFor(180.seconds) {
+        val waiting = title == "Just a moment..."
+        val solved = firstBy(".antigate_solver.solved").nonEmpty
+        val error = firstBy(".antigate_solver.error").nonEmpty
+        val missing = firstBy(".antigate_solver").isEmpty
+        !waiting && (solved || error || missing)
+      }
+      val solved = firstBy(".antigate_solver").forall { solver =>
+        val classes = solver.classes
+        classes.contains("solved")
+      }
+      if (solved) {
         scribe.info("Solved successfully!")
       } else {
-        scribe.error(s"Not solved: ${classes.mkString(", ")}")
+        scribe.error(s"Not solved!")
       }
     }
   }
