@@ -1,34 +1,24 @@
 package com.outr.robobrowser.integration
 
-import com.outr.robobrowser.RoboBrowser
+import com.outr.robobrowser.{BrowserConsoleWriter, RoboBrowser}
 import profig._
-import scribe.{Level, Logger}
+import scribe._
 import scribe.format._
-import scribe.output.{Color, ColoredOutput}
+import scribe.output.format.ASCIIOutputFormat
 
 import scala.annotation.tailrec
 
 trait IntegrationTestSuite {
+  private var _browser: Option[RoboBrowser] = None
   private var scenarios = List.empty[IntegrationTestsInstance[_ <: RoboBrowser]]
 
   def stopOnAnyFailure: Boolean = false
+  def logToConsole: Boolean = true
 
-  def testWith[Browser <: RoboBrowser](f: => IntegrationTests[Browser]): Unit = synchronized {
-    scenarios = scenarios ::: List(IntegrationTestsInstance(() => f))
-  }
-
-  // TODO: Remove after available in Scribe
-  private def levelColor(block: FormatBlock): FormatBlock = FormatBlock { logRecord =>
-    val color = logRecord.level match {
-      case Level.Trace => Color.White
-      case Level.Debug => Color.Green
-      case Level.Info => Color.Blue
-      case Level.Warn => Color.Yellow
-      case Level.Error => Color.Red
-      case Level.Fatal => Color.Magenta
-      case _ => Color.Cyan
+  object test {
+    def on[Browser <: RoboBrowser](f: => IntegrationTests[Browser]): Unit = synchronized {
+      scenarios = scenarios ::: List(IntegrationTestsInstance(() => f))
     }
-    new ColoredOutput(color, block.format(logRecord))
   }
 
   def main(args: Array[String]): Unit = {
@@ -37,8 +27,18 @@ trait IntegrationTestSuite {
 
     Logger.root
       .clearHandlers()
-      .withHandler(formatter = formatter"${levelColor(message)}$mdc")
+      .withHandler(formatter = Formatter.colored)
       .replace()
+
+    if (logToConsole) {
+      val writer = BrowserConsoleWriter(() => _browser)
+//      val outputFormat = RichBrowserOutputFormat(writer)
+      val outputFormat = ASCIIOutputFormat
+      Logger.root.withHandler(
+        writer = writer,
+        outputFormat = outputFormat
+      ).replace()
+    }
 
     scribe.info(s"Starting execution of ${scenarios.length} scenarios...")
     // TODO: Support multi-threading
@@ -57,9 +57,11 @@ trait IntegrationTestSuite {
   @tailrec
   private def recurse(scenarios: List[IntegrationTestsInstance[_ <: RoboBrowser]],
                       failures: List[RunResult.Failure]): List[RunResult.Failure] = if (scenarios.isEmpty) {
+    _browser = None
     failures.reverse
   } else {
     val instance = scenarios.head.create()
+    _browser = Some(instance.browser)
     instance.run() match {
       case failure: RunResult.Failure if stopOnAnyFailure => (failure :: failures).reverse
       case result =>

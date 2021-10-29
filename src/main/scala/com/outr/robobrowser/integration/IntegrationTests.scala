@@ -6,6 +6,7 @@ import scribe.data.MDC
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.util.Try
 
 trait IntegrationTests[Browser <: RoboBrowser] { suite =>
   private var _tests = List.empty[IntegrationTest]
@@ -32,13 +33,13 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
         context.set(previous)
       }
     }
-    def in(f: => Any): Unit = suite.synchronized {
+    def in(f: => Any)(implicit pkg: sourcecode.Pkg,
+                      fileName: sourcecode.FileName,
+                      name: sourcecode.Name,
+                      line: sourcecode.Line): Unit = suite.synchronized {
       val index = _tests.length
-      val d = context.get() match {
-        case Some(c) => s"$c when $description"
-        case None => description
-      }
-      _tests = _tests ::: List(IntegrationTest(index, d, () => f))
+      val c = context.get()
+      _tests = _tests ::: List(IntegrationTest(index, description, c, () => f, pkg, fileName, name, line))
     }
   }
 
@@ -69,17 +70,23 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
     }
   }
 
-//  def be[T](expected: T): Comparison[T] = EqualityComparison(expected)
-
   def run(): RunResult = {
     scribe.elapsed {
       if (log) scribe.info(s"$label should:")
 
-      def recurse(tests: List[IntegrationTest]): RunResult = if (tests.isEmpty) {
+      def recurse(tests: List[IntegrationTest], previousContext: Option[String]): RunResult = if (tests.isEmpty) {
         RunResult.Success
       } else {
         val test = tests.head
-        if (log) scribe.info(s"- ${test.description}...")
+        if (log && test.context != previousContext) {
+          test.context.foreach { context =>
+            scribe.info(s"- $context:")
+          }
+        }
+        val padding = if (test.context.isEmpty) "" else "  "
+        if (log) {
+          scribe.info(s"$padding- ${test.description}...")
+        }
         val start = System.nanoTime()
         try {
           MDC.contextualize("test", s"$label should ${test.description}") {
@@ -91,32 +98,50 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
           if (log) {
             val elapsed = System.nanoTime() - start
             val millis = TimeUnit.NANOSECONDS.toMillis(elapsed)
-            scribe.info(s"  - Success in ${millis / 1000.0} seconds")
+            scribe.info(s"$padding  - Success in ${millis / 1000.0} seconds")
           }
-          recurse(tests.tail)
+          recurse(tests.tail, test.context)
         } catch {
           case t: Throwable =>
             if (log) {
               val elapsed = System.nanoTime() - start
               val millis = TimeUnit.NANOSECONDS.toMillis(elapsed)
-              scribe.error(s"  - Failure in ${millis / 1000.0} seconds")
+              scribe.error(s"$padding  - Failure in ${millis / 1000.0} seconds")
             }
             RunResult.Failure(test, t)
         }
       }
 
-      val result = recurse(tests)
-      finish(label, result)
-      browser.dispose() // Make sure the browser was disposed
-      result match {
-        case RunResult.Success => scribe.info(s"$label completed successfully")
-        case RunResult.Failure(test, throwable) => throwable match {
-          case AssertionFailed(message) =>
-            scribe.error(s"$label failed on: ${test.description} (${test.index}) - $message")
-          case _ => scribe.error(s"$label failed on: ${test.description} (${test.index})", throwable)
+      val result = recurse(tests, None)
+      try {
+        def traceInfo(test: IntegrationTest): String = {
+          val (_, className) = scribe.LoggerSupport.className(test.pkg, test.fileName)
+          val methodName = test.name.value match {
+            case "anonymous" | "" => None
+            case v => Option(v)
+          }
+          val location = methodName match {
+            case Some(n) => s"$className.$n"
+            case None => className
+          }
+          s"$location:${test.line.value}"
         }
+
+        result match {
+          case RunResult.Success => scribe.info(s"$label completed successfully")
+          case RunResult.Failure(test, throwable) => throwable match {
+            case AssertionFailed(message) =>
+              scribe.error(s"$label failed on: ${test.description} (test: ${test.index + 1}, location: ${traceInfo(test)}) - $message")
+            case _ => scribe.error(s"$label failed on: ${test.description} (test: ${test.index + 1}, location: ${traceInfo(test)})", throwable)
+          }
+        }
+        result
+      } finally {
+        Try(finish(label, result)).failed.foreach { throwable =>
+          scribe.error(s"Error occurred while attempting to 'finish'", throwable)
+        }
+        browser.dispose() // Make sure the browser was disposed
       }
-      result
     }
   }
 }

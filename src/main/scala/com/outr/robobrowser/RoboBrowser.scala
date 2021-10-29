@@ -4,17 +4,18 @@ import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
 import io.youi.http.cookie.ResponseCookie
 import io.youi.net.URL
-import org.openqa.selenium.{By, Capabilities, Cookie, JavascriptExecutor, OutputType, TakesScreenshot, WebDriver}
+import org.openqa.selenium.{By, Cookie, JavascriptExecutor, OutputType, TakesScreenshot, WebDriver}
 import io.youi.stream._
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.interactions.HasInputDevices
 import org.openqa.selenium.logging.{LogEntry, LogType}
-import org.openqa.selenium.support.ui.WebDriverWait
 
 import java.util.concurrent.atomic.AtomicBoolean
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import perfolation._
+
+import scala.annotation.tailrec
 
 trait RoboBrowser extends AbstractElement {
   private var _disposed: Boolean = false
@@ -58,9 +59,23 @@ trait RoboBrowser extends AbstractElement {
     IO.stream(bytes, file)
   }
 
-  def waitFor(timeout: FiniteDuration)(condition: => Boolean): Unit = {
-    val wait = new WebDriverWait(driver, timeout.toSeconds)
-    wait.until((_: WebDriver) => condition)
+  def waitFor(timeout: FiniteDuration, sleep: FiniteDuration = 500.millis)(condition: => Boolean): Boolean = {
+    val end = System.currentTimeMillis() + timeout.toMillis
+
+    @tailrec
+    def recurse(): Boolean = {
+      val result: Boolean = condition
+      if (result) {
+        true
+      } else if (System.currentTimeMillis() >= end) {
+        false
+      } else {
+        this.sleep(sleep)
+        recurse()
+      }
+    }
+
+    recurse()
   }
 
   def sleep(duration: FiniteDuration): Unit = Thread.sleep(duration.toMillis)
@@ -68,6 +83,12 @@ trait RoboBrowser extends AbstractElement {
   def title: String = driver.getTitle
 
   def execute(script: String, args: AnyRef*): AnyRef = driver.asInstanceOf[JavascriptExecutor].executeScript(script, args: _*)
+
+  def debug(message: String, args: AnyRef*): Unit = execute("console.debug(arguments[0])", message :: args.toList: _*)
+  def error(message: String, args: AnyRef*): Unit = execute("console.error(arguments[0])", message :: args.toList: _*)
+  def info(message: String, args: AnyRef*): Unit = execute("console.info(arguments[0])", message :: args.toList: _*)
+  def trace(message: String, args: AnyRef*): Unit = execute("console.trace(arguments[0])", message :: args.toList: _*)
+  def warn(message: String, args: AnyRef*): Unit = execute("console.warn(arguments[0])", message :: args.toList: _*)
 
   object keyboard {
     object arrow {
@@ -97,12 +118,25 @@ trait RoboBrowser extends AbstractElement {
     }
   }
 
-  def logs(`type`: String = LogType.BROWSER): List[LogEntry] = driver.manage().logs().get(`type`).asScala.toList.sortBy(_.getTimestamp)
+  object logs {
+    private var cache: List[LogEntry] = Nil
 
-  def saveLogs(file: File, `type`: String = LogType.BROWSER): Unit = {
+    def apply(): List[LogEntry] = {
+      val logs = driver.manage().logs().get(LogType.BROWSER).asScala.toList
+      cache = (cache ::: logs).sortBy(_.getTimestamp)
+      cache
+    }
+
+    def clear(): Unit = {
+      cache = Nil
+      driver.manage().logs()
+    }
+  }
+
+  def saveLogs(file: File): Unit = {
     val w = new PrintWriter(new FileWriter(file))
     try {
-      logs(`type`).foreach { e =>
+      logs().foreach { e =>
         val l = e.getTimestamp
         val d = s"${l.t.Y}.${l.t.m}.${l.t.d} ${l.t.T}:${l.t.L}"
         w.println(s"$d - ${e.getLevel.getName} - ${e.getMessage}")
