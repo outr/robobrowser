@@ -14,6 +14,7 @@ trait IntegrationTestSuite {
 
   def stopOnAnyFailure: Boolean = false
   def logToConsole: Boolean = true
+  def retries: Int = 0
 
   object test {
     def on[Browser <: RoboBrowser](f: => IntegrationTests[Browser]): Unit = synchronized {
@@ -43,7 +44,7 @@ trait IntegrationTestSuite {
     scribe.info(s"Starting execution of ${scenarios.length} scenarios...")
     // TODO: Support multi-threading
     val start = System.currentTimeMillis()
-    val failures = recurse(scenarios, Nil)
+    val failures = recurse(scenarios, Nil, 0)
     val elapsed = (System.currentTimeMillis() - start) / 1000.0
     if (failures.isEmpty) {
       scribe.info(s"Successful execution of ${scenarios.length} scenarios in $elapsed seconds.")
@@ -56,20 +57,23 @@ trait IntegrationTestSuite {
 
   @tailrec
   private def recurse(scenarios: List[IntegrationTestsInstance[_ <: RoboBrowser]],
-                      failures: List[RunResult.Failure]): List[RunResult.Failure] = if (scenarios.isEmpty) {
+                      failures: List[RunResult.Failure],
+                      failed: Int): List[RunResult.Failure] = if (scenarios.isEmpty) {
     _browser = None
     failures.reverse
   } else {
     val instance = scenarios.head.create()
     _browser = Some(instance.browser)
     instance.run() match {
-      case failure: RunResult.Failure if stopOnAnyFailure => (failure :: failures).reverse
+      case failure: RunResult.Failure if stopOnAnyFailure && failed >= retries => (failure :: failures).reverse
       case result =>
-        val updated = result match {
-          case failure: RunResult.Failure => failure :: failures
-          case _ => failures
+        val (updated, fails) = result match {
+          case _: RunResult.Failure if failed < retries => (failures, failed + 1)
+          case failure: RunResult.Failure => (failure :: failures, 0)
+          case _ => (failures, 0)
         }
-        recurse(scenarios.tail, updated)
+        val list = if (fails > 0) scenarios else scenarios.tail
+        recurse(list, updated, fails)
     }
   }
 }

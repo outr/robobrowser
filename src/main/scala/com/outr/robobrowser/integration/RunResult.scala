@@ -1,6 +1,9 @@
 package com.outr.robobrowser.integration
 
-sealed trait RunResult
+sealed trait RunResult {
+  def isSuccess: Boolean = this == RunResult.Success
+  def isFailure: Boolean = !isSuccess
+}
 
 object RunResult {
   case object Success extends RunResult
