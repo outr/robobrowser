@@ -32,11 +32,13 @@ class RoboIOS(override val options: IOSOptions = IOSOptions()) extends RoboBrows
       } else {
         RoboIOS.AllowXPath
       }
-      firstBy(By.xpath(path)) match {
-        case Some(e) =>
-          e.click()
-          true
-        case None => false
+      avoidStaleReference {
+        firstBy(By.xpath(path)) match {
+          case Some(e) =>
+            e.click()
+            true
+          case None => false
+        }
       }
     }
   }

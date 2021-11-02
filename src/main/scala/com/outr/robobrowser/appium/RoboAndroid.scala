@@ -32,12 +32,14 @@ class RoboAndroid(override val options: AndroidOptions = AndroidOptions()) exten
       } else {
         RoboAndroid.AllowXPath
       }
-      firstBy(By.xpath(path)) match {
-        case Some(e) =>
-          e.click()
-          nativeAllow(reject)
-          true
-        case None => false
+      avoidStaleReference {
+        firstBy(By.xpath(path)) match {
+          case Some(e) =>
+            e.click()
+            nativeAllow(reject)
+            true
+          case None => false
+        }
       }
     }
   }
