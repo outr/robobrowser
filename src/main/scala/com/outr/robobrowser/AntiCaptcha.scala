@@ -56,8 +56,7 @@ trait AntiCaptcha extends RoboBrowser {
         val waiting = title.contains("Just a moment...") || title.contains("Please Wait...")
         val solved = firstBy(".antigate_solver.solved").nonEmpty
         val error = firstBy(".antigate_solver.error").nonEmpty
-        val missing = firstBy(".antigate_solver").isEmpty
-        !waiting && (solved || error || missing)
+        !waiting && (solved || error)
       }
       val solved = firstBy(".antigate_solver").forall { solver =>
         val classes = solver.classes
