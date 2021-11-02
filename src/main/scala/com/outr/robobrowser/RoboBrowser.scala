@@ -4,10 +4,10 @@ import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
 import io.youi.http.cookie.ResponseCookie
 import io.youi.net.URL
-import org.openqa.selenium.{By, Cookie, JavascriptExecutor, OutputType, TakesScreenshot, WebDriver}
+import org.openqa.selenium.{By, Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
 import io.youi.stream._
 import org.openqa.selenium.chrome.ChromeOptions
-import org.openqa.selenium.interactions.HasInputDevices
+import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.logging.{LogEntry, LogType}
 
 import java.util.concurrent.atomic.AtomicBoolean
@@ -16,6 +16,8 @@ import scala.jdk.CollectionConverters._
 import perfolation._
 
 import scala.annotation.tailrec
+
+case class WindowHandle(handle: String)
 
 trait RoboBrowser extends AbstractElement {
   private var _disposed: Boolean = false
@@ -98,10 +100,37 @@ trait RoboBrowser extends AbstractElement {
   def trace(message: String, args: AnyRef*): Unit = execute("console.trace(arguments[0])", message :: args.toList: _*)
   def warn(message: String, args: AnyRef*): Unit = execute("console.warn(arguments[0])", message :: args.toList: _*)
 
+  def action: Actions = new Actions(driver)
+
   object keyboard {
-    object arrow {
-      def down(): Unit = driver.asInstanceOf[HasInputDevices].getKeyboard.sendKeys("""\xEE\x80\x95""")
+    object send {
+      def apply(charSequence: CharSequence*): Unit = action.sendKeys(charSequence: _*).perform()
+      def up(): Unit = apply(Keys.ARROW_UP)
+      def down(): Unit = apply(Keys.ARROW_DOWN)
+      def left(): Unit = apply(Keys.ARROW_LEFT)
+      def right(): Unit = apply(Keys.ARROW_RIGHT)
     }
+    object press {
+      def apply(charSequence: CharSequence): Unit = action.keyDown(charSequence).perform()
+    }
+  }
+
+  object window {
+    private def w: WebDriver.Window = driver.manage().window()
+
+    def maximize(): Unit = w.maximize()
+    def handle: WindowHandle = WindowHandle(driver.getWindowHandle)
+    def handles: Set[WindowHandle] = driver.getWindowHandles.asScala.toSet.map(WindowHandle.apply)
+    def switchTo(handle: WindowHandle): Unit = driver.switchTo().window(handle.handle)
+    def newTab(): WindowHandle = {
+//      action.keyDown(Keys.CONTROL).sendKeys("t").perform()
+//      action.keyUp(Keys.CONTROL).perform()
+//      on("body").sendInput(Keys.CONTROL + "t")
+//      driver.findElement(By.cssSelector("body")).sendKeys(Keys.CONTROL + "t")
+      driver.switchTo().newWindow(WindowType.TAB)
+      handle
+    }
+    def close(): Unit = driver.close()
   }
 
   override def by(by: By): List[WebElement] = driver.findElements(by).asScala.toList.map(new SeleniumWebElement(_, this))
