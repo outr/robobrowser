@@ -80,6 +80,12 @@ trait RoboBrowser extends AbstractElement {
     recurse()
   }
 
+  def readyState: ReadyState = execute("return document.readyState;").toString match {
+    case "loading" => ReadyState.Loading
+    case "interactive" => ReadyState.Interactive
+    case "complete" => ReadyState.Complete
+  }
+
   def sleep(duration: FiniteDuration): Unit = Thread.sleep(duration.toMillis)
 
   def title: String = driver.getTitle

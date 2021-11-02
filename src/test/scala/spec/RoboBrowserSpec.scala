@@ -1,5 +1,7 @@
 package spec
 
+import com.outr.robobrowser.ReadyState
+
 import java.io.File
 import com.outr.robobrowser.chrome.RoboChrome
 import org.scalatest.matchers.should.Matchers
@@ -15,6 +17,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       browser.load(url"https://google.com")
       browser.url should be(url"https://www.google.com")
       browser.title should be("Google")
+      browser.readyState should be(ReadyState.Complete)
     }
     "do a Google search" in {
       val input = browser.oneBy("[name=\"q\"]")
