@@ -59,6 +59,8 @@ trait RoboBrowser extends AbstractElement {
     IO.stream(bytes, file)
   }
 
+  def sessionId: String
+
   def waitFor(timeout: FiniteDuration, sleep: FiniteDuration = 500.millis)(condition: => Boolean): Boolean = {
     val end = System.currentTimeMillis() + timeout.toMillis
 

@@ -8,6 +8,8 @@ import org.openqa.selenium.chrome.ChromeOptions
 class RoboIOS(override val options: IOSOptions = IOSOptions()) extends RoboBrowser with Appium {
   override protected def driver: IOSDriver[IOSElement] = super.driver.asInstanceOf[IOSDriver[IOSElement]]
 
+  override def sessionId: String = driver.getSessionId.toString
+
   override protected def createWebDriver(options: ChromeOptions): WebDriver = {
     val url = new java.net.URL(this.options.url.toString())
     new IOSDriver[IOSElement](url, options)

@@ -1,6 +1,6 @@
 package com.outr.robobrowser
 
-import org.openqa.selenium.By
+import org.openqa.selenium.{By, StaleElementReferenceException}
 
 import scala.concurrent.duration._
 
@@ -36,9 +36,19 @@ trait AbstractElement {
     instance.waitFor(timeout) {
       firstBy(cssSelector).nonEmpty
     }
-    val element = oneBy(cssSelector)
-    element.click()
-    element
+    avoidStaleReference {
+      val element = on(cssSelector)
+      element.click()
+      element
+    }
+  }
+
+  def avoidStaleReference[Return](f: => Return): Return = try {
+    f
+  } catch {
+    case _: StaleElementReferenceException =>
+      scribe.warn("Stale reference. Trying again.")
+      avoidStaleReference(f)
   }
 
   def outerHTML: String

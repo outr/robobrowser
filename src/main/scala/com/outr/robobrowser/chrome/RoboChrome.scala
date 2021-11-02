@@ -10,4 +10,6 @@ class RoboChrome(override val options: ChromeOptions = ChromeOptions()) extends 
     System.setProperty("webdriver.chrome.driver", this.options.driverPath)
     new ChromeDriver(options)
   }
+
+  override def sessionId: String = "chrome"
 }

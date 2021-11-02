@@ -53,7 +53,7 @@ trait AntiCaptcha extends RoboBrowser {
     if (hasCaptcha) {
       scribe.info("Captcha found! Waiting for solve...")
       waitFor(180.seconds) {
-        val waiting = title == "Just a moment..."
+        val waiting = title.contains("Just a moment...") || title.contains("Please Wait...")
         val solved = firstBy(".antigate_solver.solved").nonEmpty
         val error = firstBy(".antigate_solver.error").nonEmpty
         val missing = firstBy(".antigate_solver").isEmpty
