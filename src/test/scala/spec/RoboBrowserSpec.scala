@@ -1,6 +1,6 @@
 package spec
 
-import com.outr.robobrowser.{Device, ReadyState, ScreenSize, WindowHandle}
+import com.outr.robobrowser.{Device, LogEntry, LogLevel, ReadyState, ScreenSize, WindowHandle}
 
 import java.io.File
 import com.outr.robobrowser.chrome.{ChromeOptions, RoboChrome}
@@ -12,9 +12,7 @@ import scala.jdk.CollectionConverters._
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    lazy val browser = new RoboChrome(ChromeOptions(device = Device(screenSize = Some(ScreenSize())))) {
-      override protected def logCapabilities: Boolean = true
-    }
+    lazy val browser = new RoboChrome()
     lazy val screenshot = new File("screenshot.png")
 
     var googleTab: Option[WindowHandle] = None
@@ -61,35 +59,8 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       browser.title should be("robobrowser - Google Search")
     }
     "verify logs are working" in {
-      val logs = browser.logs()
-      logs.foreach { entry =>
-        scribe.info(s"${entry.getLevel} - ${entry.getMessage}")
-      }
-      logs.length should be > 0
-    }
-    "test replacing console" in {
-      browser.execute(
-        """window.oc = window.console;
-          |window.console = {};
-          |window.logs = [];
-          |
-          |window.console.clear = function() {
-          |  window.logs = [];
-          |}
-          |
-          |window.console.log = function(message) {
-          |  window.logs.push({'level': 'info', 'message': message});
-          |  window.oc.log(message);
-          |};
-          |
-          |""".stripMargin)
-      browser.execute("console.log('Testing');")
-      browser.execute("return window.logs;").asInstanceOf[java.util.List[java.util.Map[String, String]]].asScala.toList.foreach { map =>
-        scribe.info("Entry:")
-        map.asScala.foreach {
-          case (key, value) => scribe.info(s"  $key = $value")
-        }
-      }
+      browser.info("This is a test")
+      browser.logs().map(_.copy(timestamp = 0L)) should be(List(LogEntry(LogLevel.Info, 0L, "This is a test")))
     }
     "dispose the browser" in {
       browser.dispose()

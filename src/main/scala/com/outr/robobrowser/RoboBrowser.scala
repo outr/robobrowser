@@ -8,7 +8,6 @@ import org.openqa.selenium.{By, Cookie, JavascriptExecutor, Keys, OutputType, Ta
 import io.youi.stream._
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.interactions.Actions
-import org.openqa.selenium.logging.{LogEntry, LogType}
 
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration._
@@ -16,8 +15,6 @@ import scala.jdk.CollectionConverters._
 import perfolation._
 
 import scala.annotation.tailrec
-
-case class WindowHandle(handle: String)
 
 trait RoboBrowser extends AbstractElement {
   protected def logCapabilities: Boolean = false
@@ -50,12 +47,20 @@ trait RoboBrowser extends AbstractElement {
 
   protected def configureOptions(options: ChromeOptions): Unit = {}
 
-  // TODO: Stop using ChromeOptions?
   protected def createWebDriver(options: ChromeOptions): WebDriver
 
   final def initialized: Boolean = _initialized.get()
 
-  protected def initialize(): Unit = {}
+  protected def initialize(): Unit = {
+    initWindow()
+  }
+
+  protected def initWindow(): Unit = {
+    // Configure logging
+    val input = getClass.getClassLoader.getResourceAsStream("js-logging.js")
+    val script = IO.stream(input, new StringBuilder).toString
+    execute(script)
+  }
 
   final def init(): Boolean = if (_initialized.compareAndSet(false, true)) {
     initialize()
@@ -116,11 +121,11 @@ trait RoboBrowser extends AbstractElement {
 
   def execute(script: String, args: AnyRef*): AnyRef = driver.asInstanceOf[JavascriptExecutor].executeScript(script, args: _*)
 
-  def debug(message: String, args: AnyRef*): Unit = execute("console.debug(arguments[0])", message :: args.toList: _*)
-  def error(message: String, args: AnyRef*): Unit = execute("console.error(arguments[0])", message :: args.toList: _*)
-  def info(message: String, args: AnyRef*): Unit = execute("console.info(arguments[0])", message :: args.toList: _*)
-  def trace(message: String, args: AnyRef*): Unit = execute("console.trace(arguments[0])", message :: args.toList: _*)
-  def warn(message: String, args: AnyRef*): Unit = execute("console.warn(arguments[0])", message :: args.toList: _*)
+  def debug(message: String, args: AnyRef*): Unit = execute("console.debug(arguments[0]);", message :: args.toList: _*)
+  def error(message: String, args: AnyRef*): Unit = execute("console.error(arguments[0]);", message :: args.toList: _*)
+  def info(message: String, args: AnyRef*): Unit = execute("console.info(arguments[0]);", message :: args.toList: _*)
+  def trace(message: String, args: AnyRef*): Unit = execute("console.trace(arguments[0]);", message :: args.toList: _*)
+  def warn(message: String, args: AnyRef*): Unit = execute("console.warn(arguments[0]);", message :: args.toList: _*)
 
   def action: Actions = new Actions(driver)
 
@@ -145,10 +150,7 @@ trait RoboBrowser extends AbstractElement {
     def handles: Set[WindowHandle] = driver.getWindowHandles.asScala.toSet.map(WindowHandle.apply)
     def switchTo(handle: WindowHandle): Unit = driver.switchTo().window(handle.handle)
     def newTab(): WindowHandle = {
-//      action.keyDown(Keys.CONTROL).sendKeys("t").perform()
-//      action.keyUp(Keys.CONTROL).perform()
-//      on("body").sendInput(Keys.CONTROL + "t")
-//      driver.findElement(By.cssSelector("body")).sendKeys(Keys.CONTROL + "t")
+      initWindow()
       driver.switchTo().newWindow(WindowType.TAB)
       handle
     }
@@ -178,27 +180,34 @@ trait RoboBrowser extends AbstractElement {
   }
 
   object logs {
-    private var cache: List[LogEntry] = Nil
+    def apply(): List[LogEntry] = execute("return window.logs;")
+      .asInstanceOf[java.util.List[java.util.Map[String, AnyRef]]]
+      .asScala
+      .toList
+      .map { map =>
+        val level = map.get("level") match {
+          case "trace" => LogLevel.Trace
+          case "debug" => LogLevel.Debug
+          case "info" => LogLevel.Info
+          case "warn" => LogLevel.Warning
+          case "error" => LogLevel.Error
+          case _ => LogLevel.Info
+        }
+        val timestamp = map.get("timestamp").asInstanceOf[Long]
+        val message = map.get("message").toString
+        LogEntry(level, timestamp, message)
+      }
 
-    def apply(): List[LogEntry] = {
-      val logs = driver.manage().logs().get(LogType.BROWSER).asScala.toList
-      cache = (cache ::: logs).sortBy(_.getTimestamp)
-      cache
-    }
-
-    def clear(): Unit = {
-      cache = Nil
-      driver.manage().logs()
-    }
+    def clear(): Unit = execute("console.clear();")
   }
 
   def saveLogs(file: File): Unit = {
     val w = new PrintWriter(new FileWriter(file))
     try {
       logs().foreach { e =>
-        val l = e.getTimestamp
+        val l = e.timestamp
         val d = s"${l.t.Y}.${l.t.m}.${l.t.d} ${l.t.T}:${l.t.L}"
-        w.println(s"$d - ${e.getLevel.getName} - ${e.getMessage}")
+        w.println(s"$d - ${e.level} - ${e.message}")
       }
     } finally {
       w.flush()
