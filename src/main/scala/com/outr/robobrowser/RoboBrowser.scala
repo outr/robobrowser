@@ -20,23 +20,32 @@ import scala.annotation.tailrec
 case class WindowHandle(handle: String)
 
 trait RoboBrowser extends AbstractElement {
+  protected def logCapabilities: Boolean = false
+
   private var _disposed: Boolean = false
 
   override protected def instance: RoboBrowser = this
 
   def options: BrowserOptions
 
+  protected var capabilities: ChromeOptions = _
+
   private val _initialized = new AtomicBoolean(false)
 
   private lazy val _driver: WebDriver = {
     val options = this.options.toCapabilities
     configureOptions(options)
+    capabilities = options
     createWebDriver(options)
   }
 
   protected def driver: WebDriver = {
-    init()
-    _driver
+    val initted = init()
+    try {
+      _driver
+    } finally {
+      if (initted) postInit()
+    }
   }
 
   protected def configureOptions(options: ChromeOptions): Unit = {}
@@ -48,8 +57,21 @@ trait RoboBrowser extends AbstractElement {
 
   protected def initialize(): Unit = {}
 
-  final def init(): Unit = if (_initialized.compareAndSet(false, true)) {
+  final def init(): Boolean = if (_initialized.compareAndSet(false, true)) {
     initialize()
+    true
+  } else {
+    false
+  }
+
+  final def postInit(): Unit = {
+    if (logCapabilities) {
+      val caps = capabilities.getCapabilityNames.asScala.toList.map { key =>
+        val value = capabilities.getCapability(key)
+        s"  $key = $value (${value.getClass.getName})"
+      }.mkString("\n")
+      scribe.info(s"Creating RoboBrowser with the following capabilities:\n$caps")
+    }
   }
 
   def load(url: URL): Unit = driver.get(url.toString())

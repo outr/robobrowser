@@ -1,16 +1,18 @@
 package spec
 
-import com.outr.robobrowser.{ReadyState, WindowHandle}
+import com.outr.robobrowser.{Device, ReadyState, ScreenSize, WindowHandle}
 
 import java.io.File
-import com.outr.robobrowser.chrome.RoboChrome
+import com.outr.robobrowser.chrome.{ChromeOptions, RoboChrome}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    lazy val browser = new RoboChrome()
+    lazy val browser = new RoboChrome(ChromeOptions(device = Device(screenSize = Some(ScreenSize())))) {
+      override protected def logCapabilities: Boolean = true
+    }
     lazy val screenshot = new File("screenshot.png")
 
     var googleTab: Option[WindowHandle] = None

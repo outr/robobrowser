@@ -11,32 +11,36 @@ import org.openqa.selenium.chrome.ChromeOptions
 import java.util.Base64
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.jdk.CollectionConverters._
 
 trait BrowserStack extends RoboBrowser {
-  protected def browserStackConsole: String = "errors"
-  protected def browserStackNetworkLogs: Boolean = true
-  protected def browserStackName: String = "RoboBrowser Test"
-  protected def browserStackBuild: String = "Default Build"
-  protected def browserStackAppiumVersion: String = "1.21.0"
-  protected def browserStackIdleTimeout: String = "300"
-  protected def browserStackUsername: String
-  protected def browserStackAutomateKey: String
+  protected val browserStackOptions: BrowserStackOptions
+  protected def browserStackURL: URL = BrowserStack.url(browserStackOptions.username, browserStackOptions.automateKey)
 
-  protected def browserStackURL: URL = BrowserStack.url(browserStackUsername, browserStackAutomateKey)
+  override protected def configureOptions(caps: ChromeOptions): Unit = {
+    super.configureOptions(caps)
 
-  override protected def configureOptions(options: ChromeOptions): Unit = {
-    super.configureOptions(options)
+    val o = browserStackOptions
+    def t[V](key: String, value: Option[V]): Option[(String, String)] = value.map(v => key -> v.toString)
 
-    options.setCapability("browserstack.console", browserStackConsole)
-    options.setCapability("browserstack.networkLogs", browserStackNetworkLogs.toString)
-    options.setCapability("name", browserStackName)
-    options.setCapability("build", browserStackBuild)
-    options.setCapability("browserstack.appium_version", browserStackAppiumVersion)
-    options.setCapability("browserstack.idleTimeout", browserStackIdleTimeout)
+    val bs = List(
+      t("osVersion", options.device.osVersion),
+      t("deviceName", options.device.identifier),
+      t("realMobile", options.device.realMobile),
+      t("projectName", Some(o.projectName)),
+      t("buildName", Some(o.buildName)),
+      t("sessionName", o.sessionName.orElse(options.device.identifier)),
+      t("local", Some(o.local)),
+      t("networkLogs", Some(o.networkLogs)),
+      t("idleTimeout", Some(o.idleTimeout)),
+      t("appiumVersion", Some(o.appiumVersion))
+    ).flatten.toMap.asJava
+
+    caps.setCapability("bstack:options", bs)
   }
 
   def markAsync(status: BrowserStack.Status)(implicit ec: ExecutionContext): Future[Value] =
-    BrowserStack.mark(sessionId, browserStackUsername, browserStackAutomateKey, status)
+    BrowserStack.mark(sessionId, browserStackOptions.username, browserStackOptions.automateKey, status)
 
   def mark(status: BrowserStack.Status): Value = {
     val future = markAsync(status)(scribe.Execution.global)
