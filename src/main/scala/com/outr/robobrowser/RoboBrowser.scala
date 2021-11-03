@@ -13,13 +13,18 @@ import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import perfolation._
+import reactify.Trigger
 
 import scala.annotation.tailrec
+import scala.util.Try
 
 trait RoboBrowser extends AbstractElement {
+  val pageChanged: Trigger = Trigger()
+
   protected def logCapabilities: Boolean = false
 
   private var _disposed: Boolean = false
+  private var lastVerifiedWindow: Long = 0L
 
   override protected def instance: RoboBrowser = this
 
@@ -39,6 +44,7 @@ trait RoboBrowser extends AbstractElement {
   protected def driver: WebDriver = {
     val initted = init()
     try {
+      verifyWindowInitialized()
       _driver
     } finally {
       if (initted) postInit()
@@ -52,14 +58,32 @@ trait RoboBrowser extends AbstractElement {
   final def initialized: Boolean = _initialized.get()
 
   protected def initialize(): Unit = {
-    initWindow()
+    verifyWindowInitialized()
   }
 
-  protected def initWindow(): Unit = {
-    // Configure logging
-    val input = getClass.getClassLoader.getResourceAsStream("js-logging.js")
-    val script = IO.stream(input, new StringBuilder).toString
-    execute(script)
+  private val verifying = new AtomicBoolean(false)
+
+  protected def verifyWindowInitialized(): Unit = if (verifying.compareAndSet(false, true)) {
+    try {
+      val now = System.currentTimeMillis()
+      val elapsed = now - lastVerifiedWindow
+      if (elapsed > 1000L) {
+        Try {
+          lastVerifiedWindow = now
+          val loaded = execute("return typeof window.roboBrowserInitialized !== 'undefined';").asInstanceOf[Boolean]
+          if (!loaded) {
+            val input = getClass.getClassLoader.getResourceAsStream("extras.js")
+            val script = IO.stream(input, new StringBuilder).toString
+            execute(script)
+            pageChanged.trigger()     // Notify that the page has changed
+          }
+        }.failed.foreach { t =>
+          scribe.debug(s"Error while attempting to initialize window: ${t.getMessage}")
+        }
+      }
+    } finally {
+      verifying.set(false)
+    }
   }
 
   final def init(): Boolean = if (_initialized.compareAndSet(false, true)) {
@@ -109,11 +133,11 @@ trait RoboBrowser extends AbstractElement {
     recurse()
   }
 
-  def readyState: ReadyState = execute("return document.readyState;").toString match {
+  def readyState: ReadyState = Try(execute("return document.readyState;").toString match {
     case "loading" => ReadyState.Loading
     case "interactive" => ReadyState.Interactive
     case "complete" => ReadyState.Complete
-  }
+  }).getOrElse(ReadyState.Loading)
 
   def sleep(duration: FiniteDuration): Unit = Thread.sleep(duration.toMillis)
 
@@ -150,7 +174,6 @@ trait RoboBrowser extends AbstractElement {
     def handles: Set[WindowHandle] = driver.getWindowHandles.asScala.toSet.map(WindowHandle.apply)
     def switchTo(handle: WindowHandle): Unit = driver.switchTo().window(handle.handle)
     def newTab(): WindowHandle = {
-      initWindow()
       driver.switchTo().newWindow(WindowType.TAB)
       handle
     }

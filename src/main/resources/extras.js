@@ -1,3 +1,4 @@
+// Functionality related to logging
 window.oc = window.console;      // Keep a reference to the original console
 window.console = {};             // Replace the console with our new version
 window.logs = [];                // Create a place to cache log records
@@ -63,3 +64,5 @@ window.console.warn = function(message, ...arguments) {
     window.logs.push({'level': 'warn', 'message': message, 'timestamp': Date.now()});
     return window.oc.warn(message, ...arguments);
 };
+
+window.roboBrowserInitialized = true;
