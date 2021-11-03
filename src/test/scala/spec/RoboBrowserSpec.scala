@@ -8,6 +8,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._
 
+import scala.jdk.CollectionConverters._
+
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
     lazy val browser = new RoboChrome(ChromeOptions(device = Device(screenSize = Some(ScreenSize())))) {
@@ -57,6 +59,37 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       browser.window.handles.size should be(2)
       browser.window.switchTo(googleTab.getOrElse(fail()))
       browser.title should be("robobrowser - Google Search")
+    }
+    "verify logs are working" in {
+      val logs = browser.logs()
+      logs.foreach { entry =>
+        scribe.info(s"${entry.getLevel} - ${entry.getMessage}")
+      }
+      logs.length should be > 0
+    }
+    "test replacing console" in {
+      browser.execute(
+        """window.oc = window.console;
+          |window.console = {};
+          |window.logs = [];
+          |
+          |window.console.clear = function() {
+          |  window.logs = [];
+          |}
+          |
+          |window.console.log = function(message) {
+          |  window.logs.push({'level': 'info', 'message': message});
+          |  window.oc.log(message);
+          |};
+          |
+          |""".stripMargin)
+      browser.execute("console.log('Testing');")
+      browser.execute("return window.logs;").asInstanceOf[java.util.List[java.util.Map[String, String]]].asScala.toList.foreach { map =>
+        scribe.info("Entry:")
+        map.asScala.foreach {
+          case (key, value) => scribe.info(s"  $key = $value")
+        }
+      }
     }
     "dispose the browser" in {
       browser.dispose()
