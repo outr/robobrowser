@@ -11,6 +11,11 @@ import scala.util.Try
 trait IntegrationTests[Browser <: RoboBrowser] { suite =>
   private var _tests = List.empty[IntegrationTest]
 
+  /**
+   * If true, automatically calls browser.dispose() after test run is complete (defaults to true)
+   */
+  protected def autoDispose: Boolean = true
+
   def label: String
 
   def browser: Browser
@@ -140,7 +145,9 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
         Try(finish(label, result)).failed.foreach { throwable =>
           scribe.error(s"Error occurred while attempting to 'finish'", throwable)
         }
-        browser.dispose() // Make sure the browser was disposed
+        if (autoDispose) {
+          browser.dispose() // Make sure the browser was disposed
+        }
       }
     }
   }
