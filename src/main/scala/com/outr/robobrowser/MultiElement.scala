@@ -3,9 +3,15 @@ package com.outr.robobrowser
 import org.openqa.selenium.By
 
 case class MultiElement(elements: List[WebElement]) extends WebElement {
-  override def click(): Unit = elements.foreach(_.click())
+  override def click(): WebElement = {
+    elements.foreach(_.click())
+    this
+  }
 
-  override def submit(): Unit = elements.foreach(_.submit())
+  override def submit(): WebElement = {
+    elements.foreach(_.submit())
+    this
+  }
 
   override def tagName: String = ""
 

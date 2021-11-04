@@ -7,9 +7,15 @@ import scala.jdk.CollectionConverters._
 class SeleniumWebElement(e: org.openqa.selenium.WebElement, protected val instance: RoboBrowser) extends WebElement {
   override def by(by: By): List[WebElement] = e.findElements(by).asScala.toList.map(new SeleniumWebElement(_, instance))
 
-  override def click(): Unit = e.click()
+  override def click(): WebElement = {
+    e.click()
+    this
+  }
 
-  override def submit(): Unit = e.submit()
+  override def submit(): WebElement = {
+    e.submit()
+    this
+  }
 
   override def tagName: String = e.getTagName
 

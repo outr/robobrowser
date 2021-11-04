@@ -1,5 +1,6 @@
 package com.outr.robobrowser
 
+import com.outr.robobrowser.integration.AssertionFailed
 import org.openqa.selenium.{By, StaleElementReferenceException}
 
 import scala.concurrent.duration._
@@ -9,7 +10,6 @@ trait AbstractElement {
 
   def by(by: By): List[WebElement]
 
-  final def by(cssSelector: String): List[WebElement] = by(By.cssSelector(cssSelector))
   final def oneBy(by: By): WebElement = this.by(by) match {
     case element :: Nil => element
     case Nil => throw new RuntimeException(s"Nothing found by selector: ${by.toString}")
@@ -17,7 +17,6 @@ trait AbstractElement {
   }
   final def oneBy(cssSelector: String): WebElement = oneBy(By.cssSelector(cssSelector))
   def firstBy(by: By): Option[WebElement] = this.by(by).headOption
-  def firstBy(cssSelector: String): Option[WebElement] = this.by(cssSelector).headOption
 
   /**
    * Special feature to work on zero, one, or many interacting as if it were a single element (similar to jQuery)
@@ -32,15 +31,24 @@ trait AbstractElement {
    */
   def on(cssSelector: String): WebElement = on(By.cssSelector(cssSelector))
 
-  def clickWhenAvailable(cssSelector: String, timeout: FiniteDuration = 15.seconds): WebElement = {
-    instance.waitFor(timeout) {
-      firstBy(cssSelector).nonEmpty
-    }
+  def clickWhenAvailable(by: By,
+                         timeout: FiniteDuration = 15.seconds,
+                         sleep: FiniteDuration = 500.millis): WebElement = {
     avoidStaleReference {
-      val element = on(cssSelector)
-      element.click()
-      element
+      waitOn(by, timeout, sleep) match {
+        case Some(e) =>
+          e.click()
+          e
+        case None => throw AssertionFailed(s"Not found by selector: $by")
+      }
     }
+  }
+
+  def waitOn(by: By, timeout: FiniteDuration = 15.seconds, sleep: FiniteDuration = 500.millis): Option[WebElement] = {
+    instance.waitFor(timeout, sleep) {
+      firstBy(by).nonEmpty
+    }
+    firstBy(by)
   }
 
   def avoidStaleReference[Return](f: => Return): Return = try {

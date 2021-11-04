@@ -3,8 +3,8 @@ package com.outr.robobrowser
 import scala.language.implicitConversions
 
 trait WebElement extends AbstractElement {
-  def click(): Unit
-  def submit(): Unit
+  def click(): WebElement
+  def submit(): WebElement
 
   def tagName: String
   def text: String

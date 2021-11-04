@@ -21,7 +21,15 @@ import scala.util.Try
 trait RoboBrowser extends AbstractElement {
   val pageChanged: Trigger = Trigger()
 
+  /**
+   * If set to true, will log the Selenium capabilities after init. Defaults to false.
+   */
   protected def logCapabilities: Boolean = false
+
+  /**
+   * Injects an arbitrary delay between each action invoked on the browser. Defaults to 0.
+   */
+  protected def delay: FiniteDuration = 0.seconds
 
   private var _disposed: Boolean = false
   private var lastVerifiedWindow: Long = 0L
@@ -45,6 +53,9 @@ trait RoboBrowser extends AbstractElement {
     val initted = init()
     try {
       verifyWindowInitialized()
+      if (delay > 0.seconds) {
+        sleep(delay)              // Arbitrary sleep between each call
+      }
       _driver
     } finally {
       if (initted) postInit()
