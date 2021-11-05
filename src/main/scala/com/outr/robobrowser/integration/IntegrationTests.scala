@@ -56,10 +56,15 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
   }
 
   object be {
-    def apply[T](expected: T): Comparison[T] = EqualityComparison(expected)
+    def apply[T](expected: T, failMessageOverride: => String = null): Comparison[T] = Comparison[T](
+      f = value => value == expected,
+      failMessage = value => s"'$value' was not equal to '$expected'",
+      failNotMessage = value => s"'$value' was equal to '$expected'",
+      failMessageOverride = if (failMessageOverride == null) None else Some(() => failMessageOverride)
+    )
     def <[T : Ordering](expected: T): Comparison[T] = {
       val ordering = implicitly[Ordering[T]]
-      BooleanComparison[T](
+      Comparison[T](
         f = value => ordering.lt(value, expected),
         failMessage = value => s"$value was not < $expected",
         failNotMessage = value => s"$value was < $expected"
@@ -67,7 +72,7 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
     }
     def >[T : Ordering](expected: T): Comparison[T] = {
       val ordering = implicitly[Ordering[T]]
-      BooleanComparison[T](
+      Comparison[T](
         f = value => ordering.gt(value, expected),
         failMessage = value => s"$value was not > $expected",
         failNotMessage = value => s"$value was > $expected"
