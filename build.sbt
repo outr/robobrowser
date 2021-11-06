@@ -1,6 +1,6 @@
 name := "robobrowser"
 organization := "com.outr"
-version := "1.3.1"
+version := "1.3.2-SNAPSHOT"
 scalaVersion := "2.13.7"
 crossScalaVersions := Seq("2.13.7")
 scalacOptions += "-deprecation"

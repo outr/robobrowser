@@ -1,9 +1,10 @@
 package spec
 
-import com.outr.robobrowser.{Device, LogEntry, LogLevel, ReadyState, ScreenSize, WindowHandle}
+import com.outr.robobrowser.{Device, ReadyState, ScreenSize, WindowHandle}
 
 import java.io.File
 import com.outr.robobrowser.chrome.{ChromeOptions, RoboChrome}
+import com.outr.robobrowser.logging.LogEntry
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._

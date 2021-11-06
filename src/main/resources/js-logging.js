@@ -64,5 +64,3 @@ window.console.warn = function(message, ...arguments) {
     window.logs.push({'level': 'warn', 'message': message, 'timestamp': Date.now()});
     return window.oc.warn(message, ...arguments);
 };
-
-window.roboBrowserInitialized = true;

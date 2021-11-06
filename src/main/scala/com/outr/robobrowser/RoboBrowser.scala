@@ -1,5 +1,7 @@
 package com.outr.robobrowser
 
+import com.outr.robobrowser.logging.LoggingSupport
+
 import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
 import io.youi.http.cookie.ResponseCookie
@@ -83,9 +85,8 @@ trait RoboBrowser extends AbstractElement {
           lastVerifiedWindow = now
           val loaded = execute("return typeof window.roboBrowserInitialized !== 'undefined';").asInstanceOf[Boolean]
           if (!loaded) {
-            val input = getClass.getClassLoader.getResourceAsStream("extras.js")
-            val script = IO.stream(input, new StringBuilder).toString
-            execute(script)
+            initWindow()
+            execute("window.roboBrowserInitialized = true;")
             pageChanged.trigger()     // Notify that the page has changed
           }
         }.failed.foreach { t =>
@@ -96,6 +97,8 @@ trait RoboBrowser extends AbstractElement {
       verifying.set(false)
     }
   }
+
+  protected def initWindow(): Unit = {}
 
   final def init(): Boolean = if (_initialized.compareAndSet(false, true)) {
     initialize()
@@ -156,12 +159,6 @@ trait RoboBrowser extends AbstractElement {
 
   def execute(script: String, args: AnyRef*): AnyRef = driver.asInstanceOf[JavascriptExecutor].executeScript(script, args: _*)
 
-  def debug(message: String, args: AnyRef*): Unit = execute("console.debug(arguments[0]);", message :: args.toList: _*)
-  def error(message: String, args: AnyRef*): Unit = execute("console.error(arguments[0]);", message :: args.toList: _*)
-  def info(message: String, args: AnyRef*): Unit = execute("console.info(arguments[0]);", message :: args.toList: _*)
-  def trace(message: String, args: AnyRef*): Unit = execute("console.trace(arguments[0]);", message :: args.toList: _*)
-  def warn(message: String, args: AnyRef*): Unit = execute("console.warn(arguments[0]);", message :: args.toList: _*)
-
   def action: Actions = new Actions(driver)
 
   object keyboard {
@@ -213,40 +210,20 @@ trait RoboBrowser extends AbstractElement {
     }
   }
 
-  object logs {
-    def apply(): List[LogEntry] = execute("return window.logs;")
-      .asInstanceOf[java.util.List[java.util.Map[String, AnyRef]]]
-      .asScala
-      .toList
-      .map { map =>
-        val level = map.get("level") match {
-          case "trace" => LogLevel.Trace
-          case "debug" => LogLevel.Debug
-          case "info" => LogLevel.Info
-          case "warn" => LogLevel.Warning
-          case "error" => LogLevel.Error
-          case _ => LogLevel.Info
+  def saveLogs(file: File): Unit = this match {
+    case ls: LoggingSupport =>
+      val w = new PrintWriter(new FileWriter(file))
+      try {
+        ls.logs().foreach { e =>
+          val l = e.timestamp
+          val d = s"${l.t.Y}.${l.t.m}.${l.t.d} ${l.t.T}:${l.t.L}"
+          w.println(s"$d - ${e.level} - ${e.message}")
         }
-        val timestamp = map.get("timestamp").asInstanceOf[Long]
-        val message = map.get("message").toString
-        LogEntry(level, timestamp, message)
+      } finally {
+        w.flush()
+        w.close()
       }
-
-    def clear(): Unit = execute("console.clear();")
-  }
-
-  def saveLogs(file: File): Unit = {
-    val w = new PrintWriter(new FileWriter(file))
-    try {
-      logs().foreach { e =>
-        val l = e.timestamp
-        val d = s"${l.t.Y}.${l.t.m}.${l.t.d} ${l.t.T}:${l.t.L}"
-        w.println(s"$d - ${e.level} - ${e.message}")
-      }
-    } finally {
-      w.flush()
-      w.close()
-    }
+    case _ => scribe.warn("No LoggingSupport mixed in")
   }
 
   /**
