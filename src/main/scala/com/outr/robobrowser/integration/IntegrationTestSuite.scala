@@ -7,6 +7,7 @@ import scribe.format._
 import scribe.output.format.ASCIIOutputFormat
 
 import scala.annotation.tailrec
+import scala.language.implicitConversions
 
 trait IntegrationTestSuite {
   private var _browser: Option[RoboBrowser] = None
@@ -16,9 +17,16 @@ trait IntegrationTestSuite {
   def logToConsole: Boolean = true
   def retries: Int = 0
 
+  implicit def f2Instance[Browser <: RoboBrowser](f: => IntegrationTests[Browser]): IntegrationTestsInstance[Browser] =
+    IntegrationTestsInstance(() => f)
+
   object test {
-    def on[Browser <: RoboBrowser](f: => IntegrationTests[Browser]): Unit = synchronized {
-      scenarios = scenarios ::: List(IntegrationTestsInstance(() => f))
+    def on[Browser <: RoboBrowser](instances: IntegrationTestsInstance[Browser]*): Unit = synchronized {
+      scenarios = scenarios ::: instances.toList
+    }
+
+    def on[Browser <: RoboBrowser](instances: List[IntegrationTestsInstance[Browser]]): Unit = synchronized {
+      scenarios = scenarios ::: instances
     }
   }
 

@@ -29,7 +29,7 @@ trait BrowserStack extends RoboBrowser {
       t("realMobile", options.device.realMobile),
       t("projectName", Some(o.projectName)),
       t("buildName", Some(o.buildName)),
-      t("sessionName", o.sessionName.orElse(options.device.identifier)),
+      t("sessionName", Some(o.sessionName.getOrElse(s"${options.device.identifier.get} ${options.device.browserName.get}"))),
       t("local", Some(o.local)),
       t("networkLogs", Some(o.networkLogs)),
       t("idleTimeout", Some(o.idleTimeout)),

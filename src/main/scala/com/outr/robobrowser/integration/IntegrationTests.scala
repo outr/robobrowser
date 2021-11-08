@@ -1,8 +1,9 @@
 package com.outr.robobrowser.integration
 
-import com.outr.robobrowser.RoboBrowser
+import com.outr.robobrowser.{BrowserStack, RoboBrowser}
 import scribe.data.MDC
 
+import java.io.File
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -15,6 +16,11 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
    * If true, automatically calls browser.dispose() after test run is complete (defaults to true)
    */
   protected def autoDispose: Boolean = true
+
+  /**
+   * If true, when a test fails, an image, log, and HTML are logged to the filesystem
+   */
+  protected def debug: Boolean = true
 
   def label: String
 
@@ -48,7 +54,29 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
     }
   }
 
-  def finish(label: String, result: RunResult): Unit = {}
+  def finish(label: String, result: RunResult): Unit = {
+    this match {
+      case bs: BrowserStack =>
+        result match {
+          case RunResult.Success =>
+            bs.mark(BrowserStack.Status.Passed(s"$label successfully passed"))
+          case RunResult.Failure(test, throwable) =>
+            val description = test.context.map(c => s"$c: ${test.description}").getOrElse(test.description)
+            bs.mark(BrowserStack.Status.Failed(s"$description failed with message: ${throwable.getMessage}"))
+        }
+      case _ => // Ignore others
+    }
+
+    if (result.isFailure && debug) {
+      Try {
+        val dir = new File("debug")
+        dir.mkdirs()
+        browser.debug(dir, label)
+      }.failed.foreach { t =>
+        scribe.warn(s"Error while attempting to write debug information: ${t.getMessage}")
+      }
+    }
+  }
 
   implicit class Assertions[T](value: T) {
     def should(comparison: Comparison[T]): Unit = comparison.compareWith(value)
