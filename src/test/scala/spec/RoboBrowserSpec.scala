@@ -4,7 +4,7 @@ import com.outr.robobrowser.{Device, ReadyState, ScreenSize, WindowHandle}
 
 import java.io.File
 import com.outr.robobrowser.chrome.{ChromeOptions, RoboChrome}
-import com.outr.robobrowser.logging.LogEntry
+import com.outr.robobrowser.logging.{JavaScriptLoggingSupport, LogEntry, LogLevel}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._
@@ -13,7 +13,7 @@ import scala.jdk.CollectionConverters._
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    lazy val browser = new RoboChrome()
+    lazy val browser = new RoboChrome() with JavaScriptLoggingSupport
     lazy val screenshot = new File("screenshot.png")
 
     var googleTab: Option[WindowHandle] = None
@@ -60,7 +60,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       browser.title should be("robobrowser - Google Search")
     }
     "verify logs are working" in {
-      browser.info("This is a test")
+      browser.logs.info("This is a test")
       browser.logs().map(_.copy(timestamp = 0L)) should be(List(LogEntry(LogLevel.Info, 0L, "This is a test")))
     }
     "dispose the browser" in {
