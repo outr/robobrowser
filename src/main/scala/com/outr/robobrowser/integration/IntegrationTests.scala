@@ -55,7 +55,7 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
   }
 
   def finish(label: String, result: RunResult): Unit = {
-    this match {
+    browser match {
       case bs: BrowserStack =>
         result match {
           case RunResult.Success =>

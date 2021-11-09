@@ -21,6 +21,12 @@ import scala.annotation.tailrec
 import scala.util.Try
 
 trait RoboBrowser extends AbstractElement {
+  /**
+   * If true, checks to make sure the window is initialized before each instruction is invoked, but no faster than every
+   * one second (defaults to true)
+   */
+  var verifyWindowInitializationCheck: Boolean = true
+
   val pageChanged: Trigger = Trigger()
 
   /**
@@ -76,7 +82,7 @@ trait RoboBrowser extends AbstractElement {
 
   private val verifying = new AtomicBoolean(false)
 
-  protected def verifyWindowInitialized(): Unit = if (verifying.compareAndSet(false, true)) {
+  protected def verifyWindowInitialized(): Unit = if (verifyWindowInitializationCheck && verifying.compareAndSet(false, true)) {
     try {
       val now = System.currentTimeMillis()
       val elapsed = now - lastVerifiedWindow
@@ -168,6 +174,7 @@ trait RoboBrowser extends AbstractElement {
       def down(): Unit = apply(Keys.ARROW_DOWN)
       def left(): Unit = apply(Keys.ARROW_LEFT)
       def right(): Unit = apply(Keys.ARROW_RIGHT)
+      def home(): Unit = apply(Keys.HOME)
     }
     object press {
       def apply(charSequence: CharSequence): Unit = action.keyDown(charSequence).perform()

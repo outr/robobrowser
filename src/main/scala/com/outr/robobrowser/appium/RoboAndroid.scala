@@ -43,6 +43,12 @@ class RoboAndroid(override val options: AndroidOptions = AndroidOptions()) exten
       }
     }
   }
+
+  def currentActivity(): Activity = Activity(driver.getCurrentPackage, driver.currentActivity())
+
+  def startActivity(activity: Activity): Unit = driver.startActivity(new io.appium.java_client.android.Activity(activity.packageName, activity.name))
+
+  override def home(): Unit = keyboard.send.home()
 }
 
 object RoboAndroid {

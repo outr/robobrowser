@@ -1,5 +1,6 @@
 package com.outr.robobrowser.appium
 
+import com.google.common.collect.ImmutableMap
 import com.outr.robobrowser.RoboBrowser
 import io.appium.java_client.ios.IOSDriver
 import org.openqa.selenium.{By, WebDriver}
@@ -42,6 +43,10 @@ class RoboIOS(override val options: IOSOptions = IOSOptions()) extends RoboBrows
       }
     }
   }
+
+  def activate(bundleId: BundleId): Unit = driver.activateApp(bundleId.id)
+
+  override def home(): Unit = driver.executeScript("mobile: pressButton", ImmutableMap.of("name", "home"))
 }
 
 object RoboIOS {
