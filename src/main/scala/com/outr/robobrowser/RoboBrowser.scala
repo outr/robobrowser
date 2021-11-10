@@ -44,16 +44,17 @@ trait RoboBrowser extends AbstractElement {
 
   override protected def instance: RoboBrowser = this
 
-  def options: BrowserOptions
+  def capabilities: Capabilities
 
-  protected var capabilities: ChromeOptions = _
+  protected var chromeOptions: ChromeOptions = _
 
   private val _initialized = new AtomicBoolean(false)
 
   private lazy val _driver: WebDriver = {
-    val options = this.options.toCapabilities
+    val options = new ChromeOptions
+    capabilities(options)
     configureOptions(options)
-    capabilities = options
+    chromeOptions = options
     createWebDriver(options)
   }
 
@@ -115,8 +116,8 @@ trait RoboBrowser extends AbstractElement {
 
   final def postInit(): Unit = {
     if (logCapabilities) {
-      val caps = capabilities.getCapabilityNames.asScala.toList.map { key =>
-        val value = capabilities.getCapability(key)
+      val caps = chromeOptions.getCapabilityNames.asScala.toList.map { key =>
+        val value = chromeOptions.getCapability(key)
         s"  $key = $value (${value.getClass.getName})"
       }.mkString("\n")
       scribe.info(s"Creating RoboBrowser with the following capabilities:\n$caps")
@@ -261,4 +262,18 @@ trait RoboBrowser extends AbstractElement {
       driver.quit()
     }
   }
+}
+
+object RoboBrowser extends RoboBrowserBuilder[RoboBrowser] {
+  override def create(): RoboBrowser = ???
+}
+
+trait RoboBrowserBuilder[T <: RoboBrowser] extends Capabilities {
+  def create(): T
+
+  override protected def map: Map[String, Any] = Map.empty
+
+  override def ++(that: Capabilities): RoboBrowserBuilder[T] = ???
+
+  override def withCapabilities(pairs: (String, Any)*): RoboBrowserBuilder[T] = ???
 }

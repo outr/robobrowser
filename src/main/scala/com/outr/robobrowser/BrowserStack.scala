@@ -24,12 +24,12 @@ trait BrowserStack extends RoboBrowser {
     def t[V](key: String, value: Option[V]): Option[(String, String)] = value.map(v => key -> v.toString)
 
     val bs = List(
-      t("osVersion", options.device.osVersion),
-      t("deviceName", options.device.identifier),
-      t("realMobile", options.device.realMobile),
+      t("osVersion", capabilities.get("os_version")),
+      t("deviceName", capabilities.get("device")),
+      t("realMobile", capabilities.get("real_mobile")),
       t("projectName", Some(o.projectName)),
       t("buildName", Some(o.buildName)),
-      t("sessionName", Some(o.sessionName.getOrElse(s"${options.device.identifier.get} ${options.device.browserName.get}"))),
+      t("sessionName", Some(o.sessionName.getOrElse(s"${capabilities.get("device").get} ${capabilities.get("browser").get}"))),
       t("local", Some(o.local)),
       t("networkLogs", Some(o.networkLogs)),
       t("idleTimeout", Some(o.idleTimeout)),

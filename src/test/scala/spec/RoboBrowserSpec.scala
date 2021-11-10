@@ -1,18 +1,17 @@
 package spec
 
-import com.outr.robobrowser.{Device, ReadyState, ScreenSize, WindowHandle}
+import com.outr.robobrowser.{ReadyState, WindowHandle}
 
 import java.io.File
-import com.outr.robobrowser.chrome.{ChromeOptions, RoboChrome}
+import com.outr.robobrowser.chrome.RoboChrome
 import com.outr.robobrowser.logging.{JavaScriptLoggingSupport, LogEntry, LogLevel}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._
 
-import scala.jdk.CollectionConverters._
-
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
+    // RoboBrowser.Chrome.withLogging.create()
     lazy val browser = new RoboChrome() with JavaScriptLoggingSupport
     lazy val screenshot = new File("screenshot.png")
 
