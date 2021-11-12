@@ -1,7 +1,6 @@
 package spec
 
-import com.outr.robobrowser.remote.RoboRemote
-import com.outr.robobrowser.{AntiCaptcha, DriverLoader, RoboBrowser}
+import com.outr.robobrowser.RoboBrowser
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._
@@ -11,7 +10,7 @@ import scala.io.Source
 
 class AntiCaptchaSpec extends AnyWordSpec with Matchers {
   "AntiCaptcha" should {
-    val key: String = {
+    val apiKey: String = {
       val file = new File("anticaptcha.key")
       assert(file.isFile, "You must create a file 'anticaptcha.key' in the working directory with your api key")
       val s = Source.fromFile(file)
@@ -21,9 +20,7 @@ class AntiCaptchaSpec extends AnyWordSpec with Matchers {
         s.close()
       }
     }
-    lazy val browser = new RoboRemote() with AntiCaptcha {
-      override protected def antiCaptchaApiKey: String = key
-    }
+    lazy val browser = RoboBrowser.Remote.antiCaptcha(apiKey).create()
     "load reCAPTCHA 2 to verify" in {
       browser.load(url"https://antcpt.com/eng/information/demo-form/recaptcha-2.html")
       browser.oneBy("[name='demo_text']").sendInput("Test input")

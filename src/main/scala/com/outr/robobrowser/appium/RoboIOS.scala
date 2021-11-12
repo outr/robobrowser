@@ -1,18 +1,18 @@
 package com.outr.robobrowser.appium
 
 import com.google.common.collect.ImmutableMap
-import com.outr.robobrowser.RoboBrowser
+import com.outr.robobrowser.{Capabilities, RoboBrowser}
 import io.appium.java_client.ios.IOSDriver
 import org.openqa.selenium.{By, WebDriver}
 import org.openqa.selenium.chrome.ChromeOptions
 
-class RoboIOS(override val options: IOSOptions = IOSOptions()) extends RoboBrowser with Appium {
-  override protected def driver: IOSDriver = super.driver.asInstanceOf[IOSDriver]
+class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capabilities) with Appium {
+  override type Driver = IOSDriver
 
   override def sessionId: String = driver.getSessionId.toString
 
-  override protected def createWebDriver(options: ChromeOptions): WebDriver = {
-    val url = new java.net.URL(this.options.url.toString())
+  override protected def createWebDriver(options: ChromeOptions): Driver = {
+    val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))
     new IOSDriver(url, options)
   }
 
@@ -52,4 +52,6 @@ class RoboIOS(override val options: IOSOptions = IOSOptions()) extends RoboBrows
 object RoboIOS {
   lazy val AllowXPath: String = "//*[@name='Allow' or @name='OK']"
   lazy val RejectXPath: String = "//*[@name='Don't Allow' or @name='Deny']"
+
+  def create(capabilities: Capabilities): RoboIOS = new RoboIOS(capabilities)
 }

@@ -55,16 +55,14 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
   }
 
   def finish(label: String, result: RunResult): Unit = {
-    browser match {
-      case bs: BrowserStack =>
-        result match {
-          case RunResult.Success =>
-            bs.mark(BrowserStack.Status.Passed(s"$label successfully passed"))
-          case RunResult.Failure(test, throwable) =>
-            val description = test.context.map(c => s"$c: ${test.description}").getOrElse(test.description)
-            bs.mark(BrowserStack.Status.Failed(s"$description failed with message: ${throwable.getMessage}"))
-        }
-      case _ => // Ignore others
+    if (browser.isBrowserStack) {
+      result match {
+        case RunResult.Success =>
+          browser.mark(BrowserStack.Status.Passed(s"$label successfully passed"))
+        case RunResult.Failure(test, throwable) =>
+          val description = test.context.map(c => s"$c: ${test.description}").getOrElse(test.description)
+          browser.mark(BrowserStack.Status.Failed(s"$description failed with message: ${throwable.getMessage}"))
+      }
     }
 
     if (result.isFailure && debug) {

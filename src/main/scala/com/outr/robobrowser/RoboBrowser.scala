@@ -1,6 +1,6 @@
 package com.outr.robobrowser
 
-import com.outr.robobrowser.logging.LoggingSupport
+import com.outr.robobrowser.logging.{LogEntry, LogLevel, LoggingImplementation}
 
 import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
@@ -8,19 +8,22 @@ import io.youi.http.cookie.ResponseCookie
 import io.youi.net.URL
 import org.openqa.selenium.{By, Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
 import io.youi.stream._
-import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions}
 import org.openqa.selenium.interactions.Actions
+import org.openqa.selenium.remote.RemoteWebDriver
+import perfolation._
 
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
-import perfolation._
-import reactify.Trigger
+import reactify.{Channel, Trigger}
 
 import scala.annotation.tailrec
 import scala.util.Try
 
-trait RoboBrowser extends AbstractElement {
+abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
+  type Driver <: WebDriver
+
   /**
    * If true, checks to make sure the window is initialized before each instruction is invoked, but no faster than every
    * one second (defaults to true)
@@ -28,6 +31,10 @@ trait RoboBrowser extends AbstractElement {
   var verifyWindowInitializationCheck: Boolean = true
 
   val pageChanged: Trigger = Trigger()
+  val configuringOptions: Channel[ChromeOptions] = Channel[ChromeOptions]
+  val initializing: Channel[Driver] = Channel[Driver]
+  val loading: Channel[URL] = Channel[URL]
+  val loaded: Channel[URL] = Channel[URL]
 
   /**
    * If set to true, will log the Selenium capabilities after init. Defaults to false.
@@ -44,20 +51,23 @@ trait RoboBrowser extends AbstractElement {
 
   override protected def instance: RoboBrowser = this
 
-  def options: BrowserOptions
-
-  protected var capabilities: ChromeOptions = _
+  protected var chromeOptions: ChromeOptions = _
 
   private val _initialized = new AtomicBoolean(false)
 
-  private lazy val _driver: WebDriver = {
-    val options = this.options.toCapabilities
+  private lazy val _driver: Driver = {
+    val options = new ChromeOptions
+    capabilities(options)
     configureOptions(options)
-    capabilities = options
+    chromeOptions = options
     createWebDriver(options)
   }
 
-  protected def driver: WebDriver = {
+  def sessionId: String
+
+  protected def createWebDriver(options: ChromeOptions): Driver
+
+  protected def driver: Driver = {
     val initted = init()
     try {
       verifyWindowInitialized()
@@ -70,14 +80,15 @@ trait RoboBrowser extends AbstractElement {
     }
   }
 
-  protected def configureOptions(options: ChromeOptions): Unit = {}
-
-  protected def createWebDriver(options: ChromeOptions): WebDriver
+  protected def configureOptions(options: ChromeOptions): Unit = {
+    configuringOptions @= options
+  }
 
   final def initialized: Boolean = _initialized.get()
 
   protected def initialize(): Unit = {
     verifyWindowInitialized()
+    initializing @= driver
   }
 
   private val verifying = new AtomicBoolean(false)
@@ -104,7 +115,11 @@ trait RoboBrowser extends AbstractElement {
     }
   }
 
-  protected def initWindow(): Unit = {}
+  protected def initWindow(): Unit = {
+    val input = getClass.getClassLoader.getResourceAsStream("js-logging.js")
+    val script = IO.stream(input, new StringBuilder).toString
+    execute(script)
+  }
 
   final def init(): Boolean = if (_initialized.compareAndSet(false, true)) {
     initialize()
@@ -115,15 +130,19 @@ trait RoboBrowser extends AbstractElement {
 
   final def postInit(): Unit = {
     if (logCapabilities) {
-      val caps = capabilities.getCapabilityNames.asScala.toList.map { key =>
-        val value = capabilities.getCapability(key)
+      val caps = chromeOptions.getCapabilityNames.asScala.toList.map { key =>
+        val value = chromeOptions.getCapability(key)
         s"  $key = $value (${value.getClass.getName})"
       }.mkString("\n")
       scribe.info(s"Creating RoboBrowser with the following capabilities:\n$caps")
     }
   }
 
-  def load(url: URL): Unit = driver.get(url.toString())
+  def load(url: URL): Unit = {
+    loading @= url
+    driver.get(url.toString())
+    loaded @= url
+  }
   def url: URL = URL(driver.getCurrentUrl)
   def content: String = driver.getPageSource
   def save(file: File): Unit = IO.stream(content, file)
@@ -131,8 +150,6 @@ trait RoboBrowser extends AbstractElement {
     val bytes = driver.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES)
     IO.stream(bytes, file)
   }
-
-  def sessionId: String
 
   def waitFor(timeout: FiniteDuration, sleep: FiniteDuration = 500.millis)(condition: => Boolean): Boolean = {
     val end = System.currentTimeMillis() + timeout.toMillis
@@ -217,20 +234,42 @@ trait RoboBrowser extends AbstractElement {
     }
   }
 
-  def saveLogs(file: File): Unit = this match {
-    case ls: LoggingSupport =>
-      val w = new PrintWriter(new FileWriter(file))
-      try {
-        ls.logs().foreach { e =>
-          val l = e.timestamp
-          val d = s"${l.t.Y}.${l.t.m}.${l.t.d} ${l.t.T}:${l.t.L}"
-          w.println(s"$d - ${e.level} - ${e.message}")
+  lazy val logs: LoggingImplementation = new LoggingImplementation {
+    override protected def browser: RoboBrowser = rb
+
+    override def apply(): List[LogEntry] = execute("return window.logs;")
+      .asInstanceOf[java.util.List[java.util.Map[String, AnyRef]]]
+      .asScala
+      .toList
+      .map { map =>
+        val level = map.get("level") match {
+          case "trace" => LogLevel.Trace
+          case "debug" => LogLevel.Debug
+          case "info" => LogLevel.Info
+          case "warn" => LogLevel.Warning
+          case "error" => LogLevel.Error
+          case _ => LogLevel.Info
         }
-      } finally {
-        w.flush()
-        w.close()
+        val timestamp = map.get("timestamp").asInstanceOf[Long]
+        val message = map.get("message").toString
+        logging.LogEntry(level, timestamp, message)
       }
-    case _ => scribe.warn("No LoggingSupport mixed in")
+
+    override def clear(): Unit = execute("console.clear();")
+  }
+
+  def saveLogs(file: File): Unit = {
+    val w = new PrintWriter(new FileWriter(file))
+    try {
+      logs().foreach { e =>
+        val l = e.timestamp
+        val d = s"${l.t.Y}.${l.t.m}.${l.t.d} ${l.t.T}:${l.t.L}"
+        w.println(s"$d - ${e.level} - ${e.message}")
+      }
+    } finally {
+      w.flush()
+      w.close()
+    }
   }
 
   /**
@@ -261,4 +300,35 @@ trait RoboBrowser extends AbstractElement {
       driver.quit()
     }
   }
+}
+
+object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw new NotImplementedError("You must define an implementation")) {
+  private def createChrome(capabilities: Capabilities): RoboBrowser = {
+    new RoboBrowser(capabilities) {
+      override type Driver = ChromeDriver
+
+      override def sessionId: String = "Chrome"
+
+      override protected def createWebDriver(options: ChromeOptions): Driver = {
+        System.setProperty("webdriver.chrome.driver", capabilities.typed[String]("driverPath", "/usr/bin/chromedriver"))
+        new ChromeDriver(options)
+      }
+    }
+  }
+
+  private def createRemote(capabilities: Capabilities): RoboBrowser = {
+    new RoboBrowser(capabilities) {
+      override type Driver = RemoteWebDriver
+
+      override def sessionId: String = driver.getSessionId.toString
+
+      override protected def createWebDriver(options: ChromeOptions): Driver = {
+        val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))
+        new RemoteWebDriver(url, options)
+      }
+    }
+  }
+
+  object Chrome extends RoboBrowserBuilder[RoboBrowser](createChrome)
+  object Remote extends RoboBrowserBuilder[RoboBrowser](createRemote)
 }
