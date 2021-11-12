@@ -6,7 +6,7 @@ import io.appium.java_client.ios.IOSDriver
 import org.openqa.selenium.{By, WebDriver}
 import org.openqa.selenium.chrome.ChromeOptions
 
-class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser with Appium {
+class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capabilities) with Appium {
   override protected def driver: IOSDriver = super.driver.asInstanceOf[IOSDriver]
 
   override def sessionId: String = driver.getSessionId.toString
@@ -52,4 +52,6 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser with 
 object RoboIOS {
   lazy val AllowXPath: String = "//*[@name='Allow' or @name='OK']"
   lazy val RejectXPath: String = "//*[@name='Don't Allow' or @name='Deny']"
+
+  def create(capabilities: Capabilities): RoboIOS = new RoboIOS(capabilities)
 }

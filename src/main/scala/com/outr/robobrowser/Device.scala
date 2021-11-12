@@ -1,5 +1,6 @@
 package com.outr.robobrowser
 
+import com.outr.robobrowser
 import io.youi.net.URL
 import org.openqa.selenium.chrome.ChromeOptions
 
@@ -24,7 +25,9 @@ case class Browser(value: String) extends Capability {
 }*/
 
 trait Capabilities {
-  protected def map: Map[String, Any]
+  type C <: Capabilities
+
+  def map: Map[String, Any]
 
   def apply(options: ChromeOptions): Unit = map.foreach {
     case (key, value) => value match {
@@ -33,23 +36,34 @@ trait Capabilities {
     }
   }
 
-  def ++(that: Capabilities): Capabilities = Capabilities(this.map ++ that.map)
-  def withCapabilities(pairs: (String, Any)*): Capabilities = ++(Capabilities(pairs.toMap))
+  def ++(that: Capabilities): C
+  def withCapabilities(pairs: (String, Any)*): C = ++(Capabilities(pairs.toMap))
 
   def get(key: String): Option[Any] = map.get(key)
   def apply(key: String): Any = map.getOrElse(key, s"Unable to find $key capability: ${map.keys.mkString(", ")}")
   def typed[T](key: String): T = apply(key).asInstanceOf[T]
+  def typed[T](key: String, default: => T): T = get(key).asInstanceOf[Option[T]].getOrElse(default)
 
   def url(url: URL): Capabilities = withCapabilities("url" -> url.toString())
+
+  def Headless: C = withCapabilities("headless" -> Argument("--headless"), "disable-gpu" -> Argument("--disable-gpu"))
 }
 
 object Capabilities extends Capabilities {
-  override protected def map: Map[String, Any] = Map.empty
+  override type C = Capabilities
+
+  override def ++(that: Capabilities): robobrowser.Capabilities = ???
+
+  override def map: Map[String, Any] = Map.empty
 
   def apply(pairs: (String, Any)*): Capabilities = apply(pairs.toMap)
 
   def apply(capabilities: Map[String, Any]): Capabilities = new Capabilities {
-    override protected def map: Map[String, Any] = capabilities
+    override type C = Capabilities
+
+    override def ++(that: Capabilities): C = Capabilities(this.map ++ that.map)
+
+    override def map: Map[String, Any] = capabilities
   }
 }
 

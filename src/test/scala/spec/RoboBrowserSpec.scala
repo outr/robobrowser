@@ -1,18 +1,18 @@
 package spec
 
-import com.outr.robobrowser.{ReadyState, WindowHandle}
+import com.outr.robobrowser._
 
 import java.io.File
-import com.outr.robobrowser.chrome.RoboChrome
-import com.outr.robobrowser.logging.{JavaScriptLoggingSupport, LogEntry, LogLevel}
+import com.outr.robobrowser.logging.{LogEntry, LogLevel}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    // RoboBrowser.Chrome.withLogging.create()
-    lazy val browser = new RoboChrome() with JavaScriptLoggingSupport
+//    lazy val browser = RoboBrowser.Chrome.Headless.create()
+//    lazy val browser = RoboBrowser.`Samsung Galaxy S21 Ultra`.`v11.0`.create()
+    lazy val browser = RoboBrowser.`iPhone 12 Pro Max`.`v14`.create()
     lazy val screenshot = new File("screenshot.png")
 
     var googleTab: Option[WindowHandle] = None

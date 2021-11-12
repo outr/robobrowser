@@ -5,7 +5,7 @@ import io.appium.java_client.android.AndroidDriver
 import org.openqa.selenium.{By, WebDriver}
 import org.openqa.selenium.chrome.ChromeOptions
 
-class RoboAndroid(override val capabilities: Capabilities) extends RoboBrowser with Appium {
+class RoboAndroid(capabilities: Capabilities) extends RoboBrowser(capabilities) with Appium {
   override protected def driver: AndroidDriver = super.driver.asInstanceOf[AndroidDriver]
 
   override def sessionId: String = driver.getSessionId.toString
@@ -54,4 +54,6 @@ class RoboAndroid(override val capabilities: Capabilities) extends RoboBrowser w
 object RoboAndroid {
   private lazy val AllowXPath: String = ".//android.widget.Button[@resource-id='com.android.chrome:id/positive_button' or @text='Allow' or @text=\"While using the app\"]"
   private lazy val RejectXPath: String = ".//android.widget.Button[@resource-id='com.android.chrome:id/negative_button']"
+
+  def create(capabilities: Capabilities): RoboAndroid = new RoboAndroid(capabilities)
 }
