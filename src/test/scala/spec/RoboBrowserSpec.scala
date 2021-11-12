@@ -10,9 +10,7 @@ import io.youi.net._
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-//    lazy val browser = RoboBrowser.Chrome.Headless.create()
-//    lazy val browser = RoboBrowser.`Samsung Galaxy S21 Ultra`.`v11.0`.create()
-    lazy val browser = RoboBrowser.`iPhone 12 Pro Max`.`v14`.create()
+    lazy val browser = RoboBrowser.Chrome.headless.create()
     lazy val screenshot = new File("screenshot.png")
 
     var googleTab: Option[WindowHandle] = None

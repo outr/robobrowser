@@ -6,22 +6,38 @@ import io.youi.client.HttpClient
 import io.youi.http.content.Content
 import io.youi.http.{Headers, HttpMethod, HttpResponse, HttpStatus}
 import io.youi.net._
-import org.openqa.selenium.chrome.ChromeOptions
 
 import java.util.Base64
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.jdk.CollectionConverters._
 
-trait BrowserStack extends RoboBrowser {
-  protected val browserStackOptions: BrowserStackOptions
-  protected def browserStackURL: URL = BrowserStack.url(browserStackOptions.username, browserStackOptions.automateKey)
+class BrowserStack(val browser: RoboBrowser) extends AnyVal {
+  private def options: BrowserStackOptions = browser.capabilities.typed[BrowserStackOptions](BrowserStack.keyName)
 
-  override protected def configureOptions(caps: ChromeOptions): Unit = {
-    super.configureOptions(caps)
+  def isBrowserStack: Boolean = browser.capabilities.contains(BrowserStack.keyName)
 
-    val o = browserStackOptions
-    def t[V](key: String, value: Option[V]): Option[(String, String)] = value.map(v => key -> v.toString)
+  def markAsync(status: BrowserStack.Status)(implicit ec: ExecutionContext): Future[Value] =
+    BrowserStack.mark(browser.sessionId, options.username, options.automateKey, status)
+
+  def mark(status: BrowserStack.Status): Value = {
+    val future = markAsync(status)(scribe.Execution.global)
+    Await.result(future, 30.seconds)
+  }
+}
+
+object BrowserStack {
+  private val keyName: String = "browserStackOptions"
+
+  sealed trait Status
+
+  object Status {
+    case class Passed(reason: String) extends Status
+    case class Failed(reason: String) extends Status
+  }
+
+  def apply[C <: Capabilities](capabilities: C, options: BrowserStackOptions): capabilities.C = {
+    val o = options
+    def t[V](key: String, value: Option[V]): Option[(String, Any)] = value.map(v => key -> v.toString)
 
     val bs = List(
       t("osVersion", capabilities.get("os_version")),
@@ -33,27 +49,11 @@ trait BrowserStack extends RoboBrowser {
       t("local", Some(o.local)),
       t("networkLogs", Some(o.networkLogs)),
       t("idleTimeout", Some(o.idleTimeout)),
-      t("appiumVersion", Some(o.appiumVersion))
-    ).flatten.toMap.asJava
+      t("appiumVersion", Some(o.appiumVersion)),
+      Some(BrowserStack.keyName -> o)
+    ).flatten
 
-    caps.setCapability("bstack:options", bs)
-  }
-
-  def markAsync(status: BrowserStack.Status)(implicit ec: ExecutionContext): Future[Value] =
-    BrowserStack.mark(sessionId, browserStackOptions.username, browserStackOptions.automateKey, status)
-
-  def mark(status: BrowserStack.Status): Value = {
-    val future = markAsync(status)(scribe.Execution.global)
-    Await.result(future, 30.seconds)
-  }
-}
-
-object BrowserStack {
-  sealed trait Status
-
-  object Status {
-    case class Passed(reason: String) extends Status
-    case class Failed(reason: String) extends Status
+    capabilities.withCapabilities(bs: _*)
   }
 
   def url(username: String, automateKey: String): URL = URL(

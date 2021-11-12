@@ -15,7 +15,7 @@ object DeviceGenerator {
     val json = Json.parse(jsonString)
     val info = json.as[List[DeviceInfo]]
     val oses = info.groupBy(_.os)
-//    android(oses("android"))
+    android(oses("android"))
     ios(oses("ios"))
   }
 

@@ -10,17 +10,20 @@ import org.openqa.selenium.{By, Cookie, JavascriptExecutor, Keys, OutputType, Ta
 import io.youi.stream._
 import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions}
 import org.openqa.selenium.interactions.Actions
+import org.openqa.selenium.remote.RemoteWebDriver
+import perfolation._
 
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
-import perfolation._
-import reactify.Trigger
+import reactify.{Channel, Trigger}
 
 import scala.annotation.tailrec
 import scala.util.Try
 
 abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
+  type Driver <: WebDriver
+
   /**
    * If true, checks to make sure the window is initialized before each instruction is invoked, but no faster than every
    * one second (defaults to true)
@@ -28,6 +31,10 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   var verifyWindowInitializationCheck: Boolean = true
 
   val pageChanged: Trigger = Trigger()
+  val configuringOptions: Channel[ChromeOptions] = Channel[ChromeOptions]
+  val initializing: Channel[Driver] = Channel[Driver]
+  val loading: Channel[URL] = Channel[URL]
+  val loaded: Channel[URL] = Channel[URL]
 
   /**
    * If set to true, will log the Selenium capabilities after init. Defaults to false.
@@ -48,7 +55,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   private val _initialized = new AtomicBoolean(false)
 
-  private lazy val _driver: WebDriver = {
+  private lazy val _driver: Driver = {
     val options = new ChromeOptions
     capabilities(options)
     configureOptions(options)
@@ -58,9 +65,9 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   def sessionId: String
 
-  protected def createWebDriver(options: ChromeOptions): WebDriver
+  protected def createWebDriver(options: ChromeOptions): Driver
 
-  protected def driver: WebDriver = {
+  protected def driver: Driver = {
     val initted = init()
     try {
       verifyWindowInitialized()
@@ -73,12 +80,15 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     }
   }
 
-  protected def configureOptions(options: ChromeOptions): Unit = {}
+  protected def configureOptions(options: ChromeOptions): Unit = {
+    configuringOptions @= options
+  }
 
   final def initialized: Boolean = _initialized.get()
 
   protected def initialize(): Unit = {
     verifyWindowInitialized()
+    initializing @= driver
   }
 
   private val verifying = new AtomicBoolean(false)
@@ -128,7 +138,11 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     }
   }
 
-  def load(url: URL): Unit = driver.get(url.toString())
+  def load(url: URL): Unit = {
+    loading @= url
+    driver.get(url.toString())
+    loaded @= url
+  }
   def url: URL = URL(driver.getCurrentUrl)
   def content: String = driver.getPageSource
   def save(file: File): Unit = IO.stream(content, file)
@@ -244,21 +258,19 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     override def clear(): Unit = execute("console.clear();")
   }
 
-  def saveLogs(file: File): Unit = {} /*this match {
-    case ls: LoggingSupport =>
-      val w = new PrintWriter(new FileWriter(file))
-      try {
-        ls.logs().foreach { e =>
-          val l = e.timestamp
-          val d = s"${l.t.Y}.${l.t.m}.${l.t.d} ${l.t.T}:${l.t.L}"
-          w.println(s"$d - ${e.level} - ${e.message}")
-        }
-      } finally {
-        w.flush()
-        w.close()
+  def saveLogs(file: File): Unit = {
+    val w = new PrintWriter(new FileWriter(file))
+    try {
+      logs().foreach { e =>
+        val l = e.timestamp
+        val d = s"${l.t.Y}.${l.t.m}.${l.t.d} ${l.t.T}:${l.t.L}"
+        w.println(s"$d - ${e.level} - ${e.message}")
       }
-    case _ => scribe.warn("No LoggingSupport mixed in")
-  }*/
+    } finally {
+      w.flush()
+      w.close()
+    }
+  }
 
   /**
    * Saves HTML, Screenshot, and Browser logs for current page
@@ -293,29 +305,30 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw new NotImplementedError("You must define an implementation")) {
   private def createChrome(capabilities: Capabilities): RoboBrowser = {
     new RoboBrowser(capabilities) {
+      override type Driver = ChromeDriver
+
       override def sessionId: String = "Chrome"
 
-      override protected def createWebDriver(options: ChromeOptions): WebDriver = {
+      override protected def createWebDriver(options: ChromeOptions): Driver = {
         System.setProperty("webdriver.chrome.driver", capabilities.typed[String]("driverPath", "/usr/bin/chromedriver"))
         new ChromeDriver(options)
       }
     }
   }
 
+  private def createRemote(capabilities: Capabilities): RoboBrowser = {
+    new RoboBrowser(capabilities) {
+      override type Driver = RemoteWebDriver
+
+      override def sessionId: String = driver.getSessionId.toString
+
+      override protected def createWebDriver(options: ChromeOptions): Driver = {
+        val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))
+        new RemoteWebDriver(url, options)
+      }
+    }
+  }
+
   object Chrome extends RoboBrowserBuilder[RoboBrowser](createChrome)
+  object Remote extends RoboBrowserBuilder[RoboBrowser](createRemote)
 }
-
-class RoboBrowserBuilder[T <: RoboBrowser](protected val creator: Capabilities => T,
-                                           val map: Map[String, Any] = Map.empty) extends Capabilities {
-  override type C = RoboBrowserBuilder[T]
-
-  def create(): T = creator(this)
-
-  override def ++(that: Capabilities): RoboBrowserBuilder[T] = new RoboBrowserBuilder[T](creator, this.map ++ that.map)
-
-  override def withCapabilities(pairs: (String, Any)*): RoboBrowserBuilder[T] = ++(Capabilities(pairs: _*))
-
-  def withCreator[R <: RoboBrowser](creator: Capabilities => R): RoboBrowserBuilder[R] = new RoboBrowserBuilder[R](creator, map)
-}
-
-// TODO: Merge logging back into RoboBrowser and add flags to disable it

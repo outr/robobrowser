@@ -6,12 +6,12 @@ import org.openqa.selenium.{By, WebDriver}
 import org.openqa.selenium.chrome.ChromeOptions
 
 class RoboAndroid(capabilities: Capabilities) extends RoboBrowser(capabilities) with Appium {
-  override protected def driver: AndroidDriver = super.driver.asInstanceOf[AndroidDriver]
+  override type Driver = AndroidDriver
 
   override def sessionId: String = driver.getSessionId.toString
 
-  override protected def createWebDriver(options: ChromeOptions): WebDriver = {
-    val url = new java.net.URL(capabilities.typed[String]("url"))
+  override protected def createWebDriver(options: ChromeOptions): Driver = {
+    val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))
     new AndroidDriver(url, options)
   }
 
