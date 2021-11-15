@@ -7,11 +7,13 @@ import com.outr.robobrowser.logging.{LogEntry, LogLevel}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._
+import com.outr.robobrowser.monitor.Monitor
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
     lazy val browser = RoboBrowser.Chrome.headless.create()
     lazy val screenshot = new File("screenshot.png")
+    lazy val monitor = new Monitor(browser)
 
     var googleTab: Option[WindowHandle] = None
     var duckDuckGoTab: Option[WindowHandle] = None
@@ -21,6 +23,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       browser.url should be(url"https://www.google.com")
       browser.title should be("Google")
       browser.readyState should be(ReadyState.Complete)
+      monitor.refreshAndPause()
     }
     "do a Google search" in {
       val input = browser.oneBy("[name=\"q\"]")
@@ -28,10 +31,12 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       input.sendInput("robobrowser")
       input.submit()
       browser.title should be("robobrowser - Google Search")
+      monitor.refreshAndPause()
     }
     "create a screenshot" in {
       browser.screenshot(screenshot)
       screenshot.length() should be > 0L
+      monitor.refreshAndPause()
     }
     "create a new tab" in {
       googleTab = Some(browser.window.handle)     // Get a reference to the current tab

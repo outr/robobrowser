@@ -10,6 +10,8 @@ trait AbstractElement {
 
   def by(by: By): List[WebElement]
 
+  def capture(): Array[Byte]
+
   final def oneBy(by: By): WebElement = this.by(by) match {
     case element :: Nil => element
     case Nil => throw new RuntimeException(s"Nothing found by selector: ${by.toString}")

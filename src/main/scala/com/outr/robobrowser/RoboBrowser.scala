@@ -16,13 +16,19 @@ import perfolation._
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
-import reactify.{Channel, Trigger}
+import reactify.{Channel, Trigger, Var}
 
 import scala.annotation.tailrec
 import scala.util.Try
 
 abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
   type Driver <: WebDriver
+
+  val paused: Var[Boolean] = Var(false)
+
+  private val _ignorePause = new ThreadLocal[Boolean] {
+    override def initialValue(): Boolean = false
+  }
 
   /**
    * If true, checks to make sure the window is initialized before each instruction is invoked, but no faster than every
@@ -67,16 +73,30 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   protected def createWebDriver(options: ChromeOptions): Driver
 
-  protected def driver: Driver = {
+  protected def withDriver[Return](f: Driver => Return): Return = {
     val initted = init()
     try {
       verifyWindowInitialized()
       if (delay > 0.seconds) {
         sleep(delay)              // Arbitrary sleep between each call
       }
-      _driver
+      while (paused() && !_ignorePause.get()) {
+        sleep(250.millis)
+      }
+      synchronized {
+        f(_driver)
+      }
     } finally {
       if (initted) postInit()
+    }
+  }
+
+  def ignoringPause[Return](f: => Return): Return = {
+    _ignorePause.set(true)
+    try {
+      f
+    } finally {
+      _ignorePause.remove()
     }
   }
 
@@ -88,7 +108,9 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   protected def initialize(): Unit = {
     verifyWindowInitialized()
-    initializing @= driver
+    withDriver { driver =>
+      initializing @= driver
+    }
   }
 
   private val verifying = new AtomicBoolean(false)
@@ -140,16 +162,20 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   def load(url: URL): Unit = {
     loading @= url
-    driver.get(url.toString())
+    withDriver { driver =>
+      driver.get(url.toString())
+    }
     loaded @= url
   }
-  def url: URL = URL(driver.getCurrentUrl)
-  def content: String = driver.getPageSource
+  def url: URL = URL(withDriver(_.getCurrentUrl))
+  def content: String = withDriver(_.getPageSource)
   def save(file: File): Unit = IO.stream(content, file)
   def screenshot(file: File): Unit = {
-    val bytes = driver.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES)
+    val bytes = capture()
     IO.stream(bytes, file)
   }
+
+  override def capture(): Array[Byte] = withDriver(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
 
   def waitFor(timeout: FiniteDuration, sleep: FiniteDuration = 500.millis)(condition: => Boolean): Boolean = {
     val end = System.currentTimeMillis() + timeout.toMillis
@@ -178,11 +204,11 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   def sleep(duration: FiniteDuration): Unit = Thread.sleep(duration.toMillis)
 
-  def title: String = driver.getTitle
+  def title: String = withDriver(_.getTitle)
 
-  def execute(script: String, args: AnyRef*): AnyRef = driver.asInstanceOf[JavascriptExecutor].executeScript(script, args: _*)
+  def execute(script: String, args: AnyRef*): AnyRef = withDriver(_.asInstanceOf[JavascriptExecutor].executeScript(script, args: _*))
 
-  def action: Actions = new Actions(driver)
+  def action: Actions = withDriver(driver => new Actions(driver))
 
   object keyboard {
     object send {
@@ -199,22 +225,22 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   }
 
   object window {
-    private def w: WebDriver.Window = driver.manage().window()
+    private def w: WebDriver.Window = withDriver(_.manage().window())
 
     def maximize(): Unit = w.maximize()
-    def handle: WindowHandle = WindowHandle(driver.getWindowHandle)
-    def handles: Set[WindowHandle] = driver.getWindowHandles.asScala.toSet.map(WindowHandle.apply)
-    def switchTo(handle: WindowHandle): Unit = driver.switchTo().window(handle.handle)
+    def handle: WindowHandle = withDriver(driver => WindowHandle(driver.getWindowHandle))
+    def handles: Set[WindowHandle] = withDriver(_.getWindowHandles.asScala.toSet.map(WindowHandle.apply))
+    def switchTo(handle: WindowHandle): Unit = withDriver(_.switchTo().window(handle.handle))
     def newTab(): WindowHandle = {
-      driver.switchTo().newWindow(WindowType.TAB)
+      withDriver(_.switchTo().newWindow(WindowType.TAB))
       handle
     }
-    def close(): Unit = driver.close()
+    def close(): Unit = withDriver(_.close())
   }
 
-  override def by(by: By): List[WebElement] = driver.findElements(by).asScala.toList.map(new SeleniumWebElement(_, this))
+  override def by(by: By): List[WebElement] = withDriver(_.findElements(by).asScala.toList.map(new SeleniumWebElement(_, this)))
 
-  def cookies: List[ResponseCookie] = driver.manage().getCookies.asScala.toList.map { cookie =>
+  def cookies: List[ResponseCookie] = withDriver(_.manage().getCookies.asScala.toList.map { cookie =>
     ResponseCookie(
       name = cookie.getName,
       value = cookie.getValue,
@@ -224,10 +250,10 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
       secure = cookie.isSecure,
       httpOnly = cookie.isHttpOnly
     )
-  }
+  })
 
   def cookies_=(cookies: List[ResponseCookie]): Unit = {
-    val options = driver.manage()
+    val options = withDriver(_.manage())
     options.deleteAllCookies()
     cookies.foreach { c =>
       options.addCookie(new Cookie(c.name, c.value, c.domain.orNull, c.path.orNull, c.expires.map(new Date(_)).orNull, c.secure, c.httpOnly))
@@ -297,7 +323,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   def dispose(): Unit = synchronized {
     if (!isDisposed) {
       _disposed = true
-      driver.quit()
+      withDriver(_.quit())
     }
   }
 }
@@ -320,7 +346,7 @@ object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw 
     new RoboBrowser(capabilities) {
       override type Driver = RemoteWebDriver
 
-      override def sessionId: String = driver.getSessionId.toString
+      override def sessionId: String = withDriver(_.getSessionId.toString)
 
       override protected def createWebDriver(options: ChromeOptions): Driver = {
         val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))

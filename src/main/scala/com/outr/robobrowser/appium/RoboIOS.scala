@@ -9,14 +9,14 @@ import org.openqa.selenium.chrome.ChromeOptions
 class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capabilities) with Appium {
   override type Driver = IOSDriver
 
-  override def sessionId: String = driver.getSessionId.toString
+  override def sessionId: String = withDriver(_.getSessionId.toString)
 
   override protected def createWebDriver(options: ChromeOptions): Driver = {
     val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))
     new IOSDriver(url, options)
   }
 
-  override def inNativeContext[Return](f: => Return): Return = {
+  override def inNativeContext[Return](f: => Return): Return = withDriver { driver =>
     val context = driver.getContext
     driver.context("NATIVE_APP")
     try {
@@ -44,9 +44,9 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
     }
   }
 
-  def activate(bundleId: BundleId): Unit = driver.activateApp(bundleId.id)
+  def activate(bundleId: BundleId): Unit = withDriver(_.activateApp(bundleId.id))
 
-  override def home(): Unit = driver.executeScript("mobile: pressButton", ImmutableMap.of("name", "home"))
+  override def home(): Unit = withDriver(_.executeScript("mobile: pressButton", ImmutableMap.of("name", "home")))
 }
 
 object RoboIOS {

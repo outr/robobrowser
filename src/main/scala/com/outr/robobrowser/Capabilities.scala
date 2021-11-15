@@ -12,7 +12,7 @@ trait Capabilities {
 
   def apply(options: ChromeOptions): Unit = map.foreach {
     case (key, value) => value match {
-      case _: Transient => scribe.info(s"Excluding $key")
+      case _: Transient => scribe.debug(s"Excluding $key")
       case Argument(arg) => options.addArguments(arg)
       case ExperimentalOption(arg) => options.setExperimentalOption(key, arg)
       case _ => options.setCapability(key, value)

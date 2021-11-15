@@ -1,11 +1,14 @@
 package com.outr.robobrowser
 
 import org.jsoup.Jsoup
-import org.openqa.selenium.By
+import org.openqa.selenium.{By, OutputType, TakesScreenshot}
+
 import scala.jdk.CollectionConverters._
 
 class SeleniumWebElement(e: org.openqa.selenium.WebElement, protected val instance: RoboBrowser) extends WebElement {
   override def by(by: By): List[WebElement] = e.findElements(by).asScala.toList.map(new SeleniumWebElement(_, instance))
+
+  override def capture(): Array[Byte] = e.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES)
 
   override def click(): WebElement = {
     e.click()

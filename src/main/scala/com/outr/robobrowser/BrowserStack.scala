@@ -10,6 +10,7 @@ import io.youi.net._
 import java.util.Base64
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.jdk.CollectionConverters._
 
 class BrowserStack(val browser: RoboBrowser) extends AnyVal {
   private def options: BrowserStackOptions = browser.capabilities.typed[BrowserStackOptions](BrowserStack.keyName)
@@ -35,7 +36,7 @@ object BrowserStack {
     case class Failed(reason: String) extends Status
   }
 
-  def apply[C <: Capabilities](capabilities: C, options: BrowserStackOptions): capabilities.C = {
+  def apply[C <: Capabilities](capabilities: C, options: BrowserStackOptions): capabilities.C#C = {
     val o = options
     def t[V](key: String, value: Option[V]): Option[(String, Any)] = value.map(v => key -> v.toString)
 
@@ -49,11 +50,13 @@ object BrowserStack {
       t("local", Some(o.local)),
       t("networkLogs", Some(o.networkLogs)),
       t("idleTimeout", Some(o.idleTimeout)),
-      t("appiumVersion", Some(o.appiumVersion)),
-      Some(BrowserStack.keyName -> o)
-    ).flatten
+      t("appiumVersion", Some(o.appiumVersion))
+    ).flatten.toMap.asJava
 
-    capabilities.withCapabilities(bs: _*)
+    capabilities.withCapabilities(
+      "bstack:options" -> bs,
+      BrowserStack.keyName -> o
+    ).url(o.url)
   }
 
   def url(username: String, automateKey: String): URL = URL(

@@ -14,7 +14,7 @@ trait IntegrationTestSuite {
   private var scenarios = List.empty[IntegrationTestsInstance[_ <: RoboBrowser]]
 
   def stopOnAnyFailure: Boolean = false
-  def logToConsole: Boolean = true
+  def logToConsole: Boolean = false
   def retries: Int = 0
 
   implicit def f2Instance[Browser <: RoboBrowser](f: => IntegrationTests[Browser]): IntegrationTestsInstance[Browser] =

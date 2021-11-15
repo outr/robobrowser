@@ -1,6 +1,6 @@
 name := "robobrowser"
 organization := "com.outr"
-version := "1.4.0-SNAPSHOT"
+version := "1.4.0-SNAPSHOT3"
 scalaVersion := "2.13.7"
 crossScalaVersions := Seq("2.13.7")
 scalacOptions += "-deprecation"
@@ -29,6 +29,7 @@ libraryDependencies ++= Seq(
   "com.github.appium" % "java-client" % "8.0.0-beta",
   "org.seleniumhq.selenium" % "selenium-chrome-driver" % "4.0.0",
   "com.lihaoyi" %% "sourcecode" % "0.2.7",
+  "com.fifesoft" % "rsyntaxtextarea" % "3.1.3",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"
 )
 
