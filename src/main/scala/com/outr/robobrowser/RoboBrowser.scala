@@ -41,6 +41,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   val initializing: Channel[Driver] = Channel[Driver]
   val loading: Channel[URL] = Channel[URL]
   val loaded: Channel[URL] = Channel[URL]
+  val disposing: Trigger = Trigger()
 
   /**
    * If set to true, will log the Selenium capabilities after init. Defaults to false.
@@ -322,6 +323,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   def dispose(): Unit = synchronized {
     if (!isDisposed) {
+      disposing.trigger()
       _disposed = true
       withDriver(_.quit())
     }
