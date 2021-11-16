@@ -176,6 +176,12 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     IO.stream(bytes, file)
   }
 
+  def atPoint(x: Int, y: Int): WebElement = {
+    val result = execute("return document.elementFromPoint(arguments[0], arguments[1]);", Integer.valueOf(x), Integer.valueOf(y))
+    val e = result.asInstanceOf[org.openqa.selenium.WebElement]
+    new SeleniumWebElement(e, this)
+  }
+
   override def capture(): Array[Byte] = withDriver(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
 
   def waitFor(timeout: FiniteDuration, sleep: FiniteDuration = 500.millis)(condition: => Boolean): Boolean = {

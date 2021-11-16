@@ -26,6 +26,18 @@ class SeleniumWebElement(e: org.openqa.selenium.WebElement, protected val instan
 
   override def attribute(name: String): String = e.getAttribute(name)
 
+  override def attribute(name: String, value: Any): WebElement = {
+    instance.execute("arguments[0].setAttribute(arguments[1], arguments[2])", e, name, value.asInstanceOf[AnyRef])
+    this
+  }
+
+  override def style(name: String): Any = instance.execute(s"return arguments[0].style.$name;", e)
+
+  override def style(name: String, value: Any): WebElement = {
+    instance.execute(s"arguments[0].style.$name = arguments[1]", e, value.asInstanceOf[AnyRef])
+    this
+  }
+
   override def classes: Set[String] = attribute("class").split(' ').toSet
 
   override def sendInput(text: String): Unit = {

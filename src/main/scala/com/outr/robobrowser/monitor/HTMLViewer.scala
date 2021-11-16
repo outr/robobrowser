@@ -8,7 +8,8 @@ import java.awt.event.ActionEvent
 import javax.swing._
 
 class HTMLViewer(monitor: Monitor) extends JFrame("View Source Code") {
-  val controls = new JToolBar
+  val controls = new JPanel
+  controls.setLayout(new BoxLayout(controls, BoxLayout.X_AXIS))
   val searchField = new JTextField(30)
   searchField.setFont(Monitor.Normal)
   searchField.addActionListener((_: ActionEvent) => findNext())

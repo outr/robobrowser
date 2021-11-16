@@ -4,7 +4,7 @@ import com.outr.robobrowser.RoboBrowser
 import reactify.Var
 
 import java.awt.{BorderLayout, Font}
-import java.awt.event.ActionEvent
+import java.awt.event.{ActionEvent, MouseAdapter, MouseEvent}
 import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 import javax.swing.plaf.nimbus.NimbusLookAndFeel
@@ -62,10 +62,17 @@ class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
     visualSelectorButton.addActionListener((_: ActionEvent) => visualSelector.setVisible(true))
     pauseButton.addActionListener((_: ActionEvent) => browser.paused @= !browser.paused())
     refreshButton.addActionListener((_: ActionEvent) => refresh())
+    label.addMouseListener(new MouseAdapter {
+      override def mouseClicked(e: MouseEvent): Unit = {
+        visualSelector.clear()
+        visualSelector.select(e.getX, e.getY)
+      }
+    })
 
     buttons.add(viewSourceButton)
     buttons.add(visualSelectorButton)
     buttons.add(pauseButton)
+    buttons.add(refreshButton)
     panel.add(buttons, BorderLayout.NORTH)
     panel.add(label, BorderLayout.CENTER)
     frame.setContentPane(panel)

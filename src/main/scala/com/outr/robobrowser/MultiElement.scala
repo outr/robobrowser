@@ -21,6 +21,18 @@ case class MultiElement(elements: List[WebElement]) extends WebElement {
 
   override def attribute(name: String): String = elements.map(_.attribute(name)).mkString(",")
 
+  override def attribute(name: String, value: Any): WebElement = {
+    elements.foreach(_.attribute(name, value))
+    this
+  }
+
+  override def style(name: String): Any = ???
+
+  override def style(name: String, value: Any): WebElement = {
+    elements.foreach(_.style(name, value))
+    this
+  }
+
   override def classes: Set[String] = elements.flatMap(_.classes).toSet
 
   override def sendInput(text: String): Unit = elements.foreach(_.sendInput(text))
