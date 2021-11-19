@@ -14,5 +14,3 @@ case class BrowserStackOptions(username: String,
                                appiumVersion: String = "1.21.0") extends Transient {
   lazy val url: URL = BrowserStack.url(username, automateKey)
 }
-
-trait Transient

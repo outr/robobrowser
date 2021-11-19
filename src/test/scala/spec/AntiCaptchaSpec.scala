@@ -4,6 +4,7 @@ import com.outr.robobrowser.RoboBrowser
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._
+import org.openqa.selenium.By
 
 import java.io.File
 import scala.io.Source
@@ -23,9 +24,9 @@ class AntiCaptchaSpec extends AnyWordSpec with Matchers {
     lazy val browser = RoboBrowser.Remote.antiCaptcha(apiKey).create()
     "load reCAPTCHA 2 to verify" in {
       browser.load(url"https://antcpt.com/eng/information/demo-form/recaptcha-2.html")
-      browser.oneBy("[name='demo_text']").sendInput("Test input")
-      browser.oneBy("input[type=submit]").click()
-      browser.oneBy("h2").text.trim should be("Thank you, your message \"Test input\" was posted!")
+      browser.oneBy(By.cssSelector("[name='demo_text']")).sendInput("Test input")
+      browser.oneBy(By.cssSelector("input[type=submit]")).click()
+      browser.oneBy(By.cssSelector("h2")).text.trim should be("Thank you, your message \"Test input\" was posted!")
     }
     "dispose the browser" in {
       browser.dispose()

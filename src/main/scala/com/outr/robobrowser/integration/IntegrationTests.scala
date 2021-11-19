@@ -81,6 +81,12 @@ trait IntegrationTests[Browser <: RoboBrowser] { suite =>
     def shouldNot(comparison: Comparison[T]): Unit = comparison.compareNot(value)
   }
 
+  def contain[T, S <: Seq[T]](items: T*): Comparison[S] = Comparison[S](
+    f = value => items.forall(i => value.contains(i)),
+    failMessage = value => s"[${value.mkString(", ")}] did not contain all of the values in [${items.mkString(", ")}]",
+    failNotMessage = value => s"[${value.mkString(", ")}] contained all the values in [${items.mkString(", ")}]"
+  )
+
   object be {
     def apply[T](expected: T, failMessageOverride: => String = null): Comparison[T] = Comparison[T](
       f = value => value == expected,

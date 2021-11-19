@@ -33,11 +33,22 @@ trait IntegrationTestSuite {
   def main(args: Array[String]): Unit = {
     Profig.initConfiguration()
     Profig.merge(args.toList)
+    val failures = run()
+    if (failures.isEmpty) {
+      sys.exit(0)
+    } else {
+      sys.exit(1)
+    }
+  }
 
+  def run(): List[RunResult.Failure] = {
     Logger.root
       .clearHandlers()
       .withHandler(formatter = Formatter.colored)
       .replace()
+
+  // Add a shutdown hook to make sure we finish
+    Runtime.getRuntime.addShutdownHook(new Thread(() => shutdown()))
 
     if (logToConsole) {
       val writer = BrowserConsoleWriter(() => _browser)
@@ -56,12 +67,13 @@ trait IntegrationTestSuite {
     val elapsed = (System.currentTimeMillis() - start) / 1000.0
     if (failures.isEmpty) {
       scribe.info(s"Successful execution of ${scenarios.length} scenarios in $elapsed seconds.")
-      sys.exit(0)
     } else {
       scribe.error(s"${failures.length} failed of ${scenarios.length} scenarios in $elapsed seconds.")
-      sys.exit(1)
     }
+    failures
   }
+
+  private var running: Option[IntegrationTests[_ <: RoboBrowser]] = None
 
   @tailrec
   private def recurse(scenarios: List[IntegrationTestsInstance[_ <: RoboBrowser]],
@@ -72,7 +84,10 @@ trait IntegrationTestSuite {
   } else {
     val instance = scenarios.head.create()
     _browser = Some(instance.browser)
-    instance.run() match {
+    running = Some(instance)
+    val result = instance.run()
+    running = None
+    result match {
       case failure: RunResult.Failure if stopOnAnyFailure && failed >= retries => (failure :: failures).reverse
       case result =>
         val (updated, fails) = result match {
@@ -82,6 +97,12 @@ trait IntegrationTestSuite {
         }
         val list = if (fails > 0) scenarios else scenarios.tail
         recurse(list, updated, fails)
+    }
+  }
+
+  private def shutdown(): Unit = {
+    running.foreach { tests =>
+      tests.finish("Cancelled tests", RunResult.Failure(tests.tests.head, new RuntimeException("Cancelled tests")))
     }
   }
 }

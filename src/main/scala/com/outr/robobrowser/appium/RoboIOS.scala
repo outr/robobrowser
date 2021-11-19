@@ -1,7 +1,7 @@
 package com.outr.robobrowser.appium
 
 import com.google.common.collect.ImmutableMap
-import com.outr.robobrowser.{Capabilities, RoboBrowser}
+import com.outr.robobrowser.{Capabilities, Context, RoboBrowser}
 import io.appium.java_client.ios.IOSDriver
 import org.openqa.selenium.{By, WebDriver}
 import org.openqa.selenium.chrome.ChromeOptions
@@ -16,30 +16,18 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
     new IOSDriver(url, options)
   }
 
-  override def inNativeContext[Return](f: => Return): Return = withDriver { driver =>
-    val context = driver.getContext
-    driver.context("NATIVE_APP")
-    try {
-      f
-    } finally {
-      driver.context(context)
-    }
-  }
-
   override def nativeAllow(reject: Boolean = false): Unit = {
-    inNativeContext {
-      val path = if (reject) {
-        RoboIOS.RejectXPath
-      } else {
-        RoboIOS.AllowXPath
-      }
-      avoidStaleReference {
-        firstBy(By.xpath(path)) match {
-          case Some(e) =>
-            e.click()
-            true
-          case None => false
-        }
+    val path = if (reject) {
+      RoboIOS.RejectXPath
+    } else {
+      RoboIOS.AllowXPath
+    }
+    avoidStaleReference {
+      firstBy(By.xpath(path), Context.Native) match {
+        case Some(e) =>
+          e.click()
+          true
+        case None => false
       }
     }
   }

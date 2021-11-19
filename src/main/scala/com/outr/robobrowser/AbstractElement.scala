@@ -10,6 +10,8 @@ trait AbstractElement {
 
   def by(by: By): List[WebElement]
 
+  def children: List[WebElement]
+
   def capture(): Array[Byte]
 
   final def oneBy(by: By): WebElement = this.by(by) match {
@@ -17,7 +19,6 @@ trait AbstractElement {
     case Nil => throw new RuntimeException(s"Nothing found by selector: ${by.toString}")
     case list => throw new RuntimeException(s"More than one found by selector: ${by.toString} ($list)")
   }
-  final def oneBy(cssSelector: String): WebElement = oneBy(By.cssSelector(cssSelector))
   def firstBy(by: By): Option[WebElement] = this.by(by).headOption
 
   /**

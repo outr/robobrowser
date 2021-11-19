@@ -11,28 +11,32 @@ import scala.util.Try
 class VisualSelector(monitor: Monitor) extends JFrame("Visual Selector") {
   val controls = new JPanel
   controls.setLayout(new BoxLayout(controls, BoxLayout.X_AXIS))
+  private val byType = {
+    val c = new JComboBox[ByType](ByType.all.toArray)
+    c.setFont(font.Normal)
+    c
+  }
+  controls.add(byType)
   val selectorInput = new JTextField(30)
-  selectorInput.setFont(Monitor.Normal)
+  selectorInput.setFont(font.Normal)
   selectorInput.addActionListener((_: ActionEvent) => query())
   controls.add(selectorInput)
   val selectorResults = new JLabel("")
-  selectorResults.setFont(Monitor.Normal)
+  selectorResults.setFont(font.Normal)
   selectorResults.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10))
   controls.add(selectorResults)
-  val queryButton = new JButton("Query")
-  queryButton.setFont(Monitor.Normal)
-  queryButton.addActionListener((_: ActionEvent) => query())
+  private val queryButton = button("Query") {
+    query()
+  }
   controls.add(queryButton)
-  val highlightButton = new JButton("Highlight")
-  highlightButton.setFont(Monitor.Normal)
-  highlightButton.addActionListener((_: ActionEvent) => highlight())
+  private val highlightButton = button("Highlight") {
+    highlight()
+  }
   controls.add(highlightButton)
-  val clearButton = new JButton("Clear")
-  clearButton.setFont(Monitor.Normal)
-  clearButton.addActionListener((_: ActionEvent) => {
+  private val clearButton = button("Clear") {
     clear()
     clearHighlight()
-  })
+  }
   controls.add(clearButton)
 
   val panel = new JPanel(new BorderLayout)
@@ -44,6 +48,7 @@ class VisualSelector(monitor: Monitor) extends JFrame("Visual Selector") {
   scrollPane.getVerticalScrollBar.setUnitIncrement(16)
   panel.add(scrollPane, BorderLayout.CENTER)
 
+  private var selected = List.empty[WebElement]
   private var highlighted = List.empty[WebElement]
 
   setContentPane(panel)
@@ -53,7 +58,9 @@ class VisualSelector(monitor: Monitor) extends JFrame("Visual Selector") {
 
   def query(): Unit = if (selectorInput.getText.trim.nonEmpty) {
     monitor.browser.ignoringPause {
-      val results = monitor.browser.by(By.cssSelector(selectorInput.getText))
+      val byType = this.byType.getSelectedItem.asInstanceOf[ByType]
+      val by = byType.create(selectorInput.getText)
+      val results = monitor.browser.by(by, monitor.context)
       selectorResults.setText(s"${results.length} results")
 
       clear()
@@ -62,16 +69,20 @@ class VisualSelector(monitor: Monitor) extends JFrame("Visual Selector") {
     }
   }
 
-  // TODO: highlight at point, highlight from query in Monitor screenshot
   def select(element: WebElement): Unit = {
-    val c = new SelectorResult(element)
+    val c = SelectorResult(monitor, element)
     results.add(c)
+    synchronized {
+      selected = element :: selected
+    }
     setVisible(true)
   }
 
   def select(x: Int, y: Int): Unit = monitor.browser.ignoringPause {
-    val element = monitor.browser.atPoint(x, y)
-    select(element)
+    monitor.browser.atPoint(x, y) match {
+      case Some(element) => select(element)
+      case None => scribe.warn(s"Nothing found at $x x $y")
+    }
   }
 
   def highlight(element: WebElement): Unit = monitor.browser.ignoringPause {
@@ -88,25 +99,35 @@ class VisualSelector(monitor: Monitor) extends JFrame("Visual Selector") {
     monitor.refresh()
   }
 
-  def highlight(): Unit = monitor.browser.ignoringPause {
-    val results = monitor.browser.by(By.cssSelector(selectorInput.getText))
-    selectorResults.setText(s"${results.length} results")
+  def highlight(): Unit = if (selectorInput.getText.trim.nonEmpty) {
+    monitor.browser.ignoringPause {
+      val results = monitor.browser.by(By.cssSelector(selectorInput.getText))
+      selectorResults.setText(s"${results.length} results")
 
-    clearHighlight()
-    results.foreach(highlight)
+      clearHighlight()
+      results.foreach(highlight)
+    }
+  } else {      // Highlight current selection
+    monitor.browser.ignoringPause {
+      clearHighlight()
+      selected.foreach(highlight)
+    }
   }
 
-  def clear(): Unit = {
+  def clear(): Unit = synchronized {
     results.removeAll()
+    selected = Nil
     gui(results.repaint())
   }
 
   def clearHighlight(): Unit = synchronized {
-    highlighted.foreach { element =>
-      Try {
-        element.style("borderWidth", element.attribute("rb-border-width"))
-        element.style("borderStyle", element.attribute("rb-border-style"))
-        element.style("borderColor", element.attribute("rb-border-color"))
+    monitor.browser.ignoringPause {
+      highlighted.foreach { element =>
+        Try {
+          element.style("borderWidth", element.attribute("rb-border-width"))
+          element.style("borderStyle", element.attribute("rb-border-style"))
+          element.style("borderColor", element.attribute("rb-border-color"))
+        }
       }
     }
     highlighted = Nil

@@ -2,6 +2,7 @@ package com.outr.robobrowser
 
 import io.youi.net.URL
 import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.remote.LocalFileDetector
 
 import java.util
 
@@ -33,7 +34,9 @@ trait Capabilities {
 
   def typed[T](key: String): T = apply(key).asInstanceOf[T]
 
-  def typed[T](key: String, default: => T): T = get(key).asInstanceOf[Option[T]].getOrElse(default)
+  def typed[T](key: String, default: => T): T = getTyped[T](key).getOrElse(default)
+
+  def getTyped[T](key: String): Option[T] = get(key).asInstanceOf[Option[T]]
 
   def contains(key: String): Boolean = map.contains(key)
 
@@ -83,6 +86,8 @@ trait Capabilities {
     "use-fake-device-for-media-stream" -> "use-fake-device-for-media-stream",
     "use-fake-ui-for-media-stream" -> "use-fake-ui-for-media-stream"
   )
+
+  def localFileDetector: C = withCapabilities("fileDetector" -> new LocalFileDetector() with Transient)
 }
 
 object Capabilities {
@@ -95,12 +100,4 @@ object Capabilities {
 
     override def map: Map[String, Any] = capabilities
   }
-}
-
-case class Browser(value: String)
-
-object Browser {
-  lazy val Android: Browser = Browser("android")
-  lazy val Chrome: Browser = Browser("Chrome")
-  lazy val Samsung: Browser = Browser("Samsung")
 }

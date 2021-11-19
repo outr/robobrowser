@@ -11,7 +11,7 @@ import com.outr.robobrowser.monitor.Monitor
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    lazy val browser = RoboBrowser.Chrome.headless.create()
+    lazy val browser = RoboBrowser.Chrome.headless.screenSize(1600, 1200).create()
     lazy val screenshot = new File("screenshot.png")
     lazy val monitor = new Monitor(browser)
 
@@ -31,12 +31,10 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       input.sendInput("robobrowser")
       input.submit()
       browser.title should be("robobrowser - Google Search")
-      monitor.refreshAndPause()
     }
     "create a screenshot" in {
       browser.screenshot(screenshot)
       screenshot.length() should be > 0L
-      monitor.refreshAndPause()
     }
     "create a new tab" in {
       googleTab = Some(browser.window.handle)     // Get a reference to the current tab

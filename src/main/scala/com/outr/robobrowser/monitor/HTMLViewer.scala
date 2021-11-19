@@ -1,5 +1,6 @@
 package com.outr.robobrowser.monitor
 
+import com.outr.robobrowser.Context
 import org.fife.ui.rsyntaxtextarea.{RSyntaxTextArea, SyntaxConstants}
 import org.fife.ui.rtextarea.{RTextScrollPane, SearchContext, SearchEngine}
 
@@ -11,25 +12,25 @@ class HTMLViewer(monitor: Monitor) extends JFrame("View Source Code") {
   val controls = new JPanel
   controls.setLayout(new BoxLayout(controls, BoxLayout.X_AXIS))
   val searchField = new JTextField(30)
-  searchField.setFont(Monitor.Normal)
+  searchField.setFont(font.Normal)
   searchField.addActionListener((_: ActionEvent) => findNext())
   controls.add(searchField)
   val searchInfo = new JLabel("")
-  searchInfo.setFont(Monitor.Normal)
+  searchInfo.setFont(font.Normal)
   searchInfo.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10))
   controls.add(searchInfo)
-  val searchButton = new JButton("Find Next")
-  searchButton.setFont(Monitor.Normal)
-  searchButton.addActionListener((_: ActionEvent) => findNext())
+  private val searchButton = button("Find Next") {
+    findNext()
+  }
   controls.add(searchButton)
-  val refreshButton = new JButton("Refresh")
-  refreshButton.setFont(Monitor.Normal)
-  refreshButton.addActionListener((_: ActionEvent) => refresh())
+  private val refreshButton = button("Refresh") {
+    refresh()
+  }
   controls.add(refreshButton)
 
   val panel = new JPanel(new BorderLayout)
   val textArea = new RSyntaxTextArea(20, 60)
-  textArea.setFont(Monitor.Mono)
+  textArea.setFont(font.Mono)
   val scrollPane = new RTextScrollPane(textArea)
 
   textArea.setMarkOccurrences(true)
@@ -58,7 +59,8 @@ class HTMLViewer(monitor: Monitor) extends JFrame("View Source Code") {
   }
 
   def refresh(): Unit = monitor.browser.ignoringPause {
-    textArea.setText(monitor.browser.content)
+    val content = monitor.browser.content(monitor.context)
+    textArea.setText(content)
     textArea.setCaretPosition(0)
     setVisible(true)
   }

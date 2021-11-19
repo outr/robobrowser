@@ -1,15 +1,14 @@
 package com.outr.robobrowser.monitor
 
-import com.outr.robobrowser.RoboBrowser
+import com.outr.robobrowser.{Context, RoboBrowser}
 import reactify.Var
 
-import java.awt.{BorderLayout, Font}
+import java.awt.{BorderLayout, Dimension, Image}
 import java.awt.event.{ActionEvent, MouseAdapter, MouseEvent}
-import java.io.ByteArrayInputStream
-import javax.imageio.ImageIO
 import javax.swing.plaf.nimbus.NimbusLookAndFeel
-import javax.swing.{BoxLayout, ImageIcon, JButton, JFrame, JLabel, JPanel, UIManager, WindowConstants}
+import javax.swing.{BorderFactory, BoxLayout, ImageIcon, JComboBox, JFrame, JLabel, JPanel, JScrollPane, UIManager, WindowConstants}
 import scala.concurrent.duration._
+import scala.util.Try
 
 class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
   val visible: Var[Boolean] = Var(false)
@@ -17,9 +16,11 @@ class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
 
   private lazy val visualSelector = new VisualSelector(this)
   private lazy val htmlViewer = new HTMLViewer(this)
+  private lazy val executor = new JavaScriptExecutor(this)
 
   private lazy val frame = {
     val f = new JFrame("RoboBrowser Monitor")
+    f.setMinimumSize(new Dimension(1100, 600))
     f.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE)
     f
   }
@@ -29,12 +30,28 @@ class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
     p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS))
     p
   }
-  private lazy val viewSourceButton = new JButton("View Source")
-  private lazy val visualSelectorButton = new JButton("Visual Selector")
-  private lazy val pauseButton = new JButton("Pause")
-  private lazy val refreshButton = new JButton("Refresh")
+  private lazy val viewSourceButton = button("View Source") {
+    browser.ignoringPause(htmlViewer.refresh())
+  }
+  private lazy val visualSelectorButton = button("Visual Selector") {
+    visualSelector.setVisible(true)
+  }
+  private lazy val executeButton = button("Execute") {
+    executor.setVisible(true)
+  }
+  private lazy val contextSelect = new JComboBox[Context](Array(browser.initialContext, Context.Native))
+  private lazy val pauseButton = button("Pause") {
+    browser.paused @= !browser.paused()
+  }
+  private lazy val refreshButton = button("Refresh") {
+    refresh()
+  }
+  private lazy val lastRefreshed = new JLabel("Not Refreshed")
   private lazy val panel = new JPanel(new BorderLayout)
   private lazy val label = new JLabel
+  private lazy val scrollPane = new JScrollPane(label)
+
+  private var lastRefreshedTime: Long = 0L
 
   init()
 
@@ -49,39 +66,53 @@ class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
       }
     }
 
-    viewSourceButton.setFont(Monitor.Normal)
-    visualSelectorButton.setFont(Monitor.Normal)
-    pauseButton.setFont(Monitor.Normal)
-    refreshButton.setFont(Monitor.Normal)
+    val t = new Thread {
+      setDaemon(true)
 
-    viewSourceButton.addActionListener((_: ActionEvent) => browser.ignoringPause(htmlViewer.refresh()))
+      override def run(): Unit = while (true) {
+        if (lastRefreshedTime > 0L) {
+          val elapsed = (System.currentTimeMillis() - lastRefreshedTime) / 1000
+          lastRefreshed.setText(s"Last Refreshed: $elapsed seconds ago")
+        }
+        Thread.sleep(1000)
+      }
+    }
+    t.start()
+
+    lastRefreshed.setFont(font.Normal)
+
+    lastRefreshed.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0))
     browser.paused.attachAndFire {
       case true => pauseButton.setText("Resume")
       case false => pauseButton.setText("Pause")
     }
-    visualSelectorButton.addActionListener((_: ActionEvent) => visualSelector.setVisible(true))
-    pauseButton.addActionListener((_: ActionEvent) => browser.paused @= !browser.paused())
-    refreshButton.addActionListener((_: ActionEvent) => refresh())
     label.addMouseListener(new MouseAdapter {
       override def mouseClicked(e: MouseEvent): Unit = {
         visualSelector.clear()
         visualSelector.select(e.getX, e.getY)
       }
     })
+    contextSelect.setFont(font.Normal)
 
     buttons.add(viewSourceButton)
     buttons.add(visualSelectorButton)
+    buttons.add(executeButton)
+    buttons.add(contextSelect)
     buttons.add(pauseButton)
     buttons.add(refreshButton)
+    buttons.add(lastRefreshed)
     panel.add(buttons, BorderLayout.NORTH)
-    panel.add(label, BorderLayout.CENTER)
+    panel.add(scrollPane, BorderLayout.CENTER)
     frame.setContentPane(panel)
 
     visible.attach(frame.setVisible)
   }
 
+  def context: Context = contextSelect.getSelectedItem.asInstanceOf[Context]
+
   def start(every: FiniteDuration = 1.second): Refresher = {
     val r = new Refresher(every)
+    r.start()
     refresher @= Some(r)
     r
   }
@@ -97,12 +128,18 @@ class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
   }
 
   def refresh(): Unit = synchronized {
-    val bytes = browser.capture()
-    val icon = Monitor.bytes2Icon(bytes)
-    label.setIcon(icon)
-    frame.pack()
-    frame.setLocationRelativeTo(null)
-    visible @= true
+    browser.ignoringPause {
+      val bytes = browser.capture(context)
+      val icon = bytes2Icon(bytes)
+      val image = icon.getImage
+      val (width, height) = browser.size
+      val scaled = image.getScaledInstance(width, height, Image.SCALE_SMOOTH)
+      label.setIcon(new ImageIcon(scaled))
+      frame.pack()
+      frame.setLocationRelativeTo(null)
+      lastRefreshedTime = System.currentTimeMillis()
+      visible @= true
+    }
   }
 
   def refreshAndPause(): Unit = {
@@ -118,10 +155,12 @@ class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
     def start(): Unit = {
       new Thread {
         override def run(): Unit = while (keepAlive) {
-          refresh()
+          Try(refresh()).failed.foreach { t =>
+            scribe.warn(s"Error while refreshing in Refresher", t)
+          }
           browser.sleep(every)
         }
-      }
+      }.start()
       Monitor.this.synchronized {
         refresher() match {
           case Some(previous) =>
@@ -137,15 +176,5 @@ class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
       keepAlive = false
       refresher @= None
     }
-  }
-}
-
-object Monitor {
-  lazy val Normal = new Font(Font.SANS_SERIF, Font.PLAIN, 18)
-  lazy val Mono = new Font(Font.MONOSPACED, Font.PLAIN, 18)
-
-  def bytes2Icon(bytes: Array[Byte]): ImageIcon = {
-    val image = ImageIO.read(new ByteArrayInputStream(bytes))
-    new ImageIcon(image)
   }
 }

@@ -43,6 +43,8 @@ case class MultiElement(elements: List[WebElement]) extends WebElement {
 
   override def by(by: By): List[WebElement] = elements.flatMap(_.by(by)).distinct
 
+  override def children: List[WebElement] = elements.flatMap(_.children)
+
   override def outerHTML: String = elements.map(_.outerHTML).mkString(", ")
 
   override def innerHTML: String = elements.map(_.innerHTML).mkString(", ")

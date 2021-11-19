@@ -1,6 +1,8 @@
 package com.outr.robobrowser
 
+import com.outr.robobrowser.integration.AssertionFailed
 import com.outr.robobrowser.logging.{LogEntry, LogLevel, LoggingImplementation}
+import io.appium.java_client.remote.SupportsContextSwitching
 
 import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
@@ -10,7 +12,7 @@ import org.openqa.selenium.{By, Cookie, JavascriptExecutor, Keys, OutputType, Ta
 import io.youi.stream._
 import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions}
 import org.openqa.selenium.interactions.Actions
-import org.openqa.selenium.remote.RemoteWebDriver
+import org.openqa.selenium.remote.{FileDetector, RemoteWebDriver}
 import perfolation._
 
 import java.util.concurrent.atomic.AtomicBoolean
@@ -19,10 +21,13 @@ import scala.jdk.CollectionConverters._
 import reactify.{Channel, Trigger, Var}
 
 import scala.annotation.tailrec
+import scala.concurrent.TimeoutException
 import scala.util.Try
 
 abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
   type Driver <: WebDriver
+
+  lazy val initialContext: Context = scs(scs => Context(scs.getContext)).getOrElse(Context("Browser"))
 
   val paused: Var[Boolean] = Var(false)
 
@@ -74,7 +79,14 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   protected def createWebDriver(options: ChromeOptions): Driver
 
-  protected def withDriver[Return](f: Driver => Return): Return = {
+  protected def withDriver[Return](f: Driver => Return): Return = withDriverAndContext(initialContext)(f)
+
+  private def scs[Return](f: SupportsContextSwitching => Return): Option[Return] = _driver match {
+    case scs: SupportsContextSwitching => Some(f(scs))
+    case _ => None
+  }
+
+  def withDriverAndContext[Return](context: Context)(f: Driver => Return): Return = {
     val initted = init()
     try {
       verifyWindowInitialized()
@@ -84,8 +96,21 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
       while (paused() && !_ignorePause.get()) {
         sleep(250.millis)
       }
-      synchronized {
-        f(_driver)
+      rb.synchronized {
+        val previousContext = scs { scs =>
+          Context(scs.getContext)
+        }
+        val changedContext = if (previousContext.contains(context)) {
+          false
+        } else {
+          scs(_.context(context.value))
+          true
+        }
+        try {
+          f(_driver)
+        } finally {
+          if (changedContext) Try(scs(_.context(previousContext.get.value)))
+        }
       }
     } finally {
       if (initted) postInit()
@@ -93,11 +118,12 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   }
 
   def ignoringPause[Return](f: => Return): Return = {
+    val previous = _ignorePause.get()
     _ignorePause.set(true)
     try {
       f
     } finally {
-      _ignorePause.remove()
+      _ignorePause.set(previous)
     }
   }
 
@@ -108,6 +134,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   final def initialized: Boolean = _initialized.get()
 
   protected def initialize(): Unit = {
+    initialContext
     verifyWindowInitialized()
     withDriver { driver =>
       initializing @= driver
@@ -169,38 +196,62 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     loaded @= url
   }
   def url: URL = URL(withDriver(_.getCurrentUrl))
-  def content: String = withDriver(_.getPageSource)
-  def save(file: File): Unit = IO.stream(content, file)
-  def screenshot(file: File): Unit = {
-    val bytes = capture()
+  def content(context: Context = initialContext): String = withDriverAndContext(context)(_.getPageSource)
+  def save(file: File, context: Context = initialContext): Unit = IO.stream(content(context), file)
+  def screenshot(file: File, context: Context = initialContext): Unit = {
+    val bytes = capture(context)
     IO.stream(bytes, file)
   }
 
-  def atPoint(x: Int, y: Int): WebElement = {
+  def atPoint(x: Int, y: Int, context: Context = initialContext): Option[WebElement] = {
     val result = execute("return document.elementFromPoint(arguments[0], arguments[1]);", Integer.valueOf(x), Integer.valueOf(y))
-    val e = result.asInstanceOf[org.openqa.selenium.WebElement]
-    new SeleniumWebElement(e, this)
+    val e = Option(result.asInstanceOf[org.openqa.selenium.WebElement])
+    e.map { element =>
+      new SeleniumWebElement(element, context, this)
+    }
+  }
+
+  def size: (Int, Int) = {
+    val width = execute("return window.innerWidth;").asInstanceOf[Long]
+    val height = execute("return window.innerHeight;").asInstanceOf[Long]
+    (width.toInt, height.toInt)
   }
 
   override def capture(): Array[Byte] = withDriver(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
 
-  def waitFor(timeout: FiniteDuration, sleep: FiniteDuration = 500.millis)(condition: => Boolean): Boolean = {
-    val end = System.currentTimeMillis() + timeout.toMillis
+  def capture(context: Context): Array[Byte] = withDriverAndContext(context)(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
 
-    @tailrec
-    def recurse(): Boolean = {
-      val result: Boolean = condition
-      if (result) {
-        true
-      } else if (System.currentTimeMillis() >= end) {
-        false
+  def waitFor(timeout: FiniteDuration, sleep: FiniteDuration = 500.millis)(condition: => Boolean): Boolean =
+    waitForResult[Boolean](timeout, sleep, timeoutResult = false) {
+      if (condition) {
+        Some(true)
       } else {
-        this.sleep(sleep)
-        recurse()
+        None
       }
     }
 
+  def waitForResult[Return](timeout: FiniteDuration,
+                            sleep: FiniteDuration = 500.millis,
+                            timeoutResult: => Return = throw new TimeoutException("Condition timed out"))
+                           (condition: => Option[Return]): Return = {
+    val end = System.currentTimeMillis() + timeout.toMillis
+
+    @tailrec
+    def recurse(): Return = condition match {
+      case Some(r) => r
+      case None if System.currentTimeMillis() >= end => timeoutResult
+      case None =>
+        this.sleep(sleep)
+        recurse()
+    }
+
     recurse()
+  }
+
+  def waitForLoaded(timeout: FiniteDuration = 15.seconds): Unit = if (!waitFor(timeout) {
+    readyState == ReadyState.Complete
+  }) {
+    throw AssertionFailed(s"Browser's readyState was not complete after $timeout: $readyState")
   }
 
   def readyState: ReadyState = Try(execute("return document.readyState;").toString match {
@@ -213,7 +264,15 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   def title: String = withDriver(_.getTitle)
 
-  def execute(script: String, args: AnyRef*): AnyRef = withDriver(_.asInstanceOf[JavascriptExecutor].executeScript(script, args: _*))
+  def execute(script: String, args: AnyRef*): AnyRef = withDriverAndContext(initialContext) { driver =>
+    val fixed = args.map {
+      case arg: SeleniumWebElement => SeleniumWebElement.underlying(arg)    // Extract the WebElement
+      case arg => arg
+    }
+    driver.asInstanceOf[JavascriptExecutor].executeScript(script, fixed: _*)
+  }
+
+  def executeTyped[T](script: String, args: AnyRef*): T = execute(script, args: _*).asInstanceOf[T]
 
   def action: Actions = withDriver(driver => new Actions(driver))
 
@@ -245,7 +304,20 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     def close(): Unit = withDriver(_.close())
   }
 
-  override def by(by: By): List[WebElement] = withDriver(_.findElements(by).asScala.toList.map(new SeleniumWebElement(_, this)))
+  override def by(by: By): List[WebElement] = this.by(by, initialContext)
+
+  def by(by: By, context: Context): List[WebElement] = withDriverAndContext(context) { driver =>
+    driver.findElements(by).asScala.toList.map(new SeleniumWebElement(_, context, this))
+  }
+
+  override def children: List[WebElement] = Nil
+
+  final def oneBy(by: By, context: Context): WebElement = this.by(by, context) match {
+    case element :: Nil => element
+    case Nil => throw new RuntimeException(s"Nothing found by selector: ${by.toString}")
+    case list => throw new RuntimeException(s"More than one found by selector: ${by.toString} ($list)")
+  }
+  def firstBy(by: By, context: Context): Option[WebElement] = this.by(by, context).headOption
 
   def cookies: List[ResponseCookie] = withDriver(_.manage().getCookies.asScala.toList.map { cookie =>
     ResponseCookie(
@@ -312,12 +384,14 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
    * @param name prefix name for each file created
    */
   def debug(directory: File, name: String): Unit = {
-    save(new File(directory, s"$name.html"))
-    screenshot(new File(directory, s"$name.png"))
+    directory.mkdirs()
+    save(new File(directory, s"$name.html"), initialContext)
+    save(new File(directory, s"$name-native.xml"), Context.Native)
+    screenshot(new File(directory, s"$name.png"), initialContext)
     saveLogs(new File(directory, s"$name.log"))
   }
 
-  override def outerHTML: String = content
+  override def outerHTML: String = content()
 
   override def innerHTML: String = {
     val head = by("head").headOption.map(_.outerHTML).getOrElse("")
@@ -358,7 +432,9 @@ object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw 
 
       override protected def createWebDriver(options: ChromeOptions): Driver = {
         val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))
-        new RemoteWebDriver(url, options)
+        val driver = new RemoteWebDriver(url, options)
+        capabilities.getTyped[FileDetector]("fileDetector").foreach(driver.setFileDetector)
+        driver
       }
     }
   }

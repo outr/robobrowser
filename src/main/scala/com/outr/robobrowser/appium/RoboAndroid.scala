@@ -1,6 +1,6 @@
 package com.outr.robobrowser.appium
 
-import com.outr.robobrowser.{Capabilities, RoboBrowser}
+import com.outr.robobrowser.{Capabilities, Context, RoboBrowser}
 import io.appium.java_client.android.AndroidDriver
 import org.openqa.selenium.{By, WebDriver}
 import org.openqa.selenium.chrome.ChromeOptions
@@ -15,31 +15,19 @@ class RoboAndroid(capabilities: Capabilities) extends RoboBrowser(capabilities) 
     new AndroidDriver(url, options)
   }
 
-  override def inNativeContext[Return](f: => Return): Return = withDriver { driver =>
-    val context = driver.getContext
-    driver.context("NATIVE_APP")
-    try {
-      f
-    } finally {
-      driver.context(context)
-    }
-  }
-
   override def nativeAllow(reject: Boolean = false): Unit = {
-    inNativeContext {
-      val path = if (reject) {
-        RoboAndroid.RejectXPath
-      } else {
-        RoboAndroid.AllowXPath
-      }
-      avoidStaleReference {
-        firstBy(By.xpath(path)) match {
-          case Some(e) =>
-            e.click()
-            nativeAllow(reject)
-            true
-          case None => false
-        }
+    val path = if (reject) {
+      RoboAndroid.RejectXPath
+    } else {
+      RoboAndroid.AllowXPath
+    }
+    avoidStaleReference {
+      firstBy(By.xpath(path), Context.Native) match {
+        case Some(e) =>
+          e.click()
+          nativeAllow(reject)
+          true
+        case None => false
       }
     }
   }
