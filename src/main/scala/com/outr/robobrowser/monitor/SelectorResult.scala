@@ -6,7 +6,7 @@ import java.awt.Color
 import javax.swing._
 import scala.util.{Failure, Success, Try}
 
-case class SelectorResult(monitor: Monitor, element: WebElement) extends JPanel {
+case class SelectorResult(monitor: BrowserMonitor, element: WebElement) extends JPanel {
   private def browser = monitor.browser
   private val icon = Try(bytes2Icon(element.capture()))
   private val image = icon match {

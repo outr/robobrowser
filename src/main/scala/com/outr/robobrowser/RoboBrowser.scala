@@ -2,6 +2,7 @@ package com.outr.robobrowser
 
 import com.outr.robobrowser.integration.AssertionFailed
 import com.outr.robobrowser.logging.{LogEntry, LogLevel, LoggingImplementation}
+import io.appium.java_client.PushesFiles
 import io.appium.java_client.remote.SupportsContextSwitching
 
 import java.io.{File, FileWriter, PrintWriter}
@@ -10,9 +11,8 @@ import io.youi.http.cookie.ResponseCookie
 import io.youi.net.URL
 import org.openqa.selenium.{By, Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
 import io.youi.stream._
-import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions}
+import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.interactions.Actions
-import org.openqa.selenium.remote.{FileDetector, RemoteWebDriver}
 import perfolation._
 
 import java.util.concurrent.atomic.AtomicBoolean
@@ -27,7 +27,18 @@ import scala.util.Try
 abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
   type Driver <: WebDriver
 
-  lazy val initialContext: Context = scs(scs => Context(scs.getContext)).getOrElse(Context("Browser"))
+  lazy val initialContext: Context = scs(scs => {
+    scs
+      .getContextHandles
+      .asScala
+      .toList
+      .map(Context.apply)
+      .filterNot(_ == Context.Native) match {
+        case context :: Nil => context
+        case Nil => throw new RuntimeException("No non-native context found")
+        case list => throw new RuntimeException(s"Multiple non-native contexts found: ${list.mkString(", ")}")
+      }
+  }).getOrElse(Context("Browser"))
 
   val paused: Var[Boolean] = Var(false)
 
@@ -86,6 +97,8 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     case _ => None
   }
 
+  private var activeContext: Option[Context] = None
+
   def withDriverAndContext[Return](context: Context)(f: Driver => Return): Return = {
     val initted = init()
     try {
@@ -97,19 +110,19 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
         sleep(250.millis)
       }
       rb.synchronized {
-        val previousContext = scs { scs =>
-          Context(scs.getContext)
-        }
+        val previousContext = activeContext.orElse(Some(initialContext))
         val changedContext = if (previousContext.contains(context)) {
           false
         } else {
           scs(_.context(context.value))
+          activeContext = Some(context)
           true
         }
         try {
           f(_driver)
         } finally {
           if (changedContext) Try(scs(_.context(previousContext.get.value)))
+          activeContext = previousContext
         }
       }
     } finally {
@@ -233,7 +246,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   def waitForResult[Return](timeout: FiniteDuration,
                             sleep: FiniteDuration = 500.millis,
                             timeoutResult: => Return = throw new TimeoutException("Condition timed out"))
-                           (condition: => Option[Return]): Return = {
+                           (condition: => Option[Return]): Return = withDriver { _ =>
     val end = System.currentTimeMillis() + timeout.toMillis
 
     @tailrec
@@ -246,6 +259,13 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     }
 
     recurse()
+  }
+
+  def pushFile(remotePath: String, file: File): Boolean = withDriver {
+    case driver: PushesFiles =>
+      driver.pushFile(remotePath, file)
+      true
+    case _ => false
   }
 
   def waitForLoaded(timeout: FiniteDuration = 15.seconds): Unit = if (!waitFor(timeout) {
@@ -342,23 +362,28 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   lazy val logs: LoggingImplementation = new LoggingImplementation {
     override protected def browser: RoboBrowser = rb
 
-    override def apply(): List[LogEntry] = execute("return window.logs;")
-      .asInstanceOf[java.util.List[java.util.Map[String, AnyRef]]]
-      .asScala
-      .toList
-      .map { map =>
-        val level = map.get("level") match {
-          case "trace" => LogLevel.Trace
-          case "debug" => LogLevel.Debug
-          case "info" => LogLevel.Info
-          case "warn" => LogLevel.Warning
-          case "error" => LogLevel.Error
-          case _ => LogLevel.Info
+    override def apply(): List[LogEntry] = Option(execute("return window.logs;")) match {
+      case None =>
+        scribe.warn(s"Logs returned null")
+        Nil
+      case Some(list) => list
+        .asInstanceOf[java.util.List[java.util.Map[String, AnyRef]]]
+        .asScala
+        .toList
+        .map { map =>
+          val level = map.get("level") match {
+            case "trace" => LogLevel.Trace
+            case "debug" => LogLevel.Debug
+            case "info" => LogLevel.Info
+            case "warn" => LogLevel.Warning
+            case "error" => LogLevel.Error
+            case _ => LogLevel.Info
+          }
+          val timestamp = map.get("timestamp").asInstanceOf[Long]
+          val message = map.get("message").toString
+          logging.LogEntry(level, timestamp, message)
         }
-        val timestamp = map.get("timestamp").asInstanceOf[Long]
-        val message = map.get("message").toString
-        logging.LogEntry(level, timestamp, message)
-      }
+    }
 
     override def clear(): Unit = execute("console.clear();")
   }
@@ -383,12 +408,17 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
    * @param directory the directory to write the data for
    * @param name prefix name for each file created
    */
-  def debug(directory: File, name: String): Unit = {
+  def debug(directory: File,
+            name: String,
+            saveHTML: Boolean = true,
+            saveNative: Boolean = true,
+            saveScreenshot: Boolean = true,
+            saveLogs: Boolean = true): Unit = {
     directory.mkdirs()
-    save(new File(directory, s"$name.html"), initialContext)
-    save(new File(directory, s"$name-native.xml"), Context.Native)
-    screenshot(new File(directory, s"$name.png"), initialContext)
-    saveLogs(new File(directory, s"$name.log"))
+    if (saveHTML) save(new File(directory, s"$name.html"), initialContext)
+    if (saveNative) save(new File(directory, s"$name-native.xml"), Context.Native)
+    if (saveScreenshot) screenshot(new File(directory, s"$name.png"), initialContext)
+    if (saveLogs) this.saveLogs(new File(directory, s"$name.log"))
   }
 
   override def outerHTML: String = content()
@@ -411,34 +441,6 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 }
 
 object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw new NotImplementedError("You must define an implementation")) {
-  private def createChrome(capabilities: Capabilities): RoboBrowser = {
-    new RoboBrowser(capabilities) {
-      override type Driver = ChromeDriver
-
-      override def sessionId: String = "Chrome"
-
-      override protected def createWebDriver(options: ChromeOptions): Driver = {
-        System.setProperty("webdriver.chrome.driver", capabilities.typed[String]("driverPath", "/usr/bin/chromedriver"))
-        new ChromeDriver(options)
-      }
-    }
-  }
-
-  private def createRemote(capabilities: Capabilities): RoboBrowser = {
-    new RoboBrowser(capabilities) {
-      override type Driver = RemoteWebDriver
-
-      override def sessionId: String = withDriver(_.getSessionId.toString)
-
-      override protected def createWebDriver(options: ChromeOptions): Driver = {
-        val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))
-        val driver = new RemoteWebDriver(url, options)
-        capabilities.getTyped[FileDetector]("fileDetector").foreach(driver.setFileDetector)
-        driver
-      }
-    }
-  }
-
-  object Chrome extends RoboBrowserBuilder[RoboBrowser](createChrome)
-  object Remote extends RoboBrowserBuilder[RoboBrowser](createRemote)
+  object Chrome extends RoboBrowserBuilder[RoboBrowser](ChromeBrowserBuilder.create)
+  object Remote extends RoboBrowserBuilder[RoboBrowser](RemoteBrowserBuilder.create)
 }

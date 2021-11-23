@@ -15,7 +15,7 @@ class RoboAndroid(capabilities: Capabilities) extends RoboBrowser(capabilities) 
     new AndroidDriver(url, options)
   }
 
-  override def nativeAllow(reject: Boolean = false): Unit = {
+  override def nativeAllow(reject: Boolean = false): Boolean = {
     val path = if (reject) {
       RoboAndroid.RejectXPath
     } else {

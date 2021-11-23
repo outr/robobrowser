@@ -8,7 +8,7 @@ import java.awt.event.ActionEvent
 import javax.swing._
 import scala.util.Try
 
-class VisualSelector(monitor: Monitor) extends JFrame("Visual Selector") {
+class VisualSelector(monitor: BrowserMonitor) extends JFrame("Visual Selector") {
   val controls = new JPanel
   controls.setLayout(new BoxLayout(controls, BoxLayout.X_AXIS))
   private val byType = {

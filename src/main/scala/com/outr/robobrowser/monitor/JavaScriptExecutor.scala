@@ -6,7 +6,7 @@ import org.fife.ui.rtextarea.RTextScrollPane
 import java.awt.BorderLayout
 import javax.swing.{BoxLayout, JFrame, JPanel, WindowConstants}
 
-class JavaScriptExecutor(monitor: Monitor) extends JFrame("JavaScript Executor") {
+class JavaScriptExecutor(monitor: BrowserMonitor) extends JFrame("JavaScript Executor") {
   private def browser = monitor.browser
 
   private val controls = new JPanel

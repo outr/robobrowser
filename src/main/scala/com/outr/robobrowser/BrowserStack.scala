@@ -50,7 +50,8 @@ object BrowserStack {
       t("local", Some(o.local)),
       t("networkLogs", Some(o.networkLogs)),
       t("idleTimeout", Some(o.idleTimeout)),
-      t("appiumVersion", Some(o.appiumVersion))
+      t("appiumVersion", Some(o.appiumVersion)),
+      t("consoleLogs", Some(o.consoleLogs))
     ).flatten.toMap.asJava
 
     capabilities.withCapabilities(

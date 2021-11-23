@@ -59,7 +59,7 @@ class SeleniumWebElement(private val e: org.openqa.selenium.WebElement,
   override def classes: Set[String] = attribute("class").split(' ').toSet
 
   override def sendInput(text: String): Unit = {
-    e.click()
+//    e.click()     // TODO: Verify if this is needed
     e.sendKeys(text)
   }
 

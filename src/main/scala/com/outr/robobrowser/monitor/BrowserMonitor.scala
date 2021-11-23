@@ -10,7 +10,7 @@ import javax.swing.{BorderFactory, BoxLayout, ImageIcon, JComboBox, JFrame, JLab
 import scala.concurrent.duration._
 import scala.util.Try
 
-class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
+class BrowserMonitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
   val visible: Var[Boolean] = Var(false)
   val refresher: Var[Option[Refresher]] = Var(None)
 
@@ -142,9 +142,14 @@ class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
     }
   }
 
-  def refreshAndPause(): Unit = {
+  def refreshAndPause(blockCurrentThread: Boolean = true): Unit = {
     refresh()
     browser.paused @= true
+    if (blockCurrentThread) {
+      while (browser.paused()) {
+        browser.sleep(500.millis)
+      }
+    }
   }
 
   def stop(): Unit = refresher @= None
@@ -161,7 +166,7 @@ class Monitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) {
           browser.sleep(every)
         }
       }.start()
-      Monitor.this.synchronized {
+      BrowserMonitor.this.synchronized {
         refresher() match {
           case Some(previous) =>
             scribe.warn("Stopping active refresher and replacing")

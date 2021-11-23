@@ -16,7 +16,7 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
     new IOSDriver(url, options)
   }
 
-  override def nativeAllow(reject: Boolean = false): Unit = {
+  override def nativeAllow(reject: Boolean = false): Boolean = {
     val path = if (reject) {
       RoboIOS.RejectXPath
     } else {

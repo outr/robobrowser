@@ -87,6 +87,8 @@ trait Capabilities {
     "use-fake-ui-for-media-stream" -> "use-fake-ui-for-media-stream"
   )
 
+  def chromeDriver(path: String): C = withCapabilities("driverPath" -> path)
+
   def localFileDetector: C = withCapabilities("fileDetector" -> new LocalFileDetector() with Transient)
 }
 

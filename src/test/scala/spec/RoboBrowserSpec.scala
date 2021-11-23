@@ -7,13 +7,13 @@ import com.outr.robobrowser.logging.{LogEntry, LogLevel}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.youi.net._
-import com.outr.robobrowser.monitor.Monitor
+import com.outr.robobrowser.monitor.BrowserMonitor
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
     lazy val browser = RoboBrowser.Chrome.headless.screenSize(1600, 1200).create()
     lazy val screenshot = new File("screenshot.png")
-    lazy val monitor = new Monitor(browser)
+    lazy val monitor = new BrowserMonitor(browser)
 
     var googleTab: Option[WindowHandle] = None
     var duckDuckGoTab: Option[WindowHandle] = None
