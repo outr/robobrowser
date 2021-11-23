@@ -10,10 +10,10 @@ import java.io.File
 import scala.concurrent.duration._
 
 case class BrowserStackTests(label: String, browser: MobileBrowser) extends IntegrationTests[MobileBrowser] {
-  private lazy val monitor = new BrowserMonitor(browser)
-
   // TODO: Test on Android
   private var firstImage: String = _
+
+  private lazy val monitor = new BrowserMonitor(browser)
 
   "Browser Stack Mobile File Uploading" when {
     "loading the file uploader" in {
@@ -22,33 +22,37 @@ case class BrowserStackTests(label: String, browser: MobileBrowser) extends Inte
     }
     "clicking the file upload button" in {
       // iOS
-//      browser.oneBy(By.id("file-upload")).click()
+      browser.oneBy(By.id("file-upload")).click()
 
       // Android
 //      browser.oneBy(By.xpath("//android.widget.Button[@resource-id=\"file-upload\"]"), Context.Native).click()
     }
     "opening the photo library" in {
       // iOS
-//      browser.oneBy(By.name("Photo Library"), Context.Native).click()
+      browser.oneBy(By.name("Photo Library"), Context.Native).click()
+
+      browser.avoidStaleReference {
+        browser.waitForResult(15.seconds) {
+          browser.firstBy(By.name("All Photos"), Context.Native).orElse(
+            browser.firstBy(By.name("Moments"), Context.Native)
+          )
+        }.click()
+      }
 
       // Android
 //      browser.oneBy(By.xpath("//android.widget.LinearLayout[@index=\"2\"]"), Context.Native).click()
     }
     "listing out images" in {
       // iOS
-      /*val images = browser.waitForResult(15.seconds) {
+      val images = browser.waitForResult(15.seconds) {
         browser
-          .by(By.xpath("//XCUIElementTypeImage"), Context.Native)
+          .by(By.xpath("//XCUIElementTypeImage | //XCUIElementTypeCell"), Context.Native)
           .map(_.attribute("name")) match {
             case Nil => None
             case list => Some(list)
           }
       }
-      images should contain(
-        "Video, nine seconds, January 05, 2018, 1:36 PM",
-        "Video, eight seconds, November 22, 2017, 6:32 AM",
-        "Video, thirteen seconds, September 14, 2017, 10:13 AM"
-      )*/
+      images shouldNot be(Nil)
 
       // Android
       /*firstImage = browser.waitForResult(30.seconds) {
@@ -61,9 +65,9 @@ case class BrowserStackTests(label: String, browser: MobileBrowser) extends Inte
     }
     "selecting an image" in {
       // iOS
-//      browser
-//        .oneBy(By.xpath("//XCUIElementTypeImage[@index=0]"), Context.Native)
-//        .click()
+      browser
+        .oneBy(By.xpath("//XCUIElementTypeImage[@index=0] | //XCUIElementTypeCell[@index=0]"), Context.Native)
+        .click()
 
       // Android
       /*browser
@@ -71,19 +75,24 @@ case class BrowserStackTests(label: String, browser: MobileBrowser) extends Inte
         .click()*/
 //      browser.debug(new File("debug"))
     }
-    /*"choose the image" in {
-      monitor.refreshAndPause()
+    "choose the image" in {
+      browser
+        .oneBy(By.xpath("//XCUIElementTypeButton[@label=\"Done\"]"), Context.Native)
+        .click()
       browser
         .oneBy(By.xpath("//XCUIElementTypeButton[@name=\"Choose\"]"), Context.Native)
         .click()
-    }*/
+    }
     "click the upload button" in {
-      browser.pushFile("/data/local/tmp/LICENSE", new File("LICENSE"))
-      browser.oneBy(By.id("file-upload")).sendInput("/data/local/tmp/LICENSE")
+//      browser.pushFile("/data/local/tmp/LICENSE", new File("LICENSE"))
+//      browser.oneBy(By.id("file-upload")).sendInput("/data/local/tmp/LICENSE")
+      browser.sleep(2.seconds)
       browser.oneBy(By.id("file-submit")).click()
     }
     "verify the file uploaded" in {
-      browser.oneBy(By.cssSelector(".example > h3")).text should be("File Uploaded!")
+      browser.waitFor(15.seconds) {
+        browser.oneBy(By.cssSelector(".example > h3")).text == "File Uploaded!"
+      } should be(true, s"File uploaded not detected!")
     }
   }
 

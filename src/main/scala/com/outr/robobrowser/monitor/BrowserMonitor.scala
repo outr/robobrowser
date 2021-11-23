@@ -87,7 +87,7 @@ class BrowserMonitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) 
       case false => pauseButton.setText("Pause")
     }
     label.addMouseListener(new MouseAdapter {
-      override def mouseClicked(e: MouseEvent): Unit = {
+      override def mouseClicked(e: MouseEvent): Unit = if (browser.context() != Context.Native) {
         visualSelector.clear()
         visualSelector.select(e.getX, e.getY)
       }
@@ -129,11 +129,15 @@ class BrowserMonitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) 
 
   def refresh(): Unit = synchronized {
     browser.ignoringPause {
-      val bytes = browser.capture(context)
+      val bytes = browser.capture()
       val icon = bytes2Icon(bytes)
       val image = icon.getImage
-      val (width, height) = browser.size
-      val scaled = image.getScaledInstance(width, height, Image.SCALE_SMOOTH)
+      val scaled = if (browser.context() != Context.Native) {
+        val (width, height) = browser.size
+        image.getScaledInstance(width, height, Image.SCALE_SMOOTH)
+      } else {
+        image
+      }
       label.setIcon(new ImageIcon(scaled))
       frame.pack()
       frame.setLocationRelativeTo(null)

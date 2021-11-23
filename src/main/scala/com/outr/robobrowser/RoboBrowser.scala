@@ -18,7 +18,7 @@ import perfolation._
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
-import reactify.{Channel, Trigger, Var}
+import reactify.{Channel, Trigger, Val, Var}
 
 import scala.annotation.tailrec
 import scala.concurrent.TimeoutException
@@ -59,6 +59,9 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   val loaded: Channel[URL] = Channel[URL]
   val disposing: Trigger = Trigger()
 
+  private lazy val _context: Var[Context] = Var(initialContext)
+  lazy val context: Val[Context] = _context
+
   /**
    * If set to true, will log the Selenium capabilities after init. Defaults to false.
    */
@@ -97,8 +100,6 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     case _ => None
   }
 
-  private var activeContext: Option[Context] = None
-
   def withDriverAndContext[Return](context: Context)(f: Driver => Return): Return = {
     val initted = init()
     try {
@@ -110,20 +111,11 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
         sleep(250.millis)
       }
       rb.synchronized {
-        val previousContext = activeContext.orElse(Some(initialContext))
-        val changedContext = if (previousContext.contains(context)) {
-          false
-        } else {
+        if (_context() != context && context != Context.Current) {
           scs(_.context(context.value))
-          activeContext = Some(context)
-          true
+          _context @= context
         }
-        try {
-          f(_driver)
-        } finally {
-          if (changedContext) Try(scs(_.context(previousContext.get.value)))
-          activeContext = previousContext
-        }
+        f(_driver)
       }
     } finally {
       if (initted) postInit()
@@ -211,8 +203,8 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   def url: URL = URL(withDriver(_.getCurrentUrl))
   def content(context: Context = initialContext): String = withDriverAndContext(context)(_.getPageSource)
   def save(file: File, context: Context = initialContext): Unit = IO.stream(content(context), file)
-  def screenshot(file: File, context: Context = initialContext): Unit = {
-    val bytes = capture(context)
+  def screenshot(file: File): Unit = {
+    val bytes = capture()
     IO.stream(bytes, file)
   }
 
@@ -230,9 +222,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     (width.toInt, height.toInt)
   }
 
-  override def capture(): Array[Byte] = withDriver(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
-
-  def capture(context: Context): Array[Byte] = withDriverAndContext(context)(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
+  override def capture(): Array[Byte] = withDriverAndContext(Context.Current)(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
 
   def waitFor(timeout: FiniteDuration, sleep: FiniteDuration = 500.millis)(condition: => Boolean): Boolean =
     waitForResult[Boolean](timeout, sleep, timeoutResult = false) {
@@ -415,10 +405,18 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
             saveScreenshot: Boolean = true,
             saveLogs: Boolean = true): Unit = {
     directory.mkdirs()
-    if (saveHTML) save(new File(directory, s"$name.html"), initialContext)
-    if (saveNative) save(new File(directory, s"$name-native.xml"), Context.Native)
-    if (saveScreenshot) screenshot(new File(directory, s"$name.png"), initialContext)
-    if (saveLogs) this.saveLogs(new File(directory, s"$name.log"))
+    if (saveNative) Try(save(new File(directory, s"$name-native.xml"), Context.Native)).failed.foreach { t =>
+      scribe.warn(s"Error while attempting to save native: ${t.getMessage}")
+    }
+    if (saveHTML) Try(save(new File(directory, s"$name.html"), initialContext)).failed.foreach { t =>
+      scribe.warn(s"Error while attempting to save HTML: ${t.getMessage}")
+    }
+    if (saveScreenshot) Try(screenshot(new File(directory, s"$name.png"))).failed.foreach { t =>
+      scribe.warn(s"Error while attempting to save screenshot: ${t.getMessage}")
+    }
+    if (saveLogs) Try(this.saveLogs(new File(directory, s"$name.log"))).failed.foreach { t =>
+      scribe.warn(s"Error while attempting to save logs: ${t.getMessage}")
+    }
   }
 
   override def outerHTML: String = content()
