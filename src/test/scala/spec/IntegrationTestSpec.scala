@@ -20,7 +20,8 @@ class IntegrationTestSpec extends AnyWordSpec with Matchers with IntegrationTest
     }
     "run successfully on Android" in {
       test on List(
-//        RoboBrowser.`iPhone 12 Pro`.`v14`,
+        RoboBrowser.`iPhone XS`.v15,
+        RoboBrowser.`iPhone 12 Pro`.`v14`,
         RoboBrowser.`iPhone 11 Pro`.`v13`
 //        RoboBrowser.`Samsung Galaxy S21 Ultra`.`v11.0`
       ).map { builder =>

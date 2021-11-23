@@ -61,7 +61,7 @@ object DeviceGenerator {
       case (key, values) =>
         val versions = values.map { v =>
           s"""    def `v${v.os_version}`: RoboBrowserBuilder[RoboIOS] = caps(
-             |      "os_version" -> "${v.os_version}",
+             |      "os_version" -> ${v.os_version},
              |      "device" -> "${v.device.get}"
              |    )""".stripMargin
         }

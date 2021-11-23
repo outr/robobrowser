@@ -148,7 +148,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   private val verifying = new AtomicBoolean(false)
 
-  protected def verifyWindowInitialized(): Unit = if (verifyWindowInitializationCheck && verifying.compareAndSet(false, true)) {
+  protected def verifyWindowInitialized(): Unit = if (verifyWindowInitializationCheck && context() != Context.Native && verifying.compareAndSet(false, true)) {
     try {
       val now = System.currentTimeMillis()
       val elapsed = now - lastVerifiedWindow
