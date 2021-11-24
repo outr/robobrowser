@@ -4,3 +4,4 @@ target/
 anticaptcha.key
 screenshot.png
 config.json
+debug/

@@ -356,7 +356,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
       case None =>
         scribe.warn(s"Logs returned null")
         Nil
-      case Some(list) => list
+      case Some(list) if list.isInstanceOf[java.util.List[_]] => list
         .asInstanceOf[java.util.List[java.util.Map[String, AnyRef]]]
         .asScala
         .toList
@@ -373,6 +373,9 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
           val message = map.get("message").toString
           logging.LogEntry(level, timestamp, message)
         }
+      case result =>
+        scribe.warn(s"Error while retrieving logs! Got: $result instead of list")
+        Nil
     }
 
     override def clear(): Unit = execute("console.clear();")

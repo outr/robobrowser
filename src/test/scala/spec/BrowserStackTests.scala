@@ -19,7 +19,7 @@ case class BrowserStackTests(label: String, browser: MobileBrowser) extends Inte
       // iOS
       browser.oneBy(By.id("file-upload")).click()
       browser match {
-        case ios: RoboIOS => ios.selectPhotos { photos =>
+        case ios: RoboIOS => ios.selectPhotos() { photos =>
           photos.take(1)
         }
         case _ => throw new UnsupportedOperationException("Unsupported RoboBrowser")

@@ -5,6 +5,8 @@ import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions}
 import java.io.{File, FileNotFoundException}
 
 object ChromeBrowserBuilder {
+  // TODO: Support auto-download of chromedriver from https://chromedriver.storage.googleapis.com/index.html
+  // TODO: Detect installed version of Chrome using google-chrome --version
   private val searchPaths = List("/usr/bin/chromedriver", "/opt/homebrew/bin/chromedriver")
   private lazy val resolvedDriver: Option[File] = searchPaths
     .map(path => new File(path))

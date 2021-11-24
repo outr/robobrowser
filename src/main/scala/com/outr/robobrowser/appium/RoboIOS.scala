@@ -1,10 +1,9 @@
 package com.outr.robobrowser.appium
 
 import com.google.common.collect.ImmutableMap
-import com.outr.robobrowser.monitor.BrowserMonitor
-import com.outr.robobrowser.{Capabilities, Context, RoboBrowser, WebElement}
+import com.outr.robobrowser.{Capabilities, Context, RoboBrowser}
 import io.appium.java_client.ios.IOSDriver
-import org.openqa.selenium.{By, WebDriver}
+import org.openqa.selenium.By
 import org.openqa.selenium.chrome.ChromeOptions
 
 import scala.concurrent.duration.DurationInt
@@ -43,15 +42,19 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
 
   /**
    * Uses native context to select photos from the photo library. Assumes the file selection has already been opened.
+   * @param uploadButton is used only for iOS 15 where native interaction is required to launch the file chooser.
+   *                     This defaults to //XCUIElementTypeButton[@name="Choose File"]
+   * @param filter the filter to apply to the list of photos returning the list that will be selected
    */
-  def selectPhotos(filter: List[IOSFile] => List[IOSFile]): Unit = {
+  def selectPhotos(uploadButton: By = By.xpath("//XCUIElementTypeButton[@name=\"Choose File\"]"))
+                  (filter: List[IOSFile] => List[IOSFile]): Unit = {
     // Allow uploads
     nativeAllow()
 
+    // Click the file upload button
+    firstBy(uploadButton, Context.Native).foreach(_.click())
+
     // Select the 'Photo Library'
-    if (version == 15) {
-      oneBy(By.xpath("//XCUIElementTypeButton[@name=\"Choose File\"]"), Context.Native).click()
-    }
     oneBy(By.name("Photo Library"), Context.Native).click()
 
     // Select 'All Photos'
@@ -92,12 +95,17 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
     if (version == 13) {
       oneBy(By.xpath("//XCUIElementTypeButton[@label=\"Done\"]"), Context.Native).click()
     }
-    val choosePath = if (version == 15) {
-      "//XCUIElementTypeButton[@label=\"Choose\"]"
+    val chooseLabel = if (filtered.length > 1) {
+      "Add"
     } else {
-      "//XCUIElementTypeButton[@name=\"Choose\"]"
+      "Choose"
     }
-    oneBy(By.xpath(choosePath), Context.Native).click()
+    val choosePath = if (version == 15) {
+      s"""//XCUIElementTypeButton[@label="$chooseLabel"]"""
+    } else {
+      s"""//XCUIElementTypeButton[@name="$chooseLabel"]"""
+    }
+    firstBy(By.xpath(choosePath), Context.Native).foreach(_.click())
   }
 }
 
