@@ -27,7 +27,7 @@ libraryDependencies ++= Seq(
   "io.youi" %% "youi-client" % "0.14.3",
   "org.jsoup" % "jsoup" % "1.14.3",
   "com.github.appium" % "java-client" % "8.0.0-beta",
-  "org.seleniumhq.selenium" % "selenium-chrome-driver" % "4.0.0",
+  "org.seleniumhq.selenium" % "selenium-chrome-driver" % "4.1.0",
   "com.lihaoyi" %% "sourcecode" % "0.2.7",
   "com.fifesoft" % "rsyntaxtextarea" % "3.1.3",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"
