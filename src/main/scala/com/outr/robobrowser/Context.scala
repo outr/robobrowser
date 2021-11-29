@@ -1,6 +1,7 @@
 package com.outr.robobrowser
 
 object Context {
+  lazy val Browser: Context = Context("Browser")
   lazy val Native: Context = Context("NATIVE_APP")
   lazy val Current: Context = Context("Current")
 }

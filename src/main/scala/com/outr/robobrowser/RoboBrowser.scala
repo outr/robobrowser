@@ -27,7 +27,7 @@ import scala.util.Try
 abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
   type Driver <: WebDriver
 
-  lazy val browserContext: Context = scs(scs => {
+  private lazy val mainContext: Context = scs(scs => {
     scs
       .getContextHandles
       .asScala
@@ -59,7 +59,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   val loaded: Channel[URL] = Channel[URL]
   val disposing: Trigger = Trigger()
 
-  private lazy val _context: Var[Context] = Var(browserContext)
+  private lazy val _context: Var[Context] = Var(mainContext)
   lazy val context: Val[Context] = _context
 
   /**
@@ -93,7 +93,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   protected def createWebDriver(options: ChromeOptions): Driver
 
-  protected def withDriver[Return](f: Driver => Return): Return = withDriverAndContext(browserContext)(f)
+  protected def withDriver[Return](f: Driver => Return): Return = withDriverAndContext(Context.Browser)(f)
 
   private def scs[Return](f: SupportsContextSwitching => Return): Option[Return] = _driver match {
     case scs: SupportsContextSwitching => Some(f(scs))
@@ -111,9 +111,13 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
         sleep(250.millis)
       }
       rb.synchronized {
-        if (_context() != context && context != Context.Current) {
-          scs(_.context(context.value))
-          _context @= context
+        val realContext = context match {
+          case Context.Browser => mainContext
+          case _ => context
+        }
+        if (_context() != realContext && realContext != Context.Current) {
+          scs(_.context(realContext.value))
+          _context @= realContext
         }
         f(_driver)
       }
@@ -139,7 +143,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   final def initialized: Boolean = _initialized.get()
 
   protected def initialize(): Unit = {
-    scs(_.context(browserContext.value))    // Make sure the initial context is not native
+    scs(_.context(mainContext.value))    // Make sure the initial context is not native
     verifyWindowInitialized()
     withDriver { driver =>
       initializing @= driver
@@ -201,14 +205,14 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     loaded @= url
   }
   def url: URL = URL(withDriver(_.getCurrentUrl))
-  def content(context: Context = browserContext): String = withDriverAndContext(context)(_.getPageSource)
-  def save(file: File, context: Context = browserContext): Unit = IO.stream(content(context), file)
+  def content(context: Context = Context.Browser): String = withDriverAndContext(context)(_.getPageSource)
+  def save(file: File, context: Context = Context.Browser): Unit = IO.stream(content(context), file)
   def screenshot(file: File): Unit = {
     val bytes = capture()
     IO.stream(bytes, file)
   }
 
-  def atPoint(x: Int, y: Int, context: Context = browserContext): Option[WebElement] = {
+  def atPoint(x: Int, y: Int, context: Context = Context.Browser): Option[WebElement] = {
     val result = execute("return document.elementFromPoint(arguments[0], arguments[1]);", Integer.valueOf(x), Integer.valueOf(y))
     val e = Option(result.asInstanceOf[org.openqa.selenium.WebElement])
     e.map { element =>
@@ -274,7 +278,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   def title: String = withDriver(_.getTitle)
 
-  def execute(script: String, args: AnyRef*): AnyRef = withDriverAndContext(browserContext) { driver =>
+  def execute(script: String, args: AnyRef*): AnyRef = withDriverAndContext(Context.Browser) { driver =>
     val fixed = args.map {
       case arg: SeleniumWebElement => SeleniumWebElement.underlying(arg)    // Extract the WebElement
       case arg => arg
@@ -314,7 +318,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     def close(): Unit = withDriver(_.close())
   }
 
-  override def by(by: By): List[WebElement] = this.by(by, browserContext)
+  override def by(by: By): List[WebElement] = this.by(by, Context.Browser)
 
   def by(by: By, context: Context): List[WebElement] = withDriverAndContext(context) { driver =>
     driver.findElements(by).asScala.toList.map(new SeleniumWebElement(_, context, this))
@@ -411,7 +415,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     if (saveNative) Try(save(new File(directory, s"$name-native.xml"), Context.Native)).failed.foreach { t =>
       scribe.warn(s"Error while attempting to save native: ${t.getMessage}")
     }
-    if (saveHTML) Try(save(new File(directory, s"$name.html"), browserContext)).failed.foreach { t =>
+    if (saveHTML) Try(save(new File(directory, s"$name.html"), Context.Browser)).failed.foreach { t =>
       scribe.warn(s"Error while attempting to save HTML: ${t.getMessage}")
     }
     if (saveScreenshot) Try(screenshot(new File(directory, s"$name.png"))).failed.foreach { t =>

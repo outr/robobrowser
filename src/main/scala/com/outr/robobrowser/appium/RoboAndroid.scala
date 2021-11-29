@@ -17,7 +17,7 @@ class RoboAndroid(capabilities: Capabilities) extends RoboBrowser(capabilities) 
     new AndroidDriver(url, options)
   }
 
-  override def capture(): Array[Byte] = withDriverAndContext(browserContext)(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
+  override def capture(): Array[Byte] = withDriverAndContext(Context.Browser)(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
 
   override def nativeAllow(reject: Boolean = false): Boolean = {
     val path = if (reject) {
