@@ -6,7 +6,7 @@ import org.openqa.selenium.{By, StaleElementReferenceException}
 import scala.concurrent.duration._
 
 trait AbstractElement {
-  protected def instance: RoboBrowser
+  protected def browser: RoboBrowser
 
   def by(by: By): List[WebElement]
 
@@ -47,8 +47,16 @@ trait AbstractElement {
     }
   }
 
+  def waitForFirst(timeout: FiniteDuration = 15.seconds, sleep: FiniteDuration = 500.millis)(bys: By*): WebElement = {
+    avoidStaleReference {
+      browser.waitForResult(timeout, sleep) {
+        bys.flatMap(firstBy).headOption
+      }
+    }
+  }
+
   def waitOn(by: By, timeout: FiniteDuration = 15.seconds, sleep: FiniteDuration = 500.millis): Option[WebElement] = {
-    instance.waitFor(timeout, sleep) {
+    browser.waitFor(timeout, sleep) {
       firstBy(by).nonEmpty
     }
     firstBy(by)

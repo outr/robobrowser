@@ -1,6 +1,6 @@
 package com.outr.robobrowser.monitor
 
-import com.outr.robobrowser.WebElement
+import com.outr.robobrowser.{ByType, WebElement}
 import org.openqa.selenium.By
 
 import java.awt.BorderLayout

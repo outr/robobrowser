@@ -11,7 +11,7 @@ import scala.concurrent.duration.DurationInt
 class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capabilities) with Appium {
   override type Driver = IOSDriver
 
-  lazy val version: Int = capabilities.typed[Int]("os_version")
+  override lazy val version: Double = capabilities.typed[Int]("os_version").toDouble
 
   override def sessionId: String = withDriver(_.getSessionId.toString)
 
@@ -52,7 +52,9 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
     nativeAllow()
 
     // Click the file upload button
-    firstBy(uploadButton, Context.Native).foreach(_.click())
+    if (firstBy(By.name("Photo Library"), Context.Native).isEmpty) {
+      firstBy(uploadButton, Context.Native).foreach(_.click())
+    }
 
     // Select the 'Photo Library'
     oneBy(By.name("Photo Library"), Context.Native).click()

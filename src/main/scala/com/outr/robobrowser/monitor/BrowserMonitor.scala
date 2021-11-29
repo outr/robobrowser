@@ -39,7 +39,7 @@ class BrowserMonitor(val browser: RoboBrowser, updateOnDispose: Boolean = true) 
   private lazy val executeButton = button("Execute") {
     executor.setVisible(true)
   }
-  private lazy val contextSelect = new JComboBox[Context](Array(browser.initialContext, Context.Native))
+  private lazy val contextSelect = new JComboBox[Context](Array(browser.browserContext, Context.Native))
   private lazy val pauseButton = button("Pause") {
     browser.paused @= !browser.paused()
   }

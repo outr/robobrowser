@@ -1,6 +1,6 @@
 name := "robobrowser"
 organization := "com.outr"
-version := "1.4.0-SNAPSHOT42"
+version := "1.4.0-SNAPSHOT48"
 scalaVersion := "2.13.7"
 crossScalaVersions := Seq("2.13.7")
 scalacOptions += "-deprecation"
@@ -27,7 +27,10 @@ libraryDependencies ++= Seq(
   "io.youi" %% "youi-client" % "0.14.3",
   "org.jsoup" % "jsoup" % "1.14.3",
   "com.github.appium" % "java-client" % "8.0.0-beta",
-  "org.seleniumhq.selenium" % "selenium-chrome-driver" % "4.0.0",
+  "org.seleniumhq.selenium" % "selenium-api" % "4.1.0",
+  "org.seleniumhq.selenium" % "selenium-chrome-driver" % "4.1.0",
+  "org.seleniumhq.selenium" % "selenium-remote-driver" % "4.1.0",
+  "org.seleniumhq.selenium" % "selenium-support" % "4.1.0",
   "com.lihaoyi" %% "sourcecode" % "0.2.7",
   "com.fifesoft" % "rsyntaxtextarea" % "3.1.3",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"

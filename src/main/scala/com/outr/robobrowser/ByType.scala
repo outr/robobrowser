@@ -1,4 +1,4 @@
-package com.outr.robobrowser.monitor
+package com.outr.robobrowser
 
 import org.openqa.selenium.By
 

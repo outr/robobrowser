@@ -8,7 +8,8 @@ class IOSCapabilities[T <: RoboBrowser](builder: RoboBrowserBuilder[T]) {
       "os" -> "ios",
       "browser" -> "iphone",
       "real_mobile" -> true,
-      "nativeWebTap" -> true
+      "nativeWebTap" -> true,
+      "automationName" -> "XCUITest"
     )
     .withCapabilities(capabilities: _*)
     .withCreator(RoboIOS.create)

@@ -37,4 +37,7 @@ class IntegrationTestSpec extends AnyWordSpec with Matchers with IntegrationTest
       failures should be(Nil)
     }
   }
+
+  override def stopOnAnyFailure: Boolean = true
+  override def retries: Int = 0
 }

@@ -2,11 +2,13 @@ package com.outr.robobrowser.appium
 
 import com.outr.robobrowser.{Capabilities, Context, RoboBrowser}
 import io.appium.java_client.android.AndroidDriver
-import org.openqa.selenium.{By, WebDriver}
+import org.openqa.selenium.{By, OutputType, TakesScreenshot}
 import org.openqa.selenium.chrome.ChromeOptions
 
 class RoboAndroid(capabilities: Capabilities) extends RoboBrowser(capabilities) with Appium {
   override type Driver = AndroidDriver
+
+  override lazy val version: Double = capabilities.typed[Double]("os_version")
 
   override def sessionId: String = withDriver(_.getSessionId.toString)
 
@@ -14,6 +16,8 @@ class RoboAndroid(capabilities: Capabilities) extends RoboBrowser(capabilities) 
     val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))
     new AndroidDriver(url, options)
   }
+
+  override def capture(): Array[Byte] = withDriverAndContext(browserContext)(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
 
   override def nativeAllow(reject: Boolean = false): Boolean = {
     val path = if (reject) {

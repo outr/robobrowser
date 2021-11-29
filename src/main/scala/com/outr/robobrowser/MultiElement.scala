@@ -39,7 +39,7 @@ case class MultiElement(elements: List[WebElement]) extends WebElement {
 
   override def parsed(): ParsedElement = ???
 
-  override protected def instance: RoboBrowser = ???
+  override protected def browser: RoboBrowser = ???
 
   override def by(by: By): List[WebElement] = elements.flatMap(_.by(by)).distinct
 
