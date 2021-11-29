@@ -1,7 +1,7 @@
 package com.outr.robobrowser
 
 import com.outr.robobrowser.integration.AssertionFailed
-import org.openqa.selenium.{By, StaleElementReferenceException}
+import org.openqa.selenium.StaleElementReferenceException
 
 import scala.concurrent.duration._
 
@@ -28,11 +28,6 @@ trait AbstractElement {
     case e :: Nil => e
     case list => MultiElement(list)
   }
-
-  /**
-   * Special feature to work on zero, one, or many interacting as if it were a single element (similar to jQuery)
-   */
-  def on(cssSelector: String): WebElement = on(By.cssSelector(cssSelector))
 
   def clickWhenAvailable(by: By,
                          timeout: FiniteDuration = 15.seconds,

@@ -43,17 +43,17 @@ object AntiCaptcha {
     }
     browser.loaded.attach { url =>
       // TODO: support other captcha models
-      val hasCaptcha = browser.firstBy(".g-recaptcha, .antigate_solver, #challenge-form").nonEmpty ||
-        browser.by("iframe").exists(_.attribute("src").contains("hcaptcha.com"))
+      val hasCaptcha = browser.firstBy(By.css(".g-recaptcha, .antigate_solver, #challenge-form")).nonEmpty ||
+        browser.by(By.tagName("iframe")).exists(_.attribute("src").contains("hcaptcha.com"))
       if (hasCaptcha) {
         scribe.info("Captcha found! Waiting for solve...")
         browser.waitFor(180.seconds) {
           val waiting = browser.title.contains("Just a moment...") || browser.title.contains("Please Wait...")
-          val solved = browser.firstBy(".antigate_solver.solved").nonEmpty
-          val error = browser.firstBy(".antigate_solver.error").nonEmpty
+          val solved = browser.firstBy(By.css(".antigate_solver.solved")).nonEmpty
+          val error = browser.firstBy(By.css(".antigate_solver.error")).nonEmpty
           !waiting && (solved || error)
         }
-        val solved = browser.firstBy(".antigate_solver").forall { solver =>
+        val solved = browser.firstBy(By.css(".antigate_solver")).forall { solver =>
           val classes = solver.classes
           classes.contains("solved")
         }

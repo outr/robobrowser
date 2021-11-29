@@ -1,7 +1,5 @@
 package com.outr.robobrowser
 
-import org.openqa.selenium.By
-
 case class MultiElement(elements: List[WebElement]) extends WebElement {
   override def capture(): Array[Byte] = ???
 

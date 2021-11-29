@@ -1,11 +1,10 @@
 package spec
 
 import com.outr.robobrowser.appium.RoboIOS
-import com.outr.robobrowser.{Context, MobileBrowser}
+import com.outr.robobrowser.{By, Context, MobileBrowser}
 import com.outr.robobrowser.integration.IntegrationTests
 import com.outr.robobrowser.monitor.BrowserMonitor
 import io.youi.net._
-import org.openqa.selenium.By
 
 import scala.concurrent.duration._
 
@@ -18,14 +17,21 @@ case class BrowserStackTests(label: String, browser: MobileBrowser) extends Inte
     "clicking the file upload button" in {
       // iOS
       browser.oneBy(By.id("file-upload")).click()
+    }
+    "select the first photo" in {
       browser match {
         case ios: RoboIOS => ios.selectPhotos() { photos =>
           photos.take(1)
         }
         case _ => throw new UnsupportedOperationException("Unsupported RoboBrowser")
       }
+    }
+    "wait for animation to complete" in {
       browser.sleep(2.seconds)
-      browser.oneBy(By.id("file-submit")).click()
+    }
+    "submit the file to be uploaded" in {
+      browser.waitForFirst()(By.id("file-submit"), By.id("file-submit", Context.Native))
+        .click()
     }
     // TODO: Support Android
     /*"click the upload button" in {
@@ -38,7 +44,7 @@ case class BrowserStackTests(label: String, browser: MobileBrowser) extends Inte
       browser.waitForLoaded()
       browser.waitFor(15.seconds) {
         browser.avoidStaleReference {
-          browser.oneBy(By.cssSelector(".example > h3")).text == "File Uploaded!"
+          browser.oneBy(By.css(".example > h3")).text == "File Uploaded!"
         }
       } should be(true, s"File uploaded not detected!")
     }

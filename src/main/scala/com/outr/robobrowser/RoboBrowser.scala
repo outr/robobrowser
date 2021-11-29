@@ -9,7 +9,7 @@ import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
 import io.youi.http.cookie.ResponseCookie
 import io.youi.net.URL
-import org.openqa.selenium.{By, Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
+import org.openqa.selenium.{Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
 import io.youi.stream._
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.interactions.Actions
@@ -318,20 +318,12 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     def close(): Unit = withDriver(_.close())
   }
 
-  override def by(by: By): List[WebElement] = this.by(by, Context.Browser)
-
-  def by(by: By, context: Context): List[WebElement] = withDriverAndContext(context) { driver =>
-    driver.findElements(by).asScala.toList.map(new SeleniumWebElement(_, context, this))
+  override def by(by: By): List[WebElement] = withDriverAndContext(by.context) { driver =>
+    val sby = by.`type`.create(by.value)
+    driver.findElements(sby).asScala.toList.map(new SeleniumWebElement(_, context, this))
   }
 
   override def children: List[WebElement] = Nil
-
-  final def oneBy(by: By, context: Context): WebElement = this.by(by, context) match {
-    case element :: Nil => element
-    case Nil => throw new RuntimeException(s"Nothing found by selector: ${by.toString}")
-    case list => throw new RuntimeException(s"More than one found by selector: ${by.toString} ($list)")
-  }
-  def firstBy(by: By, context: Context): Option[WebElement] = this.by(by, context).headOption
 
   def cookies: List[ResponseCookie] = withDriver(_.manage().getCookies.asScala.toList.map { cookie =>
     ResponseCookie(
@@ -429,8 +421,8 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   override def outerHTML: String = content()
 
   override def innerHTML: String = {
-    val head = by("head").headOption.map(_.outerHTML).getOrElse("")
-    val body = by("body").headOption.map(_.outerHTML).getOrElse("")
+    val head = by(By.tagName("head")).headOption.map(_.outerHTML).getOrElse("")
+    val body = by(By.tagName("body")).headOption.map(_.outerHTML).getOrElse("")
     s"$head$body"
   }
 

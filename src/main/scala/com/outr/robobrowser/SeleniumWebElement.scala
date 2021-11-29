@@ -1,7 +1,7 @@
 package com.outr.robobrowser
 
 import org.jsoup.Jsoup
-import org.openqa.selenium.{By, OutputType, TakesScreenshot}
+import org.openqa.selenium.{OutputType, TakesScreenshot}
 
 import scala.jdk.CollectionConverters._
 
@@ -13,7 +13,7 @@ class SeleniumWebElement(private val e: org.openqa.selenium.WebElement,
     .toList
     .map(new SeleniumWebElement(_, context, browser))
 
-  override def by(by: By): List[WebElement] = l2l(e.findElements(by))
+  override def by(by: By): List[WebElement] = l2l(e.findElements(by.`type`.create(by.value)))
 
   override def children: List[WebElement] = l2l(browser.executeTyped[java.util.List[org.openqa.selenium.WebElement]](
     script = "return arguments[0].children;",

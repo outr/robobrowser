@@ -1,7 +1,6 @@
 package com.outr.robobrowser.monitor
 
-import com.outr.robobrowser.{ByType, WebElement}
-import org.openqa.selenium.By
+import com.outr.robobrowser.{By, ByType, WebElement}
 
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
@@ -59,8 +58,8 @@ class VisualSelector(monitor: BrowserMonitor) extends JFrame("Visual Selector") 
   def query(): Unit = if (selectorInput.getText.trim.nonEmpty) {
     monitor.browser.ignoringPause {
       val byType = this.byType.getSelectedItem.asInstanceOf[ByType]
-      val by = byType.create(selectorInput.getText)
-      val results = monitor.browser.by(by, monitor.context)
+      val by = By(selectorInput.getText, byType, monitor.context)
+      val results = monitor.browser.by(by)
       selectorResults.setText(s"${results.length} results")
 
       clear()
@@ -101,7 +100,7 @@ class VisualSelector(monitor: BrowserMonitor) extends JFrame("Visual Selector") 
 
   def highlight(): Unit = if (selectorInput.getText.trim.nonEmpty) {
     monitor.browser.ignoringPause {
-      val results = monitor.browser.by(By.cssSelector(selectorInput.getText))
+      val results = monitor.browser.by(By.css(selectorInput.getText, monitor.context))
       selectorResults.setText(s"${results.length} results")
 
       clearHighlight()

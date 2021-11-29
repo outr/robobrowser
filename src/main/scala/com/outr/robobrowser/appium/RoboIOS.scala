@@ -1,9 +1,8 @@
 package com.outr.robobrowser.appium
 
 import com.google.common.collect.ImmutableMap
-import com.outr.robobrowser.{Capabilities, Context, RoboBrowser}
+import com.outr.robobrowser.{By, Capabilities, Context, RoboBrowser}
 import io.appium.java_client.ios.IOSDriver
-import org.openqa.selenium.By
 import org.openqa.selenium.chrome.ChromeOptions
 
 import scala.concurrent.duration.DurationInt
@@ -27,7 +26,7 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
       RoboIOS.AllowXPath
     }
     avoidStaleReference {
-      firstBy(By.xpath(path), Context.Native) match {
+      firstBy(By.xPath(path, Context.Native)) match {
         case Some(e) =>
           e.click()
           true
@@ -46,23 +45,23 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
    *                     This defaults to //XCUIElementTypeButton[@name="Choose File"]
    * @param filter the filter to apply to the list of photos returning the list that will be selected
    */
-  def selectPhotos(uploadButton: By = By.xpath("//XCUIElementTypeButton[@name=\"Choose File\"]"))
+  def selectPhotos(uploadButton: By = By.xPath("//XCUIElementTypeButton[@name=\"Choose File\"]", Context.Native))
                   (filter: List[IOSFile] => List[IOSFile]): Unit = {
     // Allow uploads
     nativeAllow()
 
     // Click the file upload button
-    if (firstBy(By.name("Photo Library"), Context.Native).isEmpty) {
-      firstBy(uploadButton, Context.Native).foreach(_.click())
+    if (firstBy(By.name("Photo Library", Context.Native)).isEmpty) {
+      firstBy(uploadButton).foreach(_.click())
     }
 
     // Select the 'Photo Library'
-    oneBy(By.name("Photo Library"), Context.Native).click()
+    oneBy(By.name("Photo Library", Context.Native)).click()
 
     // Select 'All Photos'
     if (version == 13) avoidStaleReference {
       waitForResult(15.seconds) {
-        firstBy(By.name("All Photos"), Context.Native)
+        firstBy(By.name("All Photos", Context.Native))
       }.click()
     }
 
@@ -77,7 +76,7 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
 
     // Get all photos
     val images = waitForResult(15.seconds) {
-      by(By.xpath(imagePath), Context.Native)
+      by(By.xPath(imagePath, Context.Native))
         .map(e => IOSFile(e)) match {
           case Nil => None
           case list => Some(list)
@@ -95,7 +94,7 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
 
     // Finalize the selection
     if (version == 13) {
-      oneBy(By.xpath("//XCUIElementTypeButton[@label=\"Done\"]"), Context.Native).click()
+      oneBy(By.xPath("//XCUIElementTypeButton[@label=\"Done\"]", Context.Native)).click()
     }
     val chooseLabel = if (filtered.length > 1) {
       "Add"
@@ -107,7 +106,7 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
     } else {
       s"""//XCUIElementTypeButton[@name="$chooseLabel"]"""
     }
-    firstBy(By.xpath(choosePath), Context.Native).foreach(_.click())
+    firstBy(By.xPath(choosePath, Context.Native)).foreach(_.click())
   }
 }
 

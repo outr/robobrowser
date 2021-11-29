@@ -1,8 +1,8 @@
 package com.outr.robobrowser.appium
 
-import com.outr.robobrowser.{Capabilities, Context, RoboBrowser}
+import com.outr.robobrowser.{By, Capabilities, Context, RoboBrowser}
 import io.appium.java_client.android.AndroidDriver
-import org.openqa.selenium.{By, OutputType, TakesScreenshot}
+import org.openqa.selenium.{OutputType, TakesScreenshot}
 import org.openqa.selenium.chrome.ChromeOptions
 
 class RoboAndroid(capabilities: Capabilities) extends RoboBrowser(capabilities) with Appium {
@@ -26,7 +26,7 @@ class RoboAndroid(capabilities: Capabilities) extends RoboBrowser(capabilities) 
       RoboAndroid.AllowXPath
     }
     avoidStaleReference {
-      firstBy(By.xpath(path), Context.Native) match {
+      firstBy(By.xPath(path, Context.Native)) match {
         case Some(e) =>
           e.click()
           nativeAllow(reject)

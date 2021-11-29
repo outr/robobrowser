@@ -1,14 +1,11 @@
 package com.outr
 
 import com.outr.robobrowser.appium.{AndroidCapabilities, Appium, IOSCapabilities}
-import org.openqa.selenium.By
 
 import scala.language.implicitConversions
 
 package object robobrowser {
   type MobileBrowser = RoboBrowser with Appium
-
-  implicit def string2BySelector(cssSelector: String): By = By.cssSelector(cssSelector)
 
   implicit def caps2Android[T <: RoboBrowser](builder: RoboBrowserBuilder[T]): AndroidCapabilities[T] = new AndroidCapabilities(builder)
 
