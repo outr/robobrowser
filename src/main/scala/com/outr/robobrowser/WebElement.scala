@@ -20,6 +20,10 @@ trait WebElement extends AbstractElement {
   def isClickable: Boolean = isDisplayed && isEnabled
 
   def sendInput(text: String): Unit
+  def clear(): Unit
+
+  def size: (Int, Int)
+  def rect: Rect
 
   def parsed(): ParsedElement
 }

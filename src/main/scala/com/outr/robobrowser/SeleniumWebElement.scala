@@ -69,6 +69,18 @@ class SeleniumWebElement(private val e: org.openqa.selenium.WebElement,
     e.sendKeys(text)
   }
 
+  override def clear(): Unit = e.clear()
+
+  override def size: (Int, Int) = {
+    val s = e.getSize
+    (s.width, s.height)
+  }
+
+  override def rect: Rect = {
+    val r = e.getRect
+    Rect(r.x, r.y, r.width, r.height)
+  }
+
   override def parsed(): ParsedElement = new ParsedElement(Jsoup.parseBodyFragment(outerHTML).body().child(0))
 
   override def outerHTML: String = browser.executeTyped[String]("return arguments[0].outerHTML;", e)

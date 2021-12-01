@@ -31,6 +31,12 @@ case class MultiElement(elements: List[WebElement]) extends WebElement {
     this
   }
 
+  override def clear(): Unit = elements.foreach(_.clear())
+
+  override def size: (Int, Int) = ???
+
+  override def rect: Rect = ???
+
   override def isDisplayed: Boolean = elements.forall(_.isDisplayed)
 
   override def isEnabled: Boolean = elements.forall(_.isEnabled)
