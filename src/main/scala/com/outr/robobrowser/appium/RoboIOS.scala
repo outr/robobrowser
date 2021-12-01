@@ -12,7 +12,7 @@ class RoboIOS(override val capabilities: Capabilities) extends RoboBrowser(capab
 
   override lazy val version: Double = capabilities.typed[Int]("os_version").toDouble
 
-  override def sessionId: String = withDriver(_.getSessionId.toString)
+  override lazy val sessionId: String = withDriver(_.getSessionId.toString)
 
   override protected def createWebDriver(options: ChromeOptions): Driver = {
     val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))

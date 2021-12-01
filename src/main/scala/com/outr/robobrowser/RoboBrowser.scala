@@ -148,6 +148,8 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     withDriver { driver =>
       initializing @= driver
     }
+    val id: String = sessionId
+    scribe.info(s"Initialized session id: $id")
   }
 
   private val verifying = new AtomicBoolean(false)

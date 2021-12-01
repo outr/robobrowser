@@ -10,7 +10,7 @@ class RoboAndroid(capabilities: Capabilities) extends RoboBrowser(capabilities) 
 
   override lazy val version: Double = capabilities.typed[Double]("os_version")
 
-  override def sessionId: String = withDriver(_.getSessionId.toString)
+  override lazy val sessionId: String = withDriver(_.getSessionId.toString)
 
   override protected def createWebDriver(options: ChromeOptions): Driver = {
     val url = new java.net.URL(capabilities.typed[String]("url", "http://localhost:4444"))
