@@ -318,6 +318,12 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     def close(): Unit = withDriver(_.close())
   }
 
+  object navigate {
+    def refresh(): Unit = withDriver(_.navigate().refresh())
+    def back(): Unit = withDriver(_.navigate().back())
+    def forward(): Unit = withDriver(_.navigate().forward())
+  }
+
   override def by(by: By): List[WebElement] = withDriverAndContext(by.context) { driver =>
     val sby = by.`type`.create(by.value)
     driver.findElements(sby).asScala.toList.map(new SeleniumWebElement(_, context, this))

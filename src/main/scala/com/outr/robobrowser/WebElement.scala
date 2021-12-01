@@ -14,6 +14,11 @@ trait WebElement extends AbstractElement {
   def style(name: String, value: Any): WebElement
   def classes: Set[String]
 
+  def isDisplayed: Boolean
+  def isEnabled: Boolean
+  def isSelected: Boolean
+  def isClickable: Boolean = isDisplayed && isEnabled
+
   def sendInput(text: String): Unit
 
   def parsed(): ParsedElement

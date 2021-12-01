@@ -11,7 +11,7 @@ import com.outr.robobrowser.monitor.BrowserMonitor
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    lazy val browser = RoboBrowser.Chrome.headless.screenSize(1600, 1200).create()
+    lazy val browser = RoboBrowser.Chrome.headless.windowSize(1600, 1200).create()
     lazy val screenshot = new File("screenshot.png")
 
     var googleTab: Option[WindowHandle] = None

@@ -31,6 +31,12 @@ case class MultiElement(elements: List[WebElement]) extends WebElement {
     this
   }
 
+  override def isDisplayed: Boolean = elements.forall(_.isDisplayed)
+
+  override def isEnabled: Boolean = elements.forall(_.isEnabled)
+
+  override def isSelected: Boolean = elements.forall(_.isSelected)
+
   override def classes: Set[String] = elements.flatMap(_.classes).toSet
 
   override def sendInput(text: String): Unit = elements.foreach(_.sendInput(text))

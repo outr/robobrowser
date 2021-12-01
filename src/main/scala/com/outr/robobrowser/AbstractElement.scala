@@ -31,9 +31,11 @@ trait AbstractElement {
 
   def clickWhenAvailable(by: By,
                          timeout: FiniteDuration = 15.seconds,
-                         sleep: FiniteDuration = 500.millis): WebElement = {
+                         sleep: FiniteDuration = 500.millis,
+                         verifyDisplayed: Boolean = true,
+                         verifyEnabled: Boolean = true): WebElement = {
     avoidStaleReference {
-      waitOn(by, timeout, sleep) match {
+      waitOn(by, timeout, sleep, verifyDisplayed, verifyEnabled) match {
         case Some(e) =>
           e.click()
           e
@@ -50,9 +52,16 @@ trait AbstractElement {
     }
   }
 
-  def waitOn(by: By, timeout: FiniteDuration = 15.seconds, sleep: FiniteDuration = 500.millis): Option[WebElement] = {
+  def waitOn(by: By,
+             timeout: FiniteDuration = 15.seconds,
+             sleep: FiniteDuration = 500.millis,
+             verifyDisplayed: Boolean = false,
+             verifyEnabled: Boolean = false): Option[WebElement] = {
     browser.waitFor(timeout, sleep) {
-      firstBy(by).nonEmpty
+      firstBy(by) match {
+        case Some(e) if (!verifyDisplayed || e.isDisplayed) && (!verifyEnabled || e.isEnabled) => true
+        case _ => false
+      }
     }
     firstBy(by)
   }

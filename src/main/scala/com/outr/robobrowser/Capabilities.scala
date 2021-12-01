@@ -66,7 +66,9 @@ trait Capabilities {
     "browserName" -> browser.value
   )
 
-  def screenSize(width: Int, height: Int): C = withArguments("window-size" -> s"--window-size=$width,$height")
+  def windowSize(width: Int, height: Int): C = withArguments("window-size" -> s"--window-size=$width,$height")
+
+  def maximized: C = withArguments("start-maximized" -> "--start-maximized")
 
   def device(id: String): C = withCapabilities("device" -> id)
 
