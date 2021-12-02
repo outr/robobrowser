@@ -31,7 +31,9 @@ case class MultiElement(elements: List[WebElement]) extends WebElement {
     this
   }
 
-  override def clear(): Unit = elements.foreach(_.clear())
+  override def sendKeys(keysToSend: CharSequence*): Unit = elements.foreach(_.sendKeys(keysToSend: _*))
+
+  override def clear(native: Boolean = true): Unit = elements.foreach(_.clear(native))
 
   override def size: (Int, Int) = ???
 
@@ -44,8 +46,6 @@ case class MultiElement(elements: List[WebElement]) extends WebElement {
   override def isSelected: Boolean = elements.forall(_.isSelected)
 
   override def classes: Set[String] = elements.flatMap(_.classes).toSet
-
-  override def sendInput(text: String): Unit = elements.foreach(_.sendInput(text))
 
   override def parsed(): ParsedElement = ???
 

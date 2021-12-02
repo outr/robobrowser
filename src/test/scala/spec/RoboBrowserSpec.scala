@@ -26,7 +26,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
     "do a Google search" in {
       val input = browser.oneBy(By.css("[name=\"q\"]"))
       input.tagName should be("input")
-      input.sendInput("robobrowser")
+      input.sendKeys("robobrowser")
       input.submit()
       browser.title should be("robobrowser - Google Search")
     }
@@ -48,7 +48,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
     "do a Duck Duck Go search" in {
       val input = browser.oneBy(By.css("#search_form_input_homepage"))
       input.tagName should be("input")
-      input.sendInput("robobrowser")
+      input.sendKeys("robobrowser")
       input.submit()
       browser.title should be("robobrowser at DuckDuckGo")
     }

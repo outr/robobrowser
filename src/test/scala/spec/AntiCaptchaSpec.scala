@@ -23,7 +23,7 @@ class AntiCaptchaSpec extends AnyWordSpec with Matchers {
     lazy val browser = RoboBrowser.Remote.antiCaptcha(apiKey).create()
     "load reCAPTCHA 2 to verify" in {
       browser.load(url"https://antcpt.com/eng/information/demo-form/recaptcha-2.html")
-      browser.oneBy(By.css("[name='demo_text']")).sendInput("Test input")
+      browser.oneBy(By.css("[name='demo_text']")).sendKeys("Test input")
       browser.oneBy(By.css("input[type=submit]")).click()
       browser.oneBy(By.css("h2")).text.trim should be("Thank you, your message \"Test input\" was posted!")
     }

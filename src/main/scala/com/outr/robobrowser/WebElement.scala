@@ -19,8 +19,8 @@ trait WebElement extends AbstractElement {
   def isSelected: Boolean
   def isClickable: Boolean = isDisplayed && isEnabled
 
-  def sendInput(text: String): Unit
-  def clear(): Unit
+  def sendKeys(keysToSend: CharSequence*): Unit
+  def clear(native: Boolean = false): Unit
 
   def size: (Int, Int)
   def rect: Rect

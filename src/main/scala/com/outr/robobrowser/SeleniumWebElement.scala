@@ -1,7 +1,7 @@
 package com.outr.robobrowser
 
 import org.jsoup.Jsoup
-import org.openqa.selenium.{OutputType, TakesScreenshot}
+import org.openqa.selenium.{Keys, OutputType, TakesScreenshot}
 
 import scala.jdk.CollectionConverters._
 
@@ -64,12 +64,13 @@ class SeleniumWebElement(private val e: org.openqa.selenium.WebElement,
 
   override def isSelected: Boolean = e.isSelected
 
-  override def sendInput(text: String): Unit = {
-//    e.click()     // TODO: Verify if this is needed
-    e.sendKeys(text)
-  }
+  override def sendKeys(keysToSend: CharSequence*): Unit = e.sendKeys(keysToSend: _*)
 
-  override def clear(): Unit = e.clear()
+  override def clear(native: Boolean = false): Unit = if (native) {
+    e.clear()
+  } else {
+    sendKeys(Keys.chord(Keys.CONTROL, "a", Keys.DELETE))
+  }
 
   override def size: (Int, Int) = {
     val s = e.getSize

@@ -69,6 +69,9 @@ trait IntegrationTestSuite {
       scribe.info(s"Successful execution of ${scenarios.length} scenarios in $elapsed seconds.")
     } else {
       scribe.error(s"${failures.length} failed of ${scenarios.length} scenarios in $elapsed seconds.")
+      failures.foreach { f =>
+        scribe.error(s"  - ${f.test} failed with ${f.throwable.getMessage}")
+      }
     }
     failures
   }
