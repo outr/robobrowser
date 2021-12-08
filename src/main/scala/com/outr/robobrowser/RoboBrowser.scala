@@ -448,4 +448,5 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw new NotImplementedError("You must define an implementation")) {
   object Chrome extends RoboBrowserBuilder[RoboBrowser](ChromeBrowserBuilder.create)
   object Remote extends RoboBrowserBuilder[RoboBrowser](RemoteBrowserBuilder.create)
+  object Grid extends RoboBrowserBuilder[RoboBrowser](GridBrowserBuilder.create)
 }

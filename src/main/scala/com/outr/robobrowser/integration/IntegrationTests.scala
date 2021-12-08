@@ -9,7 +9,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.Try
 
-trait IntegrationTests[Browser <: RoboBrowser] { suite =>
+trait IntegrationTests[Browser <: RoboBrowser] extends AssertionsSupport { suite =>
   private var _tests = List.empty[IntegrationTest]
 
   /**
