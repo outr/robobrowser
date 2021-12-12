@@ -32,7 +32,7 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "selenium-remote-driver" % "4.1.0",
   "org.seleniumhq.selenium" % "selenium-support" % "4.1.0",
   "com.lihaoyi" %% "sourcecode" % "0.2.7",
-  "com.fifesoft" % "rsyntaxtextarea" % "3.1.3",
+  "com.fifesoft" % "rsyntaxtextarea" % "3.1.4",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"
 )
 
