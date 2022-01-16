@@ -23,7 +23,7 @@ developers := List(
 )
 
 libraryDependencies ++= Seq(
-  "com.outr" %% "scribe-slf4j" % "3.6.7",
+  "com.outr" %% "scribe-slf4j" % "3.6.9",
   "io.youi" %% "youi-client" % "0.14.4",
   "org.jsoup" % "jsoup" % "1.14.3",
   "com.github.appium" % "java-client" % "8.0.0-beta2",
