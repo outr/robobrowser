@@ -7,11 +7,12 @@ import io.appium.java_client.remote.SupportsContextSwitching
 
 import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
-import io.youi.http.cookie.ResponseCookie
+import io.youi.http.cookie.{ResponseCookie, SameSite}
 import io.youi.net.URL
 import org.openqa.selenium.{Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
 import io.youi.stream._
 import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.html5.{LocalStorage, SessionStorage, WebStorage}
 import org.openqa.selenium.interactions.Actions
 import perfolation._
 
@@ -23,6 +24,9 @@ import reactify.{Channel, Trigger, Val, Var}
 import scala.annotation.tailrec
 import scala.concurrent.TimeoutException
 import scala.util.Try
+import fabric._
+import fabric.parse.Json
+import fabric.rw._
 
 abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
   type Driver <: WebDriver
@@ -333,23 +337,229 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   override def children: List[WebElement] = Nil
 
-  def cookies: List[ResponseCookie] = withDriver(_.manage().getCookies.asScala.toList.map { cookie =>
-    ResponseCookie(
-      name = cookie.getName,
-      value = cookie.getValue,
-      expires = Option(cookie.getExpiry).map(_.getTime),
-      domain = Option(cookie.getDomain),
-      path = Option(cookie.getPath),
-      secure = cookie.isSecure,
-      httpOnly = cookie.isHttpOnly
-    )
-  })
+  object storage {
+    object cookies {
+      private implicit val ssRW: ReaderWriter[SameSite] = ReaderWriter[SameSite](
+        r = (ss: SameSite) => ss match {
+          case SameSite.Normal => "normal"
+          case SameSite.Lax => "lax"
+          case SameSite.Strict => "strict"
+        },
+        w = _.asString match {
+          case "normal" => SameSite.Normal
+          case "lax" => SameSite.Lax
+          case "strict" => SameSite.Strict
+          case s => throw new RuntimeException(s"Unsupported value for SameSite: $s")
+        }
+      )
+      private implicit val rw: ReaderWriter[ResponseCookie] = ccRW
 
-  def cookies_=(cookies: List[ResponseCookie]): Unit = {
-    val options = withDriver(_.manage())
-    options.deleteAllCookies()
-    cookies.foreach { c =>
-      options.addCookie(new Cookie(c.name, c.value, c.domain.orNull, c.path.orNull, c.expires.map(new Date(_)).orNull, c.secure, c.httpOnly))
+      private def c2rc(cookie: Cookie): ResponseCookie = ResponseCookie(
+        name = cookie.getName,
+        value = cookie.getValue,
+        expires = Option(cookie.getExpiry).map(_.getTime),
+        domain = Option(cookie.getDomain),
+        path = Option(cookie.getPath),
+        secure = cookie.isSecure,
+        httpOnly = cookie.isHttpOnly
+      )
+
+      private def rc2c(cookie: ResponseCookie): Cookie = new Cookie(
+        cookie.name,
+        cookie.value,
+        cookie.domain.orNull,
+        cookie.path.orNull,
+        cookie.expires.map(new Date(_)).orNull,
+        cookie.secure,
+        cookie.httpOnly
+      )
+
+      def all: List[ResponseCookie] = withDriver(_.manage().getCookies.asScala.toList.map(c2rc))
+
+      def set(cookies: List[ResponseCookie]): Unit = withDriver { driver =>
+        val options = driver.manage()
+        options.deleteAllCookies()
+        cookies.foreach { c =>
+          options.addCookie(rc2c(c))
+        }
+      }
+
+      def add(cookies: List[ResponseCookie]): Unit = withDriver { driver =>
+        val options = driver.manage()
+        cookies.foreach { c =>
+          options.addCookie(rc2c(c))
+        }
+      }
+
+      def get(name: String): Option[ResponseCookie] = Option(withDriver(_.manage().getCookieNamed(name))).map(c2rc)
+
+      def clear(): Unit = withDriver(_.manage().deleteAllCookies())
+
+      def toJson: Value = all.toValue
+      def fromJson(value: Value): List[ResponseCookie] = value.as[List[ResponseCookie]]
+
+      def save(file: File): Unit = {
+        val jsonString = Json.format(toJson)
+        IO.stream(jsonString, file)
+      }
+
+      def load(file: File): Boolean = if (file.isFile) {
+        val jsonString = IO.stream(file, new StringBuilder).toString
+        val json = Json.parse(jsonString)
+        val cookies = fromJson(json)
+        add(cookies)
+        true
+      } else {
+        false
+      }
+    }
+
+    object localStorage {
+      private def ls[Return](f: LocalStorage => Return): Return = withDriver { driver =>
+        f(driver.asInstanceOf[WebStorage].getLocalStorage)
+      }
+
+      def keys: Set[String] = ls(_.keySet().asScala.toSet)
+
+      def map: Map[String, String] = {
+        val set = keys
+        ls { storage =>
+          set.map(key => key -> storage.getItem(key)).toMap
+        }
+      }
+
+      def set(map: Map[String, String]): Unit = ls { storage =>
+        storage.clear()
+        map.foreach {
+          case (key, value) => storage.setItem(key, value)
+        }
+      }
+
+      def add(map: Map[String, String]): Unit = ls { storage =>
+        map.foreach {
+          case (key, value) => storage.setItem(key, value)
+        }
+      }
+
+      def get(key: String): Option[String] = ls(s => Option(s.getItem(key)))
+
+      def remove(key: String): Option[String] = Option(ls(_.removeItem(key)))
+
+      def size: Int = ls(_.size())
+
+      def clear(): Unit = ls(_.clear())
+
+      def toJson: Value = map.toValue
+      def fromJson(value: Value): Map[String, String] = value.as[Map[String, String]]
+
+      def save(file: File): Unit = {
+        val jsonString = Json.format(toJson)
+        IO.stream(jsonString, file)
+      }
+
+      def load(file: File): Boolean = if (file.isFile) {
+        val jsonString = IO.stream(file, new StringBuilder).toString
+        val json = Json.parse(jsonString)
+        val cookies = fromJson(json)
+        add(cookies)
+        true
+      } else {
+        false
+      }
+    }
+
+    object sessionStorage {
+      private def ss[Return](f: SessionStorage => Return): Return = withDriver { driver =>
+        f(driver.asInstanceOf[WebStorage].getSessionStorage)
+      }
+
+      def keys: Set[String] = ss(_.keySet().asScala.toSet)
+
+      def map: Map[String, String] = {
+        val set = keys
+        ss { storage =>
+          set.map(key => key -> storage.getItem(key)).toMap
+        }
+      }
+
+      def set(map: Map[String, String]): Unit = ss { storage =>
+        storage.clear()
+        map.foreach {
+          case (key, value) => storage.setItem(key, value)
+        }
+      }
+
+      def add(map: Map[String, String]): Unit = ss { storage =>
+        map.foreach {
+          case (key, value) => storage.setItem(key, value)
+        }
+      }
+
+      def get(key: String): Option[String] = ss(s => Option(s.getItem(key)))
+
+      def remove(key: String): Option[String] = Option(ss(_.removeItem(key)))
+
+      def size: Int = ss(_.size())
+
+      def clear(): Unit = ss(_.clear())
+
+      def toJson: Value = map.toValue
+      def fromJson(value: Value): Map[String, String] = value.as[Map[String, String]]
+
+      def save(file: File): Unit = {
+        val jsonString = Json.format(toJson)
+        IO.stream(jsonString, file)
+      }
+
+      def load(file: File): Boolean = if (file.isFile) {
+        val jsonString = IO.stream(file, new StringBuilder).toString
+        val json = Json.parse(jsonString)
+        val cookies = fromJson(json)
+        add(cookies)
+        true
+      } else {
+        false
+      }
+    }
+
+    def save(directory: File,
+             includeCookies: Boolean = true,
+             includeLocalStorage: Boolean = true,
+             includeSessionStorage: Boolean = true): Unit = {
+      directory.mkdirs()
+      assert(directory.isDirectory)
+      if (includeCookies) {
+        val file = new File(directory, "cookies.json")
+        cookies.save(file)
+      }
+      if (includeLocalStorage) {
+        val file = new File(directory, "local_storage.json")
+        localStorage.save(file)
+      }
+      if (includeSessionStorage) {
+        val file = new File(directory, "session_storage.json")
+        sessionStorage.save(file)
+      }
+    }
+
+    def load(directory: File,
+             includeCookies: Boolean = true,
+             includeLocalStorage: Boolean = true,
+             includeSessionStorage: Boolean = true): Unit = {
+      if (directory.isDirectory) {
+        if (includeCookies) {
+          val file = new File(directory, "cookies.json")
+          if (file.isFile) cookies.load(file)
+        }
+        if (includeLocalStorage) {
+          val file = new File(directory, "local_storage.json")
+          if (file.isFile) localStorage.load(file)
+        }
+        if (includeSessionStorage) {
+          val file = new File(directory, "session_storage.json")
+          if (file.isFile) sessionStorage.load(file)
+        }
+      }
     }
   }
 

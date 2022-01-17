@@ -42,6 +42,8 @@ trait Capabilities {
 
   def url(url: URL): C = withCapabilities("url" -> url.toString())
 
+  def userDataDir(path: String): C = withArguments("user-data-dir" -> s"--user-data-dir=$path", "profile-directory" -> "--profile-directory=Default")
+
   def notifications(notifications: Notifications): C = {
     val n = notifications match {
       case Notifications.Default => 0
