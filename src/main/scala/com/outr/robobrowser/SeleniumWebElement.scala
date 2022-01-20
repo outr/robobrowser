@@ -88,7 +88,7 @@ class SeleniumWebElement(private val e: org.openqa.selenium.WebElement,
 
   override def innerHTML: String = e.getAttribute("innerHTML")
 
-  override def toString: String = if (context == Context.Native) {
+  override def toString: String = if (context == Context.Native || !browser.supportsJavaScript) {
     e.toString
   } else {
     outerHTML

@@ -284,12 +284,17 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   def title: String = withDriver(_.getTitle)
 
+  def supportsJavaScript: Boolean = withDriver(_.isInstanceOf[JavascriptExecutor])
+
   def execute(script: String, args: AnyRef*): AnyRef = withDriverAndContext(Context.Browser) { driver =>
     val fixed = args.map {
       case arg: SeleniumWebElement => SeleniumWebElement.underlying(arg)    // Extract the WebElement
       case arg => arg
     }
-    driver.asInstanceOf[JavascriptExecutor].executeScript(script, fixed: _*)
+    driver match {
+      case e: JavascriptExecutor => e.executeScript(script, fixed: _*)
+      case _ => null    // Ignore not supported
+    }
   }
 
   def executeTyped[T](script: String, args: AnyRef*): T = execute(script, args: _*).asInstanceOf[T]
@@ -332,7 +337,11 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   override def by(by: By): List[WebElement] = withDriverAndContext(by.context) { driver =>
     val sby = by.`type`.create(by.value)
-    driver.findElements(sby).asScala.toList.map(new SeleniumWebElement(_, context, this))
+    driver
+      .findElements(sby)
+      .asScala
+      .toList
+      .map(new SeleniumWebElement(_, context, this))
   }
 
   override def children: List[WebElement] = Nil
@@ -659,4 +668,6 @@ object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw 
   object Chrome extends RoboBrowserBuilder[RoboBrowser](ChromeBrowserBuilder.create)
   object Remote extends RoboBrowserBuilder[RoboBrowser](RemoteBrowserBuilder.create)
   object Grid extends RoboBrowserBuilder[RoboBrowser](GridBrowserBuilder.create)
+  object HtmlUnit extends RoboBrowserBuilder[RoboBrowser](HtmlUnitBrowserBuilder.create)
+  object Jsoup extends RoboBrowserBuilder[RoboBrowser](JsoupWebDriver.create)
 }

@@ -59,6 +59,25 @@ trait Capabilities {
     withCapabilities("prefs" -> ExperimentalOption(prefs))
   }
 
+  def mobileEmulation(deviceName: String,
+                      width: Int = -1,
+                      height: Int = -1,
+                      pixelRatio: Double = -1.0,
+                      touch: Boolean = true): C = {
+    val mobileEmulation = new util.HashMap[String, AnyRef]
+    mobileEmulation.put("deviceName", deviceName)
+    if (width != -1) mobileEmulation.put("width", Integer.valueOf(width))
+    if (height != -1) mobileEmulation.put("height", Integer.valueOf(height))
+    if (pixelRatio != -1.0) mobileEmulation.put("pixelRatio", java.lang.Double.valueOf(pixelRatio))
+    if (!touch) mobileEmulation.put("touch", java.lang.Boolean.valueOf(touch))
+    withCapabilities("mobileEmulation" -> ExperimentalOption(mobileEmulation))
+  }
+
+  def disableJavaScript: C = withCapabilities(
+    "javascript.enabled" -> false,
+    "chrome.switches" -> util.Arrays.asList("--disable-javascript")
+  ).asInstanceOf[C].withArguments("disable-javascript" -> "--disable-javascript").asInstanceOf[C]
+
   def headless: C = withCapabilities("headless" -> Argument("--headless"))
 
   def disableGPU: C = withCapabilities("disable-gpu" -> Argument("--disable-gpu"))
