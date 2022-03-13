@@ -26,7 +26,7 @@ libraryDependencies ++= Seq(
   "com.outr" %% "scribe-slf4j" % "3.6.9",
   "io.youi" %% "youi-client" % "0.14.4",
   "org.jsoup" % "jsoup" % "1.14.3",
-  "com.github.appium" % "java-client" % "8.0.0-beta2",
+  "com.github.appium" % "java-client" % "8.0.0",
   "org.seleniumhq.selenium" % "selenium-api" % "4.1.1",
   "org.seleniumhq.selenium" % "selenium-chrome-driver" % "4.1.1",
   "org.seleniumhq.selenium" % "selenium-remote-driver" % "4.1.1",
