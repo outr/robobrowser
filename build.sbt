@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "htmlunit-driver" % "3.56.0",
   "org.seleniumhq.selenium" % "selenium-support" % "4.1.1",
   "com.lihaoyi" %% "sourcecode" % "0.2.7",
-  "com.fifesoft" % "rsyntaxtextarea" % "3.1.6",
+  "com.fifesoft" % "rsyntaxtextarea" % "3.2.0",
   "org.scalatest" %% "scalatest" % "3.2.10" % "test"
 )
 
