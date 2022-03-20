@@ -30,7 +30,7 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "selenium-api" % "4.1.1",
   "org.seleniumhq.selenium" % "selenium-chrome-driver" % "4.1.1",
   "org.seleniumhq.selenium" % "selenium-remote-driver" % "4.1.1",
-  "org.seleniumhq.selenium" % "htmlunit-driver" % "3.56.0",
+  "org.seleniumhq.selenium" % "htmlunit-driver" % "3.60.0",
   "org.seleniumhq.selenium" % "selenium-support" % "4.1.1",
   "com.lihaoyi" %% "sourcecode" % "0.2.7",
   "com.fifesoft" % "rsyntaxtextarea" % "3.1.6",
