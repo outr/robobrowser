@@ -34,7 +34,7 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "selenium-support" % "4.1.1",
   "com.lihaoyi" %% "sourcecode" % "0.2.7",
   "com.fifesoft" % "rsyntaxtextarea" % "3.1.6",
-  "org.scalatest" %% "scalatest" % "3.2.10" % "test"
+  "org.scalatest" %% "scalatest" % "3.2.12" % "test"
 )
 
 fork := true
