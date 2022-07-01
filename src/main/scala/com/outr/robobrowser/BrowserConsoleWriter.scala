@@ -5,15 +5,16 @@ import scribe.output.format.OutputFormat
 import scribe.writer.Writer
 import scribe.{Level, LogRecord}
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 case class BrowserConsoleWriter(browserOption: () => Option[RoboBrowser]) extends Writer {
   val args: ListBuffer[String] = ListBuffer.empty
 
-  override def write[M](record: LogRecord[M], output: LogOutput, outputFormat: OutputFormat): Unit =
+  override def write(record: LogRecord, output: LogOutput, outputFormat: OutputFormat): Unit =
     browserOption().foreach { browser =>
-      val b = new StringBuilder
+      val b = new mutable.StringBuilder
       args.clear()
       outputFormat.begin(b.append(_))
       outputFormat(output, b.append(_))

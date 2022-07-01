@@ -22,19 +22,21 @@ developers := List(
   Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("http://matthicks.com"))
 )
 
+val seleniumVersion = "4.3.0"
+
 libraryDependencies ++= Seq(
-  "com.outr" %% "scribe-slf4j" % "3.6.9",
+  "com.outr" %% "scribe-slf4j" % "3.10.0",
   "io.youi" %% "youi-client" % "0.14.4",
-  "org.jsoup" % "jsoup" % "1.14.3",
-  "com.github.appium" % "java-client" % "8.0.0-beta2",
-  "org.seleniumhq.selenium" % "selenium-api" % "4.1.1",
-  "org.seleniumhq.selenium" % "selenium-chrome-driver" % "4.1.1",
-  "org.seleniumhq.selenium" % "selenium-remote-driver" % "4.1.1",
-  "org.seleniumhq.selenium" % "htmlunit-driver" % "3.56.0",
-  "org.seleniumhq.selenium" % "selenium-support" % "4.1.1",
-  "com.lihaoyi" %% "sourcecode" % "0.2.7",
-  "com.fifesoft" % "rsyntaxtextarea" % "3.1.6",
-  "org.scalatest" %% "scalatest" % "3.2.10" % "test"
+  "org.jsoup" % "jsoup" % "1.15.1",
+  "com.github.appium" % "java-client" % "8.1.1",
+  "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
+  "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
+  "org.seleniumhq.selenium" % "selenium-remote-driver" % seleniumVersion,
+  "org.seleniumhq.selenium" % "htmlunit-driver" % "3.62.0",
+  "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
+  "com.lihaoyi" %% "sourcecode" % "0.2.8",
+  "com.fifesoft" % "rsyntaxtextarea" % "3.2.0",
+  "org.scalatest" %% "scalatest" % "3.2.12" % "test"
 )
 
 fork := true

@@ -668,6 +668,6 @@ object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw 
   object Chrome extends RoboBrowserBuilder[RoboBrowser](ChromeBrowserBuilder.create)
   object Remote extends RoboBrowserBuilder[RoboBrowser](RemoteBrowserBuilder.create)
   object Grid extends RoboBrowserBuilder[RoboBrowser](GridBrowserBuilder.create)
-  object HtmlUnit extends RoboBrowserBuilder[RoboBrowser](HtmlUnitBrowserBuilder.create)
+//  object HtmlUnit extends RoboBrowserBuilder[RoboBrowser](HtmlUnitBrowserBuilder.create)
   object Jsoup extends RoboBrowserBuilder[RoboBrowser](JsoupWebDriver.create)
 }
