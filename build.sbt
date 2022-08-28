@@ -27,7 +27,7 @@ val seleniumVersion = "4.3.0"
 libraryDependencies ++= Seq(
   "com.outr" %% "scribe-slf4j" % "3.10.0",
   "io.youi" %% "youi-client" % "0.14.4",
-  "org.jsoup" % "jsoup" % "1.15.1",
+  "org.jsoup" % "jsoup" % "1.15.3",
   "com.github.appium" % "java-client" % "8.1.1",
   "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
