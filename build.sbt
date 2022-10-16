@@ -1,8 +1,8 @@
 name := "robobrowser"
 organization := "com.outr"
 version := "1.5.0-SNAPSHOT6"
-scalaVersion := "2.13.8"
-crossScalaVersions := Seq("2.13.8")
+scalaVersion := "2.13.10"
+crossScalaVersions := Seq("2.13.10")
 scalacOptions += "-deprecation"
 
 resolvers += "jitpack.io" at "https://jitpack.io"
