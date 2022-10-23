@@ -25,7 +25,7 @@ developers := List(
 val seleniumVersion = "4.3.0"
 
 libraryDependencies ++= Seq(
-  "com.outr" %% "scribe-slf4j" % "3.10.0",
+  "com.outr" %% "scribe-slf4j" % "3.10.4",
   "io.youi" %% "youi-client" % "0.14.4",
   "org.jsoup" % "jsoup" % "1.15.1",
   "com.github.appium" % "java-client" % "8.1.1",
