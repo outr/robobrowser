@@ -3,8 +3,7 @@ package spec
 import com.outr.robobrowser.appium.RoboIOS
 import com.outr.robobrowser.{By, Context, MobileBrowser}
 import com.outr.robobrowser.integration.IntegrationTests
-import com.outr.robobrowser.monitor.BrowserMonitor
-import io.youi.net._
+import spice.net._
 
 import scala.concurrent.duration._
 

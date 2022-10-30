@@ -7,10 +7,7 @@ import io.appium.java_client.remote.SupportsContextSwitching
 
 import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
-import io.youi.http.cookie.{ResponseCookie, SameSite}
-import io.youi.net.URL
 import org.openqa.selenium.{Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
-import io.youi.stream._
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.html5.{LocalStorage, SessionStorage, WebStorage}
 import org.openqa.selenium.interactions.Actions
@@ -25,8 +22,14 @@ import scala.annotation.tailrec
 import scala.concurrent.TimeoutException
 import scala.util.Try
 import fabric._
-import fabric.parse.Json
-import fabric.rw._
+import fabric.io.{JsonFormatter, JsonParser}
+import fabric.rw.{Asable, Convertible, RW}
+import spice.http.cookie.SameSite
+import spice.http.cookie.{Cookie => SpiceCookie}
+import spice.net.URL
+import spice.streamer._
+
+import scala.collection.mutable
 
 abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
   type Driver <: WebDriver
@@ -167,6 +170,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
           lastVerifiedWindow = now
           val loaded = execute("return typeof window.roboBrowserInitialized !== 'undefined';").asInstanceOf[Boolean]
           if (!loaded) {
+            scribe.info("Initializing window...")
             initWindow()
             execute("window.roboBrowserInitialized = true;")
             pageChanged.trigger()     // Notify that the page has changed
@@ -182,7 +186,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   protected def initWindow(): Unit = {
     val input = getClass.getClassLoader.getResourceAsStream("js-logging.js")
-    val script = IO.stream(input, new StringBuilder).toString
+    val script = Streamer(input, new mutable.StringBuilder).toString
     execute(script)
   }
 
@@ -212,10 +216,10 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   }
   def url: URL = URL(withDriver(_.getCurrentUrl))
   def content(context: Context = Context.Browser): String = withDriverAndContext(context)(_.getPageSource)
-  def save(file: File, context: Context = Context.Browser): Unit = IO.stream(content(context), file)
+  def save(file: File, context: Context = Context.Browser): Unit = Streamer(content(context), file)
   def screenshot(file: File): Unit = {
     val bytes = capture()
-    IO.stream(bytes, file)
+    Streamer(bytes, file)
   }
 
   def atPoint(x: Int, y: Int, context: Context = Context.Browser): Option[WebElement] = {
@@ -273,6 +277,8 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   }) {
     throw AssertionFailed(s"Browser's readyState was not complete after $timeout: $readyState")
   }
+
+  def fullScreen(): Unit = withDriver(_.manage().window().fullscreen())
 
   def readyState: ReadyState = Try(execute("return document.readyState;").toString match {
     case "loading" => ReadyState.Loading
@@ -348,7 +354,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   object storage {
     object cookies {
-      private implicit val ssRW: ReaderWriter[SameSite] = ReaderWriter[SameSite](
+      private implicit val ssRW: RW[SameSite] = RW.from(
         r = (ss: SameSite) => ss match {
           case SameSite.Normal => "normal"
           case SameSite.Lax => "lax"
@@ -361,9 +367,9 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
           case s => throw new RuntimeException(s"Unsupported value for SameSite: $s")
         }
       )
-      private implicit val rw: ReaderWriter[ResponseCookie] = ccRW
+      private implicit val rw: RW[SpiceCookie.Response] = RW.gen
 
-      private def c2rc(cookie: Cookie): ResponseCookie = ResponseCookie(
+      private def c2rc(cookie: Cookie): SpiceCookie.Response = SpiceCookie.Response(
         name = cookie.getName,
         value = cookie.getValue,
         expires = Option(cookie.getExpiry).map(_.getTime),
@@ -373,7 +379,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
         httpOnly = cookie.isHttpOnly
       )
 
-      private def rc2c(cookie: ResponseCookie): Cookie = new Cookie(
+      private def rc2c(cookie: SpiceCookie.Response): Cookie = new Cookie(
         cookie.name,
         cookie.value,
         cookie.domain.orNull,
@@ -383,9 +389,9 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
         cookie.httpOnly
       )
 
-      def all: List[ResponseCookie] = withDriver(_.manage().getCookies.asScala.toList.map(c2rc))
+      def all: List[SpiceCookie.Response] = withDriver(_.manage().getCookies.asScala.toList.map(c2rc))
 
-      def set(cookies: List[ResponseCookie]): Unit = withDriver { driver =>
+      def set(cookies: List[SpiceCookie.Response]): Unit = withDriver { driver =>
         val options = driver.manage()
         options.deleteAllCookies()
         cookies.foreach { c =>
@@ -393,28 +399,28 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
         }
       }
 
-      def add(cookies: List[ResponseCookie]): Unit = withDriver { driver =>
+      def add(cookies: List[SpiceCookie.Response]): Unit = withDriver { driver =>
         val options = driver.manage()
         cookies.foreach { c =>
           options.addCookie(rc2c(c))
         }
       }
 
-      def get(name: String): Option[ResponseCookie] = Option(withDriver(_.manage().getCookieNamed(name))).map(c2rc)
+      def get(name: String): Option[SpiceCookie.Response] = Option(withDriver(_.manage().getCookieNamed(name))).map(c2rc)
 
       def clear(): Unit = withDriver(_.manage().deleteAllCookies())
 
-      def toJson: Value = all.toValue
-      def fromJson(value: Value): List[ResponseCookie] = value.as[List[ResponseCookie]]
+      def toJson: Json = all.json
+      def fromJson(value: Json): List[SpiceCookie.Response] = value.as[List[SpiceCookie.Response]]
 
       def save(file: File): Unit = {
-        val jsonString = Json.format(toJson)
-        IO.stream(jsonString, file)
+        val jsonString = JsonFormatter.Default(toJson)
+        Streamer(jsonString, file)
       }
 
       def load(file: File): Boolean = if (file.isFile) {
-        val jsonString = IO.stream(file, new StringBuilder).toString
-        val json = Json.parse(jsonString)
+        val jsonString = Streamer(file, new mutable.StringBuilder).toString
+        val json = JsonParser(jsonString)
         val cookies = fromJson(json)
         add(cookies)
         true
@@ -458,17 +464,17 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
       def clear(): Unit = ls(_.clear())
 
-      def toJson: Value = map.toValue
-      def fromJson(value: Value): Map[String, String] = value.as[Map[String, String]]
+      def toJson: Json = map.json
+      def fromJson(value: Json): Map[String, String] = value.as[Map[String, String]]
 
       def save(file: File): Unit = {
-        val jsonString = Json.format(toJson)
-        IO.stream(jsonString, file)
+        val jsonString = JsonFormatter.Default(toJson)
+        Streamer(jsonString, file)
       }
 
       def load(file: File): Boolean = if (file.isFile) {
-        val jsonString = IO.stream(file, new StringBuilder).toString
-        val json = Json.parse(jsonString)
+        val jsonString = Streamer(file, new mutable.StringBuilder).toString
+        val json = JsonParser(jsonString)
         val cookies = fromJson(json)
         add(cookies)
         true
@@ -512,17 +518,17 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
       def clear(): Unit = ss(_.clear())
 
-      def toJson: Value = map.toValue
-      def fromJson(value: Value): Map[String, String] = value.as[Map[String, String]]
+      def toJson: Json = map.json
+      def fromJson(value: Json): Map[String, String] = value.as[Map[String, String]]
 
       def save(file: File): Unit = {
-        val jsonString = Json.format(toJson)
-        IO.stream(jsonString, file)
+        val jsonString = JsonFormatter.Default(toJson)
+        Streamer(jsonString, file)
       }
 
       def load(file: File): Boolean = if (file.isFile) {
-        val jsonString = IO.stream(file, new StringBuilder).toString
-        val json = Json.parse(jsonString)
+        val jsonString = Streamer(file, new mutable.StringBuilder).toString
+        val json = JsonParser(jsonString)
         val cookies = fromJson(json)
         add(cookies)
         true
@@ -666,8 +672,9 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
 object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw new NotImplementedError("You must define an implementation")) {
   object Chrome extends RoboBrowserBuilder[RoboBrowser](ChromeBrowserBuilder.create)
+  object Firefox extends RoboBrowserBuilder[RoboBrowser](FirefoxBrowserBuilder.create)
   object Remote extends RoboBrowserBuilder[RoboBrowser](RemoteBrowserBuilder.create)
   object Grid extends RoboBrowserBuilder[RoboBrowser](GridBrowserBuilder.create)
-//  object HtmlUnit extends RoboBrowserBuilder[RoboBrowser](HtmlUnitBrowserBuilder.create)
+  object HtmlUnit extends RoboBrowserBuilder[RoboBrowser](HtmlUnitBrowserBuilder.create)
   object Jsoup extends RoboBrowserBuilder[RoboBrowser](JsoupWebDriver.create)
 }

@@ -1,6 +1,6 @@
 package com.outr.robobrowser
 
-import io.youi.net.URL
+import spice.net.URL
 
 case class BrowserStackOptions(username: String,
                                automateKey: String,

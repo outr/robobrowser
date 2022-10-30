@@ -1,29 +1,27 @@
 package com.outr.robobrowser
 
-import fabric.{Value, obj}
-import fabric.parse.Json
-import io.youi.client.HttpClient
-import io.youi.http.content.Content
-import io.youi.http.{Headers, HttpMethod, HttpResponse, HttpStatus}
-import io.youi.net._
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import fabric._
+import fabric.io.JsonParser
+import spice.http.{Headers, HttpMethod, HttpResponse, HttpStatus}
+import spice.http.client.HttpClient
+import spice.http.content.Content
+import spice.net._
 
 import java.util.Base64
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
+import scala.util.{Failure, Success}
 
 class BrowserStack(val browser: RoboBrowser) extends AnyVal {
   private def options: BrowserStackOptions = browser.capabilities.typed[BrowserStackOptions](BrowserStack.keyName)
 
   def isBrowserStack: Boolean = browser.capabilities.contains(BrowserStack.keyName)
 
-  def markAsync(status: BrowserStack.Status)(implicit ec: ExecutionContext): Future[Value] =
+  def markAsync(status: BrowserStack.Status): IO[Json] =
     BrowserStack.mark(browser.sessionId, options.username, options.automateKey, status)
 
-  def mark(status: BrowserStack.Status): Value = {
-    val future = markAsync(status)(scribe.Execution.global)
-    Await.result(future, 30.seconds)
-  }
+  def mark(status: BrowserStack.Status): Json = markAsync(status).unsafeRunSync()
 }
 
 object BrowserStack {
@@ -75,22 +73,24 @@ object BrowserStack {
     .url(url"https://api-cloud.browserstack.com".withPath(s"/automate/sessions/$sessionId.json"))
     .header(Headers.Request.Authorization(s"Basic ${encoded(username, password)}"))
 
-  private def toJson(response: HttpResponse): Value = {
+  private def toJson(response: HttpResponse): Json = {
     if (response.status != HttpStatus.OK) throw new RuntimeException(s"Error: ${response.status} - ${response.content.map(_.asString)}")
     val content = response.content.getOrElse(
       throw new RuntimeException(s"No content for request: ${response.status}")
     )
-    Json.parse(content.asString)
+    JsonParser(content.asString)
   }
 
-  def status(sessionId: String, username: String, automateKey: String)
-            (implicit ec: ExecutionContext): Future[Value] = client(sessionId, username, automateKey)
+  def status(sessionId: String, username: String, automateKey: String): IO[Json] = client(sessionId, username, automateKey)
     .get
     .send()
+    .map {
+      case Success(value) => value
+      case Failure(exception) => throw exception
+    }
     .map(toJson)
 
-  def mark(sessionId: String, username: String, automateKey: String, status: Status)
-          (implicit ec: ExecutionContext): Future[Value] = {
+  def mark(sessionId: String, username: String, automateKey: String, status: Status): IO[Json] = {
     val json = status match {
       case Status.Passed(reason) => obj("status" -> "passed", "reason" -> reason)
       case Status.Failed(reason) => obj("status" -> "failed", "reason" -> reason)
@@ -99,6 +99,10 @@ object BrowserStack {
       .method(HttpMethod.Put)
       .content(Content.json(json))
       .send()
+      .map {
+        case Success(value) => value
+        case Failure(exception) => throw exception
+      }
       .map(toJson)
   }
 }

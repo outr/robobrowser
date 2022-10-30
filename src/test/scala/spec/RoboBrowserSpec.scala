@@ -6,12 +6,12 @@ import java.io.File
 import com.outr.robobrowser.logging.{LogEntry, LogLevel}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import io.youi.net._
-import com.outr.robobrowser.monitor.BrowserMonitor
+import spice.net._
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    lazy val browser = RoboBrowser.Chrome.headless.windowSize(1600, 1200).create()
+//    lazy val browser = RoboBrowser.Chrome.headless.windowSize(1600, 1200).create()
+    lazy val browser = RoboBrowser.Chrome.windowSize(1600, 1200).create()
     lazy val screenshot = new File("screenshot.png")
 
     var googleTab: Option[WindowHandle] = None
@@ -57,10 +57,10 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       browser.window.switchTo(googleTab.getOrElse(fail()))
       browser.title should be("robobrowser - Google Search")
     }
-    "verify logs are working" in {
-      browser.logs.info("This is a test")
-      browser.logs().map(_.copy(timestamp = 0L)) should be(List(LogEntry(LogLevel.Info, 0L, "This is a test")))
-    }
+//    "verify logs are working" in {
+//      browser.logs.info("This is a test")
+//      browser.logs().map(_.copy(timestamp = 0L)) should be(List(LogEntry(LogLevel.Info, 0L, "This is a test")))
+//    }
     "dispose the browser" in {
       browser.dispose()
     }

@@ -1,14 +1,13 @@
 package com.outr.robobrowser
 
-import io.youi.net._
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Document, Element}
 import org.openqa.selenium
 import org.openqa.selenium.{Dimension, OutputType, Point, Rectangle, WebDriver}
 import org.openqa.selenium.chrome.ChromeOptions
+import spice.net._
 
 import java.util
-import scala.concurrent.duration._
 
 class JsoupWebElement(element: Element) extends selenium.WebElement {
   override def click(): Unit = ???

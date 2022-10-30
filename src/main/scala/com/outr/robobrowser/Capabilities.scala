@@ -1,15 +1,13 @@
 package com.outr.robobrowser
 
-import io.youi.net.URL
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.remote.LocalFileDetector
+import spice.net.URL
 
 import java.util
 
-trait Capabilities {
+abstract class Capabilities(val map: Map[String, Any], val prefs: util.HashMap[String, Any]) {
   type C <: Capabilities
-
-  def map: Map[String, Any]
 
   def apply(options: ChromeOptions): Unit = map.foreach {
     case (key, value) => value match {
@@ -54,10 +52,22 @@ trait Capabilities {
     contentSettings.put("notifications", Integer.valueOf(n))
     val profile = new util.HashMap[String, AnyRef]
     profile.put("managed_default_content_settings", contentSettings)
-    val prefs = new util.HashMap[String, AnyRef]
     prefs.put("profile", profile)
     withCapabilities("prefs" -> ExperimentalOption(prefs))
   }
+
+  def disablePasswordManager: C = {
+    prefs.put("credentials_enable_service", false)
+    prefs.put("profile.password_manager_enabled", false)
+    withCapabilities("prefs" -> ExperimentalOption(prefs))
+  }
+
+  def app(url: URL): C = withArguments("app" -> s"--app=$url")
+
+  def kiosk: C = withArguments("kios" -> "--kiosk")
+
+  def disableControlledBar: C =
+    withCapabilities("excludeSwitches" -> ExperimentalOption(Array("enable-automation")))
 
   def mobileEmulation(deviceName: String,
                       width: Int = -1,
@@ -89,6 +99,8 @@ trait Capabilities {
 
   def windowSize(width: Int, height: Int): C = withArguments("window-size" -> s"--window-size=$width,$height")
 
+  def enableDRM: C = withArguments("media.eme.enabled" -> "true", "media.gmp-manager.updateEnabled" -> "true")
+
   def maximized: C = withArguments("start-maximized" -> "--start-maximized")
 
   def device(id: String): C = withCapabilities("device" -> id)
@@ -118,11 +130,9 @@ trait Capabilities {
 object Capabilities {
   def apply(pairs: (String, Any)*): Capabilities = apply(pairs.toMap)
 
-  def apply(capabilities: Map[String, Any]): Capabilities = new Capabilities {
+  def apply(map: Map[String, Any]): Capabilities = new Capabilities(map, new util.HashMap[String, Any]) {
     override type C = Capabilities
 
     override def ++(that: Capabilities): C = Capabilities(this.map ++ that.map)
-
-    override def map: Map[String, Any] = capabilities
   }
 }

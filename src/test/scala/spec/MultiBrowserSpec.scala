@@ -1,9 +1,9 @@
 package spec
 
 import com.outr.robobrowser.RoboBrowser
-import io.youi.net._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import spice.net._
 
 import scala.util.Try
 

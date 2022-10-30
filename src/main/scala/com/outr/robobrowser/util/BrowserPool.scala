@@ -1,7 +1,7 @@
 package com.outr.robobrowser.util
 
 import com.outr.robobrowser.RoboBrowser
-import io.youi.net._
+import spice.net._
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.annotation.tailrec

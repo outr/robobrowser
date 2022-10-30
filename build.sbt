@@ -1,8 +1,8 @@
 name := "robobrowser"
 organization := "com.outr"
 version := "1.5.0-SNAPSHOT6"
-scalaVersion := "2.13.8"
-crossScalaVersions := Seq("2.13.8")
+scalaVersion := "2.13.10"
+crossScalaVersions := Seq("2.13.10")
 scalacOptions += "-deprecation"
 
 resolvers += "jitpack.io" at "https://jitpack.io"
@@ -22,21 +22,22 @@ developers := List(
   Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("http://matthicks.com"))
 )
 
-val seleniumVersion = "4.3.0"
+val seleniumVersion = "4.5.2"
 
 libraryDependencies ++= Seq(
-  "com.outr" %% "scribe-slf4j" % "3.10.0",
-  "io.youi" %% "youi-client" % "0.14.4",
-  "org.jsoup" % "jsoup" % "1.15.1",
-  "com.github.appium" % "java-client" % "8.1.1",
+  "com.outr" %% "scribe-slf4j" % "3.10.4",
+  "com.outr" %% "spice-client" % "0.0.2-SNAPSHOT",
+  "org.jsoup" % "jsoup" % "1.15.3",
+  "io.appium" % "java-client" % "8.2.0",
   "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
+  "org.seleniumhq.selenium" % "selenium-firefox-driver" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-remote-driver" % seleniumVersion,
-  "org.seleniumhq.selenium" % "htmlunit-driver" % "3.62.0",
+  "org.seleniumhq.selenium" % "htmlunit-driver" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
-  "com.lihaoyi" %% "sourcecode" % "0.2.8",
-  "com.fifesoft" % "rsyntaxtextarea" % "3.2.0",
-  "org.scalatest" %% "scalatest" % "3.2.12" % "test"
+  "com.lihaoyi" %% "sourcecode" % "0.3.0",
+  "com.fifesoft" % "rsyntaxtextarea" % "3.3.0",
+  "org.scalatest" %% "scalatest" % "3.2.14" % "test"
 )
 
 fork := true

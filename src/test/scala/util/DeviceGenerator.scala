@@ -1,8 +1,8 @@
 package util
 
-import fabric.parse.Json
-import fabric.rw._
-import io.youi.stream.IO
+import fabric.io.JsonParser
+import fabric.rw.{Asable, RW}
+import spice.streamer._
 
 import java.io.File
 
@@ -11,8 +11,8 @@ import java.io.File
  */
 object DeviceGenerator {
   def main(args: Array[String]): Unit = {
-    val jsonString = IO.stream(getClass.getClassLoader.getResourceAsStream("browsers.json"), new StringBuilder).toString
-    val json = Json.parse(jsonString)
+    val jsonString = Streamer(getClass.getClassLoader.getResourceAsStream("browsers.json"), new StringBuilder).toString
+    val json = JsonParser(jsonString)
     val info = json.as[List[DeviceInfo]]
     val oses = info.groupBy(_.os)
     android(oses("android"))
@@ -52,7 +52,7 @@ object DeviceGenerator {
          |
          |$objects
          |}""".stripMargin
-    IO.stream(code, file)
+    Streamer(code, file)
   }
 
   def ios(list: List[DeviceInfo]): Unit = {
@@ -88,7 +88,7 @@ object DeviceGenerator {
          |
          |$objects
          |}""".stripMargin
-    IO.stream(code, file)
+    Streamer(code, file)
   }
 
   case class DeviceInfo(os: String,
@@ -99,6 +99,6 @@ object DeviceGenerator {
                         real_mobile: Option[Boolean])
 
   object DeviceInfo {
-    implicit val rw: ReaderWriter[DeviceInfo] = ccRW
+    implicit val rw: RW[DeviceInfo] = RW.gen
   }
 }

@@ -3,7 +3,7 @@ package spec
 import com.outr.robobrowser.{By, RoboBrowser}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import io.youi.net._
+import spice.net.interpolation
 
 import java.io.File
 import scala.io.Source
