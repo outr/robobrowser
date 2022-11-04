@@ -1,4 +1,4 @@
-package com.outr.robobrowser
+package com.outr.robobrowser.browserstack
 
 import spice.net.URL
 
@@ -11,6 +11,6 @@ case class BrowserStackOptions(username: String,
                                networkLogs: Boolean = true,
                                idleTimeout: Int = 300,
                                local: Boolean = false,
-                               appiumVersion: String = "1.22.0") extends Transient {
+                               appiumVersion: String = "1.22.0") {
   lazy val url: URL = BrowserStack.url(username, automateKey)
 }

@@ -1,10 +1,13 @@
 package spec
 
-import com.outr.robobrowser.{Browser, BrowserStackOptions, MobileBrowser, RoboBrowser}
+import com.outr.robobrowser.browser.ios.IOS
+import com.outr.robobrowser.MobileBrowser
 import com.outr.robobrowser.integration.{IntegrationTestSuite, IntegrationTestsInstance}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import profig.Profig
+
+import com.outr.robobrowser.browserstack._
 
 class IntegrationTestSpec extends AnyWordSpec with Matchers with IntegrationTestSuite {
   lazy val bsOptions: BrowserStackOptions = BrowserStackOptions(
@@ -20,15 +23,15 @@ class IntegrationTestSpec extends AnyWordSpec with Matchers with IntegrationTest
     }
     "run successfully on Android" in {
       test on List(
-        RoboBrowser.`iPhone XS`.v15,
-        RoboBrowser.`iPhone 12 Pro`.`v14`,
-        RoboBrowser.`iPhone 11 Pro`.`v13`
-//        RoboBrowser.`Samsung Galaxy S21 Ultra`.`v11.0`
-      ).map { builder =>
-        val browser = builder.browserStack(bsOptions).create()
+        IOS.`iPhone XS`.v15,
+        IOS.`iPhone 12 Pro`.`v14`,
+        IOS.`iPhone 11 Pro`.`v13`
+//        Android.`Samsung Galaxy S21 Ultra`.`v11.0`
+      ).map { options =>
+        val browser = options.browserStack(bsOptions).create()
         browser.verifyWindowInitializationCheck = false
         IntegrationTestsInstance[MobileBrowser](() => BrowserStackTests(
-          label = builder.typed[String]("device"),
+          label = options.capabilities.getCapability("device").toString,
           browser = browser
         ))
       }

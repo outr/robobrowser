@@ -1,6 +1,8 @@
 package spec
 
 import com.outr.robobrowser._
+import com.outr.robobrowser.browser.chrome.Chrome
+import com.outr.robobrowser.browser.firefox.Firefox
 
 import java.io.File
 import com.outr.robobrowser.logging.{LogEntry, LogLevel}
@@ -8,10 +10,11 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import spice.net._
 
+import scala.concurrent.duration.DurationInt
+
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-//    lazy val browser = RoboBrowser.Chrome.headless.windowSize(1600, 1200).create()
-    lazy val browser = RoboBrowser.Chrome.windowSize(1600, 1200).create()
+    lazy val browser = Chrome.headless.windowSize(1600, 1200).create()
     lazy val screenshot = new File("screenshot.png")
 
     var googleTab: Option[WindowHandle] = None
@@ -28,6 +31,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       input.tagName should be("input")
       input.sendKeys("robobrowser")
       input.submit()
+      browser.waitFor(5.seconds)(browser.title == "robobrowser - Google Search")
       browser.title should be("robobrowser - Google Search")
     }
     "create a screenshot" in {
@@ -50,6 +54,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       input.tagName should be("input")
       input.sendKeys("robobrowser")
       input.submit()
+      browser.waitFor(5.seconds)(browser.title == "robobrowser at DuckDuckGo")
       browser.title should be("robobrowser at DuckDuckGo")
     }
     "switch back to Google tab" in {

@@ -1,6 +1,6 @@
 package spec
 
-import com.outr.robobrowser.appium.RoboIOS
+import com.outr.robobrowser.browser.ios.IOS
 import com.outr.robobrowser.{By, Context, MobileBrowser}
 import com.outr.robobrowser.integration.IntegrationTests
 import spice.net._
@@ -19,7 +19,7 @@ case class BrowserStackTests(label: String, browser: MobileBrowser) extends Inte
     }
     "select the first photo" in {
       browser match {
-        case ios: RoboIOS => ios.selectPhotos() { photos =>
+        case ios: IOS => ios.selectPhotos() { photos =>
           photos.take(1)
         }
         case _ => throw new UnsupportedOperationException("Unsupported RoboBrowser")
