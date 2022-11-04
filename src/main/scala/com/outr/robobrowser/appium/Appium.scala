@@ -1,6 +1,8 @@
 package com.outr.robobrowser.appium
 
 import com.outr.robobrowser.RoboBrowser
+import com.outr.robobrowser.browser.android.Android
+import com.outr.robobrowser.browser.ios.IOS
 
 trait Appium extends RoboBrowser {
   lazy val iOSVersion: Option[Int] = if (isIOS) {
@@ -17,8 +19,8 @@ trait Appium extends RoboBrowser {
 
   def version: Double
 
-  lazy val isAndroid: Boolean = this.isInstanceOf[RoboAndroid]
-  lazy val isIOS: Boolean = this.isInstanceOf[RoboIOS]
+  lazy val isAndroid: Boolean = this.isInstanceOf[Android]
+  lazy val isIOS: Boolean = this.isInstanceOf[IOS]
 
   def nativeAllow(reject: Boolean = false): Boolean
   def home(): Unit

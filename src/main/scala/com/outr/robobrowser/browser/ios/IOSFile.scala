@@ -1,4 +1,4 @@
-package com.outr.robobrowser.appium
+package com.outr.robobrowser.browser.ios
 
 import com.outr.robobrowser.WebElement
 

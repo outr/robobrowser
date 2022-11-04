@@ -31,8 +31,11 @@ import spice.streamer._
 
 import scala.collection.mutable
 
-abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
+abstract class RoboBrowser extends AbstractElement { rb =>
   type Driver <: WebDriver
+
+  def sessionId: String
+  protected def _driver: Driver
 
   private lazy val mainContext: Context = scs(scs => {
     scs
@@ -87,18 +90,6 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   protected var chromeOptions: ChromeOptions = _
 
   private val _initialized = new AtomicBoolean(false)
-
-  private lazy val _driver: Driver = {
-    val options = new ChromeOptions
-    capabilities(options)
-    configureOptions(options)
-    chromeOptions = options
-    createWebDriver(options)
-  }
-
-  def sessionId: String
-
-  protected def createWebDriver(options: ChromeOptions): Driver
 
   protected def withDriver[Return](f: Driver => Return): Return = withDriverAndContext(Context.Browser)(f)
 
@@ -670,11 +661,11 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   }
 }
 
-object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw new NotImplementedError("You must define an implementation")) {
-  object Chrome extends RoboBrowserBuilder[RoboBrowser](ChromeBrowserBuilder.create)
-  object Firefox extends RoboBrowserBuilder[RoboBrowser](FirefoxBrowserBuilder.create)
-  object Remote extends RoboBrowserBuilder[RoboBrowser](RemoteBrowserBuilder.create)
-  object Grid extends RoboBrowserBuilder[RoboBrowser](GridBrowserBuilder.create)
-  object HtmlUnit extends RoboBrowserBuilder[RoboBrowser](HtmlUnitBrowserBuilder.create)
-  object Jsoup extends RoboBrowserBuilder[RoboBrowser](JsoupWebDriver.create)
-}
+//object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw new NotImplementedError("You must define an implementation")) {
+//  object Chrome extends RoboBrowserBuilder[RoboBrowser](ChromeBrowserBuilder.create)
+//  object Firefox extends RoboBrowserBuilder[RoboBrowser](FirefoxBrowserBuilder.create)
+//  object Remote extends RoboBrowserBuilder[RoboBrowser](RemoteBrowserBuilder.create)
+//  object Grid extends RoboBrowserBuilder[RoboBrowser](GridBrowserBuilder.create)
+//  object HtmlUnit extends RoboBrowserBuilder[RoboBrowser](HtmlUnitBrowserBuilder.create)
+//  object Jsoup extends RoboBrowserBuilder[RoboBrowser](JsoupWebDriver.create)
+//}

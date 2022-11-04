@@ -55,15 +55,16 @@ trait IntegrationTests[Browser <: RoboBrowser] extends AssertionsSupport { suite
   }
 
   def finish(label: String, result: RunResult): Unit = {
-    if (browser.isBrowserStack) {
-      result match {
-        case RunResult.Success =>
-          browser.mark(BrowserStack.Status.Passed(s"$label successfully passed"))
-        case RunResult.Failure(test, throwable) =>
-          val description = test.context.map(c => s"$c: ${test.description}").getOrElse(test.description)
-          browser.mark(BrowserStack.Status.Failed(s"$description failed with message: ${throwable.getMessage}"))
-      }
-    }
+    // TODO: Use BrowserStack as a mix-in for RoboBrowser
+//    if (browser.isBrowserStack) {
+//      result match {
+//        case RunResult.Success =>
+//          browser.mark(BrowserStack.Status.Passed(s"$label successfully passed"))
+//        case RunResult.Failure(test, throwable) =>
+//          val description = test.context.map(c => s"$c: ${test.description}").getOrElse(test.description)
+//          browser.mark(BrowserStack.Status.Failed(s"$description failed with message: ${throwable.getMessage}"))
+//      }
+//    }
 
     if (result.isFailure && debug) {
       Try {

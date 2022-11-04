@@ -13,11 +13,8 @@ import java.util.Base64
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success}
 
-class BrowserStack(val browser: RoboBrowser) extends AnyVal {
-  private def options: BrowserStackOptions = browser.capabilities.typed[BrowserStackOptions](BrowserStack.keyName)
-
-  def isBrowserStack: Boolean = browser.capabilities.contains(BrowserStack.keyName)
-
+// TODO: Revisit this!
+class BrowserStack(val browser: RoboBrowser, options: BrowserStackOptions) {
   def markAsync(status: BrowserStack.Status): IO[Json] =
     BrowserStack.mark(browser.sessionId, options.username, options.automateKey, status)
 
@@ -34,29 +31,29 @@ object BrowserStack {
     case class Failed(reason: String) extends Status
   }
 
-  def apply[C <: Capabilities](capabilities: C, options: BrowserStackOptions): capabilities.C#C = {
-    val o = options
-    def t[V](key: String, value: Option[V]): Option[(String, Any)] = value.map(v => key -> v.toString)
-
-    val bs = List(
-      t("osVersion", capabilities.get("os_version")),
-      t("deviceName", capabilities.get("device")),
-      t("realMobile", capabilities.get("real_mobile")),
-      t("projectName", Some(o.projectName)),
-      t("buildName", Some(o.buildName)),
-      t("sessionName", Some(o.sessionName.getOrElse(s"${capabilities.get("device").get} ${capabilities.get("browser").get}"))),
-      t("local", Some(o.local)),
-      t("networkLogs", Some(o.networkLogs)),
-      t("idleTimeout", Some(o.idleTimeout)),
-      t("appiumVersion", Some(o.appiumVersion)),
-      t("consoleLogs", Some(o.consoleLogs))
-    ).flatten.toMap.asJava
-
-    capabilities.withCapabilities(
-      "bstack:options" -> bs,
-      BrowserStack.keyName -> o
-    ).url(o.url)
-  }
+//  def apply[C <: Capabilities](capabilities: C, options: BrowserStackOptions): capabilities.C#C = {
+//    val o = options
+//    def t[V](key: String, value: Option[V]): Option[(String, Any)] = value.map(v => key -> v.toString)
+//
+//    val bs = List(
+//      t("osVersion", capabilities.get("os_version")),
+//      t("deviceName", capabilities.get("device")),
+//      t("realMobile", capabilities.get("real_mobile")),
+//      t("projectName", Some(o.projectName)),
+//      t("buildName", Some(o.buildName)),
+//      t("sessionName", Some(o.sessionName.getOrElse(s"${capabilities.get("device").get} ${capabilities.get("browser").get}"))),
+//      t("local", Some(o.local)),
+//      t("networkLogs", Some(o.networkLogs)),
+//      t("idleTimeout", Some(o.idleTimeout)),
+//      t("appiumVersion", Some(o.appiumVersion)),
+//      t("consoleLogs", Some(o.consoleLogs))
+//    ).flatten.toMap.asJava
+//
+//    capabilities.withCapabilities(
+//      "bstack:options" -> bs,
+//      BrowserStack.keyName -> o
+//    ).url(o.url)
+//  }
 
   def url(username: String, automateKey: String): URL = URL(
     protocol = Protocol.Https,
