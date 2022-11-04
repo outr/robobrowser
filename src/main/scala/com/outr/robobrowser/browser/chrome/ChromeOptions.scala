@@ -1,8 +1,13 @@
 package com.outr.robobrowser.browser.chrome
 
+import com.outr.robobrowser.browser.BrowserOptions
+import org.openqa.selenium.Capabilities
 import org.openqa.selenium.chrome.{ChromeOptions => SeleniumChromeOptions}
 
-case class ChromeOptions(options: SeleniumChromeOptions, driverPath: Option[String] = None) {
+case class ChromeOptions(options: SeleniumChromeOptions, driverPath: Option[String] = None) extends BrowserOptions[ChromeOptions] {
+  override def capabilities: Capabilities = options
+  override def merge(capabilities: Capabilities): ChromeOptions = copy(options.merge(capabilities))
+
   def driverPath(path: String): ChromeOptions = copy(driverPath = Some(path))
 
   protected def add(f: SeleniumChromeOptions => SeleniumChromeOptions): ChromeOptions = {

@@ -5,7 +5,7 @@ import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions => SeleniumChrome
 
 import java.io.{File, FileNotFoundException}
 
-class Chrome(options: SeleniumChromeOptions) extends RoboBrowser {
+class Chrome(options: SeleniumChromeOptions) extends RoboBrowser(options) {
   override type Driver = ChromeDriver
 
   override def sessionId: String = "Chrome"

@@ -5,7 +5,7 @@ import org.openqa.selenium.{Capabilities, ImmutableCapabilities}
 import org.openqa.selenium.remote.{FileDetector, RemoteWebDriver}
 import spice.net._
 
-class Remote(url: URL, capabilities: Capabilities, fileDetector: Option[FileDetector]) extends RoboBrowser {
+class Remote(url: URL, capabilities: Capabilities, fileDetector: Option[FileDetector]) extends RoboBrowser(capabilities) {
   override type Driver = RemoteWebDriver
 
   override def sessionId: String = withDriver(_.getSessionId.toString)
@@ -18,4 +18,4 @@ class Remote(url: URL, capabilities: Capabilities, fileDetector: Option[FileDete
   }
 }
 
-object Remote extends RemoteOptions(url"http://localhost:4444", new ImmutableCapabilities, None)
+object Remote extends RemoteOptions(new ImmutableCapabilities, None)

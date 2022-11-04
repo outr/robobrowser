@@ -1,20 +1,23 @@
-package com.outr.robobrowser
+package com.outr.robobrowser.browserstack
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import fabric._
+import com.outr.robobrowser.RoboBrowser
 import fabric.io.JsonParser
+import fabric.{Json, obj}
 import spice.http.{Headers, HttpMethod, HttpResponse, HttpStatus}
 import spice.http.client.HttpClient
 import spice.http.content.Content
 import spice.net._
 
 import java.util.Base64
-import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success}
 
-// TODO: Revisit this!
-class BrowserStack(val browser: RoboBrowser, options: BrowserStackOptions) {
+case class BrowserStack(browser: RoboBrowser) extends AnyVal {
+  private def options: BrowserStackOptions = browser.capabilities.getCapability(BrowserStack.keyName).asInstanceOf[BrowserStackOptions]
+
+  def isBrowserStack: Boolean = Option(browser.capabilities.getCapability(BrowserStack.keyName)).nonEmpty
+
   def markAsync(status: BrowserStack.Status): IO[Json] =
     BrowserStack.mark(browser.sessionId, options.username, options.automateKey, status)
 
@@ -22,7 +25,7 @@ class BrowserStack(val browser: RoboBrowser, options: BrowserStackOptions) {
 }
 
 object BrowserStack {
-  private val keyName: String = "browserStackOptions"
+  val keyName: String = "browserStackOptions"
 
   sealed trait Status
 
@@ -30,30 +33,6 @@ object BrowserStack {
     case class Passed(reason: String) extends Status
     case class Failed(reason: String) extends Status
   }
-
-//  def apply[C <: Capabilities](capabilities: C, options: BrowserStackOptions): capabilities.C#C = {
-//    val o = options
-//    def t[V](key: String, value: Option[V]): Option[(String, Any)] = value.map(v => key -> v.toString)
-//
-//    val bs = List(
-//      t("osVersion", capabilities.get("os_version")),
-//      t("deviceName", capabilities.get("device")),
-//      t("realMobile", capabilities.get("real_mobile")),
-//      t("projectName", Some(o.projectName)),
-//      t("buildName", Some(o.buildName)),
-//      t("sessionName", Some(o.sessionName.getOrElse(s"${capabilities.get("device").get} ${capabilities.get("browser").get}"))),
-//      t("local", Some(o.local)),
-//      t("networkLogs", Some(o.networkLogs)),
-//      t("idleTimeout", Some(o.idleTimeout)),
-//      t("appiumVersion", Some(o.appiumVersion)),
-//      t("consoleLogs", Some(o.consoleLogs))
-//    ).flatten.toMap.asJava
-//
-//    capabilities.withCapabilities(
-//      "bstack:options" -> bs,
-//      BrowserStack.keyName -> o
-//    ).url(o.url)
-//  }
 
   def url(username: String, automateKey: String): URL = URL(
     protocol = Protocol.Https,

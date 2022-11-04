@@ -8,7 +8,7 @@ import spice.net.URL
 
 import scala.jdk.CollectionConverters._
 
-class Android(url: URL, capabilities: Capabilities) extends RoboBrowser with Appium {
+class Android(url: URL, capabilities: Capabilities) extends RoboBrowser(capabilities) with Appium {
   override type Driver = AndroidDriver
 
   override lazy val version: Double = capabilities.getCapability("os_version").toString.toDouble

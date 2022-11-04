@@ -5,7 +5,7 @@ import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions => SeleniumFir
 
 import java.io.{File, FileNotFoundException}
 
-class Firefox(options: SeleniumFirefoxOptions) extends RoboBrowser {
+class Firefox(options: SeleniumFirefoxOptions) extends RoboBrowser(options) {
   override type Driver = FirefoxDriver
 
   override def sessionId: String = "Firefox"

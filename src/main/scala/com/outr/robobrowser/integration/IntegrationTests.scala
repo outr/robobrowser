@@ -1,6 +1,6 @@
 package com.outr.robobrowser.integration
 
-import com.outr.robobrowser.{BrowserStack, RoboBrowser}
+import com.outr.robobrowser.RoboBrowser
 import scribe.data.MDC
 
 import java.io.File

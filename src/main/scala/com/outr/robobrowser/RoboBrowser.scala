@@ -7,7 +7,7 @@ import io.appium.java_client.remote.SupportsContextSwitching
 
 import java.io.{File, FileWriter, PrintWriter}
 import java.util.Date
-import org.openqa.selenium.{Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
+import org.openqa.selenium.{Capabilities, Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.html5.{LocalStorage, SessionStorage, WebStorage}
 import org.openqa.selenium.interactions.Actions
@@ -31,7 +31,7 @@ import spice.streamer._
 
 import scala.collection.mutable
 
-abstract class RoboBrowser extends AbstractElement { rb =>
+abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
   type Driver <: WebDriver
 
   def sessionId: String

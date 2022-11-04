@@ -10,7 +10,7 @@ import spice.net._
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters.MapHasAsJava
 
-class IOS(url: URL, capabilities: Capabilities) extends RoboBrowser with Appium {
+class IOS(url: URL, capabilities: Capabilities) extends RoboBrowser(capabilities) with Appium {
   override type Driver = IOSDriver
 
   override def version: Double = capabilities.getCapability("os_version").toString.toDouble

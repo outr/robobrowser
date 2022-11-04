@@ -1,4 +1,4 @@
-package com.outr.robobrowser
+package com.outr.robobrowser.browserstack
 
 import spice.net.URL
 

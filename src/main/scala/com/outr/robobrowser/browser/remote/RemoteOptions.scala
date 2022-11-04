@@ -1,15 +1,16 @@
 package com.outr.robobrowser.browser.remote
 
+import com.outr.robobrowser.browser.BrowserOptions
 import org.openqa.selenium.Capabilities
 import org.openqa.selenium.remote.FileDetector
 import spice.net._
 
-case class RemoteOptions(url: URL, capabilities: Capabilities, fileDetector: Option[FileDetector]) {
-  def fileDetector(detector: FileDetector): RemoteOptions = copy(fileDetector = Some(detector))
+case class RemoteOptions(capabilities: Capabilities, fileDetector: Option[FileDetector]) extends BrowserOptions[RemoteOptions] {
+  override def merge(capabilities: Capabilities): RemoteOptions = copy(capabilities = this.capabilities.merge(capabilities))
 
-  def url(url: URL): RemoteOptions = copy(url = url)
+  def fileDetector(detector: FileDetector): RemoteOptions = copy(fileDetector = Some(detector))
 
   def grid: RemoteOptions = url(url"http://localhost:4444/wd/hub")
 
-  def create(): Remote = new Remote(url, capabilities, fileDetector)
+  def create(url: URL = typed[URL]("url", url"http://localhost:4444")): Remote = new Remote(url, capabilities, fileDetector)
 }

@@ -1,8 +1,9 @@
 package com.outr.robobrowser.browser.jsoup
 
 import com.outr.robobrowser.RoboBrowser
+import org.openqa.selenium.ImmutableCapabilities
 
-class JsoupBrowser(userAgent: String) extends RoboBrowser {
+class JsoupBrowser(userAgent: String) extends RoboBrowser(new ImmutableCapabilities) {
   override type Driver = JsoupWebDriver
 
   override def sessionId: String = "Jsoup"

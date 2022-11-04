@@ -1,10 +1,15 @@
 package com.outr.robobrowser.browser.firefox
 
+import com.outr.robobrowser.browser.BrowserOptions
+import org.openqa.selenium.Capabilities
 import org.openqa.selenium.firefox.{FirefoxProfile, FirefoxOptions => SeleniumFirefoxOptions}
 
 import java.io.File
 
-case class FirefoxOptions(options: SeleniumFirefoxOptions, driverPath: Option[String] = None) {
+case class FirefoxOptions(options: SeleniumFirefoxOptions, driverPath: Option[String] = None) extends BrowserOptions[FirefoxOptions] {
+  override def capabilities: Capabilities = options
+  override def merge(capabilities: Capabilities): FirefoxOptions = copy(options.merge(capabilities))
+
   def driverPath(path: String): FirefoxOptions = copy(driverPath = Some(path))
 
   protected def add(f: SeleniumFirefoxOptions => SeleniumFirefoxOptions): FirefoxOptions = {
