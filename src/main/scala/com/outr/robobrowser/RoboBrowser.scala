@@ -660,12 +660,3 @@ abstract class RoboBrowser extends AbstractElement { rb =>
     }
   }
 }
-
-//object RoboBrowser extends RoboBrowserBuilder[RoboBrowser](creator = _ => throw new NotImplementedError("You must define an implementation")) {
-//  object Chrome extends RoboBrowserBuilder[RoboBrowser](ChromeBrowserBuilder.create)
-//  object Firefox extends RoboBrowserBuilder[RoboBrowser](FirefoxBrowserBuilder.create)
-//  object Remote extends RoboBrowserBuilder[RoboBrowser](RemoteBrowserBuilder.create)
-//  object Grid extends RoboBrowserBuilder[RoboBrowser](GridBrowserBuilder.create)
-//  object HtmlUnit extends RoboBrowserBuilder[RoboBrowser](HtmlUnitBrowserBuilder.create)
-//  object Jsoup extends RoboBrowserBuilder[RoboBrowser](JsoupWebDriver.create)
-//}
