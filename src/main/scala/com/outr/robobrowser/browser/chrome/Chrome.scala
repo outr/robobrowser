@@ -4,6 +4,7 @@ import com.outr.robobrowser.RoboBrowser
 import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions => SeleniumChromeOptions}
 
 import java.io.{File, FileNotFoundException}
+import java.util
 
 class Chrome(options: SeleniumChromeOptions) extends RoboBrowser(options) {
   override type Driver = ChromeDriver
@@ -13,7 +14,7 @@ class Chrome(options: SeleniumChromeOptions) extends RoboBrowser(options) {
   override protected lazy val _driver: ChromeDriver = new ChromeDriver(options)
 }
 
-object Chrome extends ChromeOptions(new SeleniumChromeOptions) {
+object Chrome extends ChromeOptions(new SeleniumChromeOptions, None, new util.HashMap[String, Any]) {
   // TODO: Support auto-download of chromedriver from https://chromedriver.storage.googleapis.com/index.html
   // TODO: Detect installed version of Chrome using google-chrome --version
   private val searchPaths = List("/usr/bin/chromedriver", "/opt/homebrew/bin/chromedriver")
