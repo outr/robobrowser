@@ -19,31 +19,111 @@ class EventManager(browser: RoboBrowser) {
     browser.executeInputStream(input)
   }
 
-  def queue[T](key: String)(implicit rw: RW[T]): EventManagerQueue[T] = synchronized {
-    assert(!queueMap.contains(key), s"Queue already exists for $key")
-    val q = new EventManagerQueue[T](key, rw, browser)
-    queueMap += key -> q
-    q
-  }
+  object queue {
+    def apply[T](key: String)(implicit rw: RW[T]): EventManagerQueue[T] = synchronized {
+      assert(!queueMap.contains(key), s"Queue already exists for $key")
+      val q = new EventManagerQueue[T](key, rw, browser)
+      queueMap += key -> q
+      q
+    }
 
-  def keyEventQueue(key: String, element: Option[WebElement]): EventManagerQueue[KeyEvent] = {
-    val q = queue[KeyEvent](key)
-    browser.execute(
-      """let el = arguments[1];
-        |if (!el) el = document;
-        |el.addEventListener('keyup', (e) => {
-        |  window.roboEvents.enqueueJson(arguments[0], {
-        |    'code': e.code,
-        |    'key': e.key,
-        |    'repeat': e.repeat,
-        |    'composing': e.isComposing,
-        |    'shift': e.shiftKey,
-        |    'alt': e.altKey,
-        |    'ctrl': e.ctrlKey,
-        |    'meta': e.metaKey
-        |  }, e.target);
-        |});""".stripMargin, key, element.orNull)
-    q
+    private def events[T](key: String, element: Option[WebElement], eventType: String, toJson: String)
+                         (implicit rw: RW[T]): EventManagerQueue[T] = {
+      val q = queue[T](key)
+      browser.execute(
+       s"""let el = arguments[1];
+          |if (!el) el = document;
+          |el.addEventListener('$eventType', (e) => {
+          |  window.roboEvents.enqueueJson(arguments[0], $toJson, e.target);
+          |});""".stripMargin, key, element.orNull)
+      q
+    }
+
+    object key {
+      private lazy val js: String =
+        """{
+          |  'code': e.code,
+          |  'key': e.key,
+          |  'repeat': e.repeat,
+          |  'composing': e.isComposing,
+          |  'shift': e.shiftKey,
+          |  'alt': e.altKey,
+          |  'ctrl': e.ctrlKey,
+          |  'meta': e.metaKey
+          |}""".stripMargin
+
+      def down(key: String, element: Option[WebElement]): EventManagerQueue[KeyEvent] =
+        events[KeyEvent](key, element, "keyup", js)
+
+      def up(key: String, element: Option[WebElement]): EventManagerQueue[KeyEvent] =
+        events[KeyEvent](key, element, "keyup", js)
+    }
+
+    object pointer {
+      private lazy val js: String =
+        """{
+          |  'button': e.button,
+          |  'buttons': e.buttons,
+          |  'x': e.x,
+          |  'y': e.y,
+          |  'clientX': e.clientX,
+          |  'clientY': e.clientY,
+          |  'movementX': e.movementX,
+          |  'movementY': e.movementY,
+          |  'offsetX': e.offsetX,
+          |  'offsetY': e.offsetY,
+          |  'pageX': e.pageX,
+          |  'pageY': e.pageY,
+          |  'screenX': e.screenX,
+          |  'screenY': e.screenY,
+          |  'pointerId': e.pointerId,
+          |  'width': e.width,
+          |  'height': e.height,
+          |  'pressure': e.pressure,
+          |  'tangentialPressure': e.tangentialPressure,
+          |  'tiltX': e.tiltX,
+          |  'tiltY': e.tiltY,
+          |  'twist': e.twist,
+          |  'pointerType': e.pointerType,
+          |  'primary': e.isPrimary,
+          |  'shift': e.shiftKey,
+          |  'alt': e.altKey,
+          |  'ctrl': e.ctrlKey,
+          |  'meta': e.metaKey
+          |}""".stripMargin
+
+      def over(key: String, element: Option[WebElement]): EventManagerQueue[PointerEvent] =
+        events[PointerEvent](key, element, "pointerover", js)
+
+      def enter(key: String, element: Option[WebElement]): EventManagerQueue[PointerEvent] =
+        events[PointerEvent](key, element, "pointerenter", js)
+
+      def down(key: String, element: Option[WebElement]): EventManagerQueue[PointerEvent] =
+        events[PointerEvent](key, element, "pointerdown", js)
+
+      def move(key: String, element: Option[WebElement]): EventManagerQueue[PointerEvent] =
+        events[PointerEvent](key, element, "pointermove", js)
+
+      def up(key: String, element: Option[WebElement]): EventManagerQueue[PointerEvent] =
+        events[PointerEvent](key, element, "pointerup", js)
+
+      def cancel(key: String, element: Option[WebElement]): EventManagerQueue[PointerEvent] =
+        events[PointerEvent](key, element, "pointercancel", js)
+
+      def out(key: String, element: Option[WebElement]): EventManagerQueue[PointerEvent] =
+        events[PointerEvent](key, element, "pointerout", js)
+
+      def leave(key: String, element: Option[WebElement]): EventManagerQueue[PointerEvent] =
+        events[PointerEvent](key, element, "pointerleave", js)
+
+      object capture {
+        def got(key: String, element: Option[WebElement]): EventManagerQueue[PointerEvent] =
+          events[PointerEvent](key, element, "gotpointercapture", js)
+
+        def lost(key: String, element: Option[WebElement]): EventManagerQueue[PointerEvent] =
+          events[PointerEvent](key, element, "lostpointercapture", js)
+      }
+    }
   }
 
   def monitor(every: FiniteDuration = 1.second): IO[Unit] = {
@@ -84,8 +164,4 @@ class EventManager(browser: RoboBrowser) {
         Event(key, json, element)
       }
   }
-
-  // TODO: Support monitor for checking status and firing events
-
-  // TODO: Support key events and mouse events
 }

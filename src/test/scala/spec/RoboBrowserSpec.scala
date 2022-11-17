@@ -3,7 +3,6 @@ package spec
 import cats.effect.unsafe.implicits.global
 import com.outr.robobrowser._
 import com.outr.robobrowser.browser.chrome.Chrome
-import com.outr.robobrowser.browser.firefox.Firefox
 import com.outr.robobrowser.event.{Event, EventManager}
 import fabric._
 
@@ -13,7 +12,6 @@ import org.scalatest.wordspec.AnyWordSpec
 import spice.net._
 
 import scala.concurrent.duration.DurationInt
-import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
@@ -86,7 +84,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       event.value should be(obj("hello" -> "world!"))
       event.element.get.attribute("name") should be("q")
 
-      val keyQueue = eventManager.keyEventQueue("test2", None)
+      val keyQueue = eventManager.queue.key.up("test2", None)
       var keyCounter = 0
       keyQueue.listen { evt =>
         scribe.info(s"Key Event: ${evt.value} / ${evt.element.map(_.tagName)}")
