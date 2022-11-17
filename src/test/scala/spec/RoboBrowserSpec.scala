@@ -1,20 +1,23 @@
 package spec
 
+import cats.effect.unsafe.implicits.global
 import com.outr.robobrowser._
 import com.outr.robobrowser.browser.chrome.Chrome
 import com.outr.robobrowser.browser.firefox.Firefox
+import com.outr.robobrowser.event.{Event, EventManager}
+import fabric._
 
 import java.io.File
-import com.outr.robobrowser.logging.{LogEntry, LogLevel}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import spice.net._
 
 import scala.concurrent.duration.DurationInt
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    lazy val browser = Chrome.headless.windowSize(1600, 1200).create()
+    lazy val browser = Firefox.windowSize(1600, 1200).create()
     lazy val screenshot = new File("screenshot.png")
 
     var googleTab: Option[WindowHandle] = None
@@ -66,6 +69,35 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
 //      browser.logs.info("This is a test")
 //      browser.logs().map(_.copy(timestamp = 0L)) should be(List(LogEntry(LogLevel.Info, 0L, "This is a test")))
 //    }
+    "monitor key event" in {
+      val eventManager = new EventManager(browser)
+      val queue = eventManager.queue[Json]("test1")
+      var received = List.empty[Event[Json]]
+
+      val input = browser.oneBy(By.css("[name=\"q\"][type=\"text\"]"))
+      queue.enqueue(obj("hello" -> "world!"), Some(input))
+      queue.listen { evt =>
+        received = evt :: received
+      }
+      eventManager.check()
+      received.length should be(1)
+      val event = received.head
+      event.key should be("test1")
+      event.value should be(obj("hello" -> "world!"))
+      event.element.get.attribute("name") should be("q")
+
+      val keyQueue = eventManager.keyEventQueue("test2", None)
+      var keyCounter = 0
+      keyQueue.listen { evt =>
+        scribe.info(s"Key Event: ${evt.value} / ${evt.element.map(_.tagName)}")
+        if (evt.value.key != "Shift") {
+          keyCounter += 1
+        }
+      }
+      input.sendKeys("Testing")
+      eventManager.check()
+      keyCounter should be(7)
+    }
     "dispose the browser" in {
       browser.dispose()
     }

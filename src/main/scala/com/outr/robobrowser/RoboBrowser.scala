@@ -1,11 +1,12 @@
 package com.outr.robobrowser
 
+import cats.effect.unsafe.implicits.global
 import com.outr.robobrowser.integration.AssertionFailed
 import com.outr.robobrowser.logging.{LogEntry, LogLevel, LoggingImplementation}
 import io.appium.java_client.PushesFiles
 import io.appium.java_client.remote.SupportsContextSwitching
 
-import java.io.{File, FileWriter, PrintWriter}
+import java.io.{File, FileWriter, InputStream, PrintWriter}
 import java.util.Date
 import org.openqa.selenium.{Capabilities, Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
 import org.openqa.selenium.chrome.ChromeOptions
@@ -91,7 +92,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   private val _initialized = new AtomicBoolean(false)
 
-  protected def withDriver[Return](f: Driver => Return): Return = withDriverAndContext(Context.Browser)(f)
+  protected[robobrowser] def withDriver[Return](f: Driver => Return): Return = withDriverAndContext(Context.Browser)(f)
 
   private def scs[Return](f: SupportsContextSwitching => Return): Option[Return] = _driver match {
     case scs: SupportsContextSwitching => Some(f(scs))
@@ -177,8 +178,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   protected def initWindow(): Unit = {
     val input = getClass.getClassLoader.getResourceAsStream("js-logging.js")
-    val script = Streamer(input, new mutable.StringBuilder).toString
-    execute(script)
+    executeInputStream(input)
   }
 
   final def init(): Boolean = if (_initialized.compareAndSet(false, true)) {
@@ -207,10 +207,10 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   }
   def url: URL = URL(withDriver(_.getCurrentUrl))
   def content(context: Context = Context.Browser): String = withDriverAndContext(context)(_.getPageSource)
-  def save(file: File, context: Context = Context.Browser): Unit = Streamer(content(context), file)
+  def save(file: File, context: Context = Context.Browser): Unit = Streamer(content(context), file).unsafeRunSync()
   def screenshot(file: File): Unit = {
     val bytes = capture()
-    Streamer(bytes, file)
+    Streamer(bytes, file).unsafeRunSync()
   }
 
   def atPoint(x: Int, y: Int, context: Context = Context.Browser): Option[WebElement] = {
@@ -283,6 +283,13 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   def supportsJavaScript: Boolean = withDriver(_.isInstanceOf[JavascriptExecutor])
 
+  /**
+   * Args are referenced as arguments[0], arguments[1], etc.
+   *
+   * @param script the script to execute
+   * @param args the optional arguments
+   * @return return value or null
+   */
   def execute(script: String, args: AnyRef*): AnyRef = withDriverAndContext(Context.Browser) { driver =>
     val fixed = args.map {
       case arg: SeleniumWebElement => SeleniumWebElement.underlying(arg)    // Extract the WebElement
@@ -294,9 +301,14 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     }
   }
 
+  def executeInputStream(input: InputStream, args: AnyRef*): AnyRef = {
+    val script = Streamer(input, new mutable.StringBuilder).unsafeRunSync().toString
+    execute(script, args: _*)
+  }
+
   def executeTyped[T](script: String, args: AnyRef*): T = execute(script, args: _*).asInstanceOf[T]
 
-  def action: Actions = withDriver(driver => new Actions(driver))
+  def action: ActionBuilder = new ActionBuilder(this)
 
   object keyboard {
     object send {
@@ -406,11 +418,11 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
       def save(file: File): Unit = {
         val jsonString = JsonFormatter.Default(toJson)
-        Streamer(jsonString, file)
+        Streamer(jsonString, file).unsafeRunSync()
       }
 
       def load(file: File): Boolean = if (file.isFile) {
-        val jsonString = Streamer(file, new mutable.StringBuilder).toString
+        val jsonString = Streamer(file, new mutable.StringBuilder).unsafeRunSync().toString
         val json = JsonParser(jsonString)
         val cookies = fromJson(json)
         add(cookies)
@@ -460,11 +472,11 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
       def save(file: File): Unit = {
         val jsonString = JsonFormatter.Default(toJson)
-        Streamer(jsonString, file)
+        Streamer(jsonString, file).unsafeRunSync()
       }
 
       def load(file: File): Boolean = if (file.isFile) {
-        val jsonString = Streamer(file, new mutable.StringBuilder).toString
+        val jsonString = Streamer(file, new mutable.StringBuilder).unsafeRunSync().toString
         val json = JsonParser(jsonString)
         val cookies = fromJson(json)
         add(cookies)
@@ -514,11 +526,11 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
       def save(file: File): Unit = {
         val jsonString = JsonFormatter.Default(toJson)
-        Streamer(jsonString, file)
+        Streamer(jsonString, file).unsafeRunSync()
       }
 
       def load(file: File): Boolean = if (file.isFile) {
-        val jsonString = Streamer(file, new mutable.StringBuilder).toString
+        val jsonString = Streamer(file, new mutable.StringBuilder).unsafeRunSync().toString
         val json = JsonParser(jsonString)
         val cookies = fromJson(json)
         add(cookies)
