@@ -1,5 +1,6 @@
 package com.outr.robobrowser.monitor
 
+import com.outr.robobrowser.monitor.font.Normal
 import com.outr.robobrowser.{By, ByType, WebElement}
 
 import java.awt.BorderLayout
@@ -12,16 +13,16 @@ class VisualSelector(monitor: BrowserMonitor) extends JFrame("Visual Selector") 
   controls.setLayout(new BoxLayout(controls, BoxLayout.X_AXIS))
   private val byType = {
     val c = new JComboBox[ByType](ByType.all.toArray)
-    c.setFont(font.Normal)
+    c.setFont(Normal)
     c
   }
   controls.add(byType)
   val selectorInput = new JTextField(30)
-  selectorInput.setFont(font.Normal)
+  selectorInput.setFont(Normal)
   selectorInput.addActionListener((_: ActionEvent) => query())
   controls.add(selectorInput)
   val selectorResults = new JLabel("")
-  selectorResults.setFont(font.Normal)
+  selectorResults.setFont(Normal)
   selectorResults.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10))
   controls.add(selectorResults)
   private val queryButton = button("Query") {

@@ -1,6 +1,5 @@
 package com.outr.robobrowser.monitor
 
-import com.outr.robobrowser.Context
 import org.fife.ui.rsyntaxtextarea.{RSyntaxTextArea, SyntaxConstants}
 import org.fife.ui.rtextarea.{RTextScrollPane, SearchContext, SearchEngine}
 
@@ -8,15 +7,17 @@ import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing._
 
+import com.outr.robobrowser.monitor.font._
+
 class HTMLViewer(monitor: BrowserMonitor) extends JFrame("View Source Code") {
   val controls = new JPanel
   controls.setLayout(new BoxLayout(controls, BoxLayout.X_AXIS))
   val searchField = new JTextField(30)
-  searchField.setFont(font.Normal)
+  searchField.setFont(Normal)
   searchField.addActionListener((_: ActionEvent) => findNext())
   controls.add(searchField)
   val searchInfo = new JLabel("")
-  searchInfo.setFont(font.Normal)
+  searchInfo.setFont(Normal)
   searchInfo.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10))
   controls.add(searchInfo)
   private val searchButton = button("Find Next") {
@@ -30,7 +31,7 @@ class HTMLViewer(monitor: BrowserMonitor) extends JFrame("View Source Code") {
 
   val panel = new JPanel(new BorderLayout)
   val textArea = new RSyntaxTextArea(20, 60)
-  textArea.setFont(font.Mono)
+  textArea.setFont(Mono)
   val scrollPane = new RTextScrollPane(textArea)
 
   textArea.setMarkOccurrences(true)

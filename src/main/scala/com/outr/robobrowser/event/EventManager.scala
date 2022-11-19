@@ -9,7 +9,7 @@ import fabric.rw._
 import spice.http.content.Content
 import spice.http.{HttpExchange, HttpStatus}
 import spice.http.server.HttpServer
-import spice.net.{ContentType, interpolation}
+import spice.net._
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.jdk.CollectionConverters._

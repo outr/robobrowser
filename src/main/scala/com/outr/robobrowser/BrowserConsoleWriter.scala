@@ -3,7 +3,7 @@ package com.outr.robobrowser
 import scribe.output.LogOutput
 import scribe.output.format.OutputFormat
 import scribe.writer.Writer
-import scribe.{Level, LogRecord}
+import scribe._
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer

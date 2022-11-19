@@ -1,6 +1,7 @@
 package com.outr.robobrowser.monitor
 
 import com.outr.robobrowser.WebElement
+import com.outr.robobrowser.monitor.font.{Mono, Normal}
 
 import java.awt.Color
 import javax.swing._
@@ -14,7 +15,7 @@ case class SelectorResult(monitor: BrowserMonitor, element: WebElement) extends 
     case Failure(t) =>
       scribe.warn(t.getMessage)
       val l = new JLabel("Error capturing image", UIManager.getIcon("OptionPane.errorIcon"), SwingConstants.CENTER)
-      l.setFont(font.Normal)
+      l.setFont(Normal)
       l
   }
   private val label = new JTextArea(element.toString)
@@ -33,7 +34,7 @@ case class SelectorResult(monitor: BrowserMonitor, element: WebElement) extends 
   label.setBorder(null)
   label.setLineWrap(true)
   label.setBackground(new Color(0, 0, 0, 0))
-  label.setFont(font.Mono)
+  label.setFont(Mono)
   label.setOpaque(false)
   setBorder(BorderFactory.createCompoundBorder(
     BorderFactory.createCompoundBorder(

@@ -17,7 +17,7 @@ import perfolation._
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
-import reactify.{Channel, Trigger, Val, Var}
+import reactify._
 
 import scala.annotation.tailrec
 import scala.concurrent.TimeoutException

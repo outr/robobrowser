@@ -1,5 +1,6 @@
 package com.outr.robobrowser.monitor
 
+import com.outr.robobrowser.monitor.font._
 import org.fife.ui.rsyntaxtextarea.{RSyntaxTextArea, SyntaxConstants}
 import org.fife.ui.rtextarea.RTextScrollPane
 
@@ -18,7 +19,7 @@ class JavaScriptExecutor(monitor: BrowserMonitor) extends JFrame("JavaScript Exe
 
   private val panel = new JPanel(new BorderLayout)
   private val textArea = new RSyntaxTextArea(20, 60)
-  textArea.setFont(font.Mono)
+  textArea.setFont(Mono)
   textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT)
   textArea.setCodeFoldingEnabled(true)
   val scrollPane = new RTextScrollPane(textArea)

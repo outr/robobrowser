@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import com.outr.robobrowser.RoboBrowser
 import fabric.io.JsonParser
-import fabric.{Json, obj}
+import fabric._
 import spice.http.{Headers, HttpMethod, HttpResponse, HttpStatus}
 import spice.http.client.HttpClient
 import spice.http.content.Content
