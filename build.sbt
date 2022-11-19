@@ -22,7 +22,7 @@ developers := List(
   Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("http://matthicks.com"))
 )
 
-val seleniumVersion = "4.5.2"
+val seleniumVersion = "4.6.0"
 
 libraryDependencies ++= Seq(
   "com.outr" %% "scribe-slf4j" % "3.10.4",
