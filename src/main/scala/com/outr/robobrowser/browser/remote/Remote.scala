@@ -10,7 +10,7 @@ class Remote(url: URL, capabilities: Capabilities, fileDetector: Option[FileDete
 
   override def sessionId: String = withDriver(_.getSessionId.toString)
 
-  override protected lazy val _driver: Driver = {
+  override protected def createDriver(): Driver = {
     val javaURL = new java.net.URL(url.toString())
     val driver = new RemoteWebDriver(javaURL, capabilities)
     fileDetector.foreach(driver.setFileDetector)

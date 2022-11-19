@@ -10,7 +10,7 @@ class HtmlUnit(javaScript: Boolean) extends RoboBrowser(new ImmutableCapabilitie
 
   override def sessionId: String = "HtmlUnit"
 
-  override protected lazy val _driver: Driver = {
+  override protected def createDriver(): Driver = {
     new HtmlUnitDriver(BrowserVersion.CHROME, javaScript)
   }
 }

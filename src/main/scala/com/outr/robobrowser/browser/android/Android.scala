@@ -46,7 +46,7 @@ class Android(url: URL, capabilities: Capabilities) extends RoboBrowser(capabili
 
   override def home(): Unit = keyboard.send.home()
 
-  override protected lazy val _driver: Driver = {
+  override protected def createDriver(): Driver = {
     val javaURL = new java.net.URL(url.toString())
     new AndroidDriver(javaURL, capabilities)
   }

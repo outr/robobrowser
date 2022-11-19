@@ -25,6 +25,7 @@ import scala.util.Try
 import fabric._
 import fabric.io.{JsonFormatter, JsonParser}
 import fabric.rw.{Asable, Convertible, RW}
+import org.openqa.selenium.support.events.EventFiringDecorator
 import spice.http.cookie.SameSite
 import spice.http.cookie.{Cookie => SpiceCookie}
 import spice.net.URL
@@ -36,7 +37,11 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   type Driver <: WebDriver
 
   def sessionId: String
-  protected def _driver: Driver
+
+  private lazy val listener: RoboListener = new RoboListener(this)
+
+  protected def createDriver(): Driver
+  protected final val _driver: Driver = new EventFiringDecorator[Driver](listener).decorate(createDriver())
 
   private lazy val mainContext: Context = scs(scs => {
     scs

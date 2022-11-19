@@ -10,7 +10,7 @@ class Firefox(options: SeleniumFirefoxOptions) extends RoboBrowser(options) {
 
   override def sessionId: String = "Firefox"
 
-  override protected lazy val _driver: FirefoxDriver = new FirefoxDriver(options)
+  override protected def createDriver(): FirefoxDriver = new FirefoxDriver(options)
 }
 
 object Firefox extends FirefoxOptions(new SeleniumFirefoxOptions) {
