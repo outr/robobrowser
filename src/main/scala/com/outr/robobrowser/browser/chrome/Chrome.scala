@@ -11,7 +11,7 @@ class Chrome(options: SeleniumChromeOptions) extends RoboBrowser(options) {
 
   override def sessionId: String = "Chrome"
 
-  override protected lazy val _driver: ChromeDriver = new ChromeDriver(options)
+  override protected def createDriver(): ChromeDriver = new ChromeDriver(options)
 }
 
 object Chrome extends ChromeOptions(new SeleniumChromeOptions, None, new util.HashMap[String, Any]) {

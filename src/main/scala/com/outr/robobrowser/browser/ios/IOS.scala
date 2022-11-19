@@ -107,7 +107,7 @@ class IOS(url: URL, capabilities: Capabilities) extends RoboBrowser(capabilities
     firstBy(By.xPath(choosePath, Context.Native)).foreach(_.click())
   }
 
-  override protected lazy val _driver: Driver = {
+  override protected def createDriver(): Driver = {
     val javaURL = new java.net.URL(url.toString())
     new IOSDriver(javaURL, capabilities)
   }

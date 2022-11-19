@@ -1,6 +1,6 @@
 name := "robobrowser"
 organization := "com.outr"
-version := "1.5.0-SNAPSHOT6"
+version := "1.5.0-SNAPSHOT7"
 scalaVersion := "2.13.10"
 crossScalaVersions := Seq("2.13.10")
 scalacOptions += "-deprecation"
@@ -22,11 +22,12 @@ developers := List(
   Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("http://matthicks.com"))
 )
 
-val seleniumVersion = "4.5.2"
+val seleniumVersion = "4.6.0"
 
 libraryDependencies ++= Seq(
   "com.outr" %% "scribe-slf4j" % "3.10.4",
-  "com.outr" %% "spice-client" % "0.0.2-SNAPSHOT",
+  "com.outr" %% "spice-client" % "0.0.2",
+  "com.outr" %% "spice-server-undertow" % "0.0.2",
   "org.jsoup" % "jsoup" % "1.15.3",
   "io.appium" % "java-client" % "8.2.0",
   "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,

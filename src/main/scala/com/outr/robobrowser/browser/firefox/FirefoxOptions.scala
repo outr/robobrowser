@@ -29,12 +29,19 @@ case class FirefoxOptions(options: SeleniumFirefoxOptions, driverPath: Option[St
     s"--height=$height"
   )
 
-  def profileDir(dir: File): FirefoxOptions = add(_.setProfile(new FirefoxProfile(dir)))
+  def profile(profile: FirefoxProfile): FirefoxOptions = add(_.setProfile(profile))
+
+  def userDataDir(path: String): FirefoxOptions = withArguments(
+    s"--user-data-dir=$path",
+    "--profile-directory=Default"
+  )
 
   def enableDRM: FirefoxOptions = withPreferences(
     "media.eme.enabled" -> true,
     "media.gmp-manager.updateEnabled" -> true
   )
+
+  def kiosk: FirefoxOptions = withArguments("--kiosk")
 
   def create(): Firefox = {
     System.setProperty("webdriver.firefox.driver", driverPath.getOrElse(Firefox.findGeckoDriver()))
