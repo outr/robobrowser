@@ -17,6 +17,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
     lazy val browser = Chrome.headless.windowSize(1600, 1200).create()
     lazy val screenshot = new File("screenshot.png")
+    lazy val eventManager = new EventManager(browser, Some(8888))
 
     var googleTab: Option[WindowHandle] = None
     var duckDuckGoTab: Option[WindowHandle] = None
@@ -68,17 +69,17 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
 //      browser.logs().map(_.copy(timestamp = 0L)) should be(List(LogEntry(LogLevel.Info, 0L, "This is a test")))
 //    }
     "monitor key event" in {
-      val eventManager = new EventManager(browser)
       val queue = eventManager.queue[Json]("test1")
       var received = List.empty[Event[Json]]
 
       val input = browser.oneBy(By.css("[name=\"q\"][type=\"text\"]"))
-      queue.enqueue(obj("hello" -> "world!"), Some(input))
       queue.listen { evt =>
         received = evt :: received
       }
-      eventManager.check()
-      received.length should be(1)
+      queue.enqueue(obj("hello" -> "world!"), Some(input))
+      browser.waitFor(5.seconds, 100.millis, blocking = false) {
+        received.length == 1
+      } should be(true)
       val event = received.head
       event.key should be("test1")
       event.value should be(obj("hello" -> "world!"))
@@ -93,10 +94,12 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
         }
       }
       input.sendKeys("Testing")
-      eventManager.check()
-      keyCounter should be(7)
+      browser.waitFor(2.seconds, 100.millis, blocking = false) {
+        keyCounter == 7
+      } should be(true)
     }
     "dispose the browser" in {
+      eventManager.dispose()
       browser.dispose()
     }
   }

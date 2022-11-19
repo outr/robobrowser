@@ -1,22 +1,48 @@
 package com.outr.robobrowser.event
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import com.outr.robobrowser.{Context, RoboBrowser, SeleniumWebElement, WebElement}
 import fabric.Json
 import fabric.io.JsonParser
 import fabric.rw._
+import spice.http.content.Content
+import spice.http.{HttpExchange, HttpStatus}
+import spice.http.server.HttpServer
+import spice.net.{ContentType, interpolation}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.jdk.CollectionConverters._
+import scala.util.Try
 
-class EventManager(browser: RoboBrowser) {
+// TODO: At such point as the server is used by more than EventManager, take in the server instance
+class EventManager(browser: RoboBrowser, serverPort: Option[Int] = None) {
   private var queueMap = Map.empty[String, EventManagerQueue[_]]
 
   init()
 
+  private lazy val server = serverPort.map { port =>
+    new HttpServer {
+      config.clearListeners().addHttpListener(port = port)
+
+      override def handle(exchange: HttpExchange): IO[HttpExchange] = if (exchange.request.url.path == path"/notify") {
+        exchange.modify { r => IO {
+          Try(check())
+          r.withContent(Content.string("Notified!", ContentType.`text/plain`)).withStatus(HttpStatus.OK)
+        }}
+      } else {
+        IO.pure(exchange)
+      }
+    }
+  }
+
   private def init(): Unit = {
     val input = getClass.getClassLoader.getResourceAsStream("event-manager.js")
     browser.executeInputStream(input)
+    server.foreach { s =>
+      s.start().unsafeRunSync()
+      browser.execute(s"window.roboEvents.serverURL = 'http://localhost:${serverPort.get}/notify';")
+    }
   }
 
   object queue {
@@ -126,6 +152,13 @@ class EventManager(browser: RoboBrowser) {
     }
   }
 
+  /**
+   * Creates an infinite looping monitor to check for updates in the queue and fetch them.
+   * NOTE: This is not necessary if the server is enabled!
+   *
+   * @param every how frequently to check the queue (defaults to every second)
+   * @return IO[Unit] that must be invoked to start this
+   */
   def monitor(every: FiniteDuration = 1.second): IO[Unit] = {
     IO(check()).flatMap { _ =>
       IO.sleep(every)
@@ -134,7 +167,7 @@ class EventManager(browser: RoboBrowser) {
     }
   }
 
-  def check(): Unit = {
+  def check(): Unit = synchronized {
     val events = get()
     events.foreach { evt =>
       try {
@@ -163,5 +196,9 @@ class EventManager(browser: RoboBrowser) {
           }
         Event(key, json, element)
       }
+  }
+
+  def dispose(): Unit = {
+    server.foreach(_.dispose())
   }
 }

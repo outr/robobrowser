@@ -234,8 +234,9 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   override def capture(): Array[Byte] = withDriverAndContext(Context.Current)(_.asInstanceOf[TakesScreenshot].getScreenshotAs(OutputType.BYTES))
 
-  def waitFor(timeout: FiniteDuration, sleep: FiniteDuration = 500.millis)(condition: => Boolean): Boolean =
-    waitForResult[Boolean](timeout, sleep, timeoutResult = false) {
+  def waitFor(timeout: FiniteDuration, sleep: FiniteDuration = 500.millis, blocking: Boolean = true)
+             (condition: => Boolean): Boolean =
+    waitForResult[Boolean](timeout, sleep, timeoutResult = false, blocking = blocking) {
       if (condition) {
         Some(true)
       } else {
@@ -245,20 +246,28 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   def waitForResult[Return](timeout: FiniteDuration,
                             sleep: FiniteDuration = 500.millis,
-                            timeoutResult: => Return = throw new TimeoutException("Condition timed out"))
-                           (condition: => Option[Return]): Return = withDriver { _ =>
-    val end = System.currentTimeMillis() + timeout.toMillis
+                            timeoutResult: => Return = throw new TimeoutException("Condition timed out"),
+                            blocking: Boolean = true)
+                           (condition: => Option[Return]): Return = {
+    val f = () => {
+      val end = System.currentTimeMillis() + timeout.toMillis
 
-    @tailrec
-    def recurse(): Return = condition match {
-      case Some(r) => r
-      case None if System.currentTimeMillis() >= end => timeoutResult
-      case None =>
-        this.sleep(sleep)
-        recurse()
+      @tailrec
+      def recurse(): Return = condition match {
+        case Some(r) => r
+        case None if System.currentTimeMillis() >= end => timeoutResult
+        case None =>
+          this.sleep(sleep)
+          recurse()
+      }
+
+      recurse()
     }
-
-    recurse()
+    if (blocking) {
+      withDriver(_ => f())
+    } else {
+      f()
+    }
   }
 
   def pushFile(remotePath: String, file: File): Boolean = withDriver {
