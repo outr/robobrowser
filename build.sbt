@@ -1,16 +1,19 @@
 name := "robobrowser"
 organization := "com.outr"
-version := "1.5.0-SNAPSHOT7"
+version := "1.5.0"
 scalaVersion := "2.13.10"
 crossScalaVersions := Seq("2.13.10", "3.2.1")
 scalacOptions += "-deprecation"
 
 resolvers += "jitpack.io" at "https://jitpack.io"
-publishTo := sonatypePublishTo.value
+
+sonatypeCredentialHost := "s01.oss.sonatype.org"
+sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+publishTo := sonatypePublishToBundle.value
 sonatypeProfileName := "com.outr"
 publishMavenStyle := true
 licenses := Seq("MIT" -> url("https://github.com/outr/robobrowser/blob/master/LICENSE"))
-sonatypeProjectHosting := Some(xerial.sbt.Sonatype.GitHubHosting("outr", "robobrowser", "matt@outr.com"))
+sonatypeProjectHosting := Some(xerial.sbt.Sonatype.GitHubHosting("outr", "robobrowser", "matt@matthicks.com"))
 homepage := Some(url("https://github.com/outr/robobrowser"))
 scmInfo := Some(
   ScmInfo(
@@ -19,7 +22,7 @@ scmInfo := Some(
   )
 )
 developers := List(
-  Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("http://matthicks.com"))
+  Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("https://matthicks.com"))
 )
 
 val seleniumVersion = "4.6.0"

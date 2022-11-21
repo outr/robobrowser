@@ -9,8 +9,8 @@ import scala.util.Try
 
 class MultiBrowserSpec extends AnyWordSpec with Matchers {
   "Multi Browser" should {
-    lazy val browser1 = Chrome.create()
-    lazy val browser2 = Chrome.create()
+    lazy val browser1 = Chrome.headless.create()
+    lazy val browser2 = Chrome.headless.create()
 
     "initialize and load first browser" in {
       browser1.load(url"https://outr.com")

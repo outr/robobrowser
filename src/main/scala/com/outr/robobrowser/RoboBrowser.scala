@@ -11,7 +11,6 @@ import java.util.Date
 import org.openqa.selenium.{Capabilities, Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.html5.{LocalStorage, SessionStorage, WebStorage}
-import org.openqa.selenium.interactions.Actions
 import perfolation._
 
 import java.util.concurrent.atomic.AtomicBoolean
@@ -41,7 +40,9 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   private lazy val listener: RoboListener = new RoboListener(this)
 
   protected def createDriver(): Driver
-  protected final val _driver: Driver = new EventFiringDecorator[Driver](listener).decorate(createDriver())
+  // TODO: Figure out a way to support this with Appium
+//  protected final lazy val _driver: Driver = new EventFiringDecorator[Driver](listener).decorate(createDriver())
+  protected final lazy val _driver: Driver = createDriver()
 
   private lazy val mainContext: Context = scs(scs => {
     scs

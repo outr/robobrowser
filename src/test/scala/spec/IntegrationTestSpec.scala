@@ -11,10 +11,10 @@ import com.outr.robobrowser.browserstack._
 
 class IntegrationTestSpec extends AnyWordSpec with Matchers with IntegrationTestSuite {
   lazy val bsOptions: BrowserStackOptions = BrowserStackOptions(
-    Profig("browserStackUsername").as[String],
-    Profig("browserStackAutomateKey").as[String],
-    "RoboBrowser",
-    "IntegrationTestSpec"
+    username = Profig("browserStackUsername").as[String],
+    automateKey = Profig("browserStackAutomateKey").as[String],
+    projectName = "RoboBrowser",
+    buildName = "IntegrationTestSpec"
   )
 
   "BrowserStack tests" should {
