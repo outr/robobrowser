@@ -9,6 +9,7 @@ import fabric._
 import java.io.File
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import spice.http.server.MutableHttpServer
 import spice.net._
 
 import scala.concurrent.duration.DurationInt
@@ -17,7 +18,11 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
     lazy val browser = Chrome.headless.windowSize(1600, 1200).create()
     lazy val screenshot = new File("screenshot.png")
-    lazy val eventManager = new EventManager(browser, Some(8888))
+    lazy val server = new MutableHttpServer {
+      config.clearListeners().addHttpListener(port = 8888)
+      start().unsafeRunSync()
+    }
+    lazy val eventManager = new EventManager(browser, Some(server))
 
     var googleTab: Option[WindowHandle] = None
     var duckDuckGoTab: Option[WindowHandle] = None

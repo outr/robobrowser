@@ -1,47 +1,34 @@
 package com.outr.robobrowser.event
 
 import cats.effect.IO
-import cats.effect.unsafe.implicits.global
 import com.outr.robobrowser.{Context, RoboBrowser, SeleniumWebElement, WebElement}
 import fabric.Json
 import fabric.io.JsonParser
 import fabric.rw._
 import spice.http.content.Content
-import spice.http.{HttpExchange, HttpStatus}
-import spice.http.server.HttpServer
+import spice.http._
+import spice.http.server._
 import spice.net._
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-// TODO: At such point as the server is used by more than EventManager, take in the server instance
-class EventManager(browser: RoboBrowser, serverPort: Option[Int] = None) {
+class EventManager(browser: RoboBrowser, server: Option[MutableHttpServer] = None) {
   private var queueMap = Map.empty[String, EventManagerQueue[_]]
 
   init()
-
-  private lazy val server = serverPort.map { port =>
-    new HttpServer {
-      config.clearListeners().addHttpListener(port = port)
-
-      override def handle(exchange: HttpExchange): IO[HttpExchange] = if (exchange.request.url.path == path"/notify") {
-        exchange.modify { r => IO {
-          Try(check())
-          r.withContent(Content.string("Notified!", ContentType.`text/plain`)).withStatus(HttpStatus.OK)
-        }}
-      } else {
-        IO.pure(exchange)
-      }
-    }
-  }
 
   private def init(): Unit = {
     val input = getClass.getClassLoader.getResourceAsStream("event-manager.js")
     browser.executeInputStream(input)
     server.foreach { s =>
-      s.start().unsafeRunSync()
-      browser.execute(s"window.roboEvents.serverURL = 'http://localhost:${serverPort.get}/notify';")
+      val l = s.config.listeners().head
+      browser.execute(s"window.roboEvents.serverURL = 'http://${l.host}:${l.port}/notify';")
+      s.handler.matcher(paths.exact(path"/notify")).content {
+        Try(check())
+        Content.string("Notified!", ContentType.`text/plain`)
+      }
     }
   }
 
