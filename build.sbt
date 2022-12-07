@@ -29,8 +29,8 @@ val seleniumVersion = "4.6.0"
 
 libraryDependencies ++= Seq(
   "com.outr" %% "scribe-slf4j" % "3.10.5",
-  "com.outr" %% "spice-client" % "0.0.5",
-  "com.outr" %% "spice-server-undertow" % "0.0.5",
+  "com.outr" %% "spice-client" % "0.0.6",
+  "com.outr" %% "spice-server-undertow" % "0.0.6",
   "org.jsoup" % "jsoup" % "1.15.3",
   "io.appium" % "java-client" % "8.2.0",
   "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
