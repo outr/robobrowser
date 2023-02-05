@@ -2,7 +2,7 @@ name := "robobrowser"
 organization := "com.outr"
 version := "1.5.1"
 scalaVersion := "2.13.10"
-crossScalaVersions := Seq("2.13.10", "3.2.1")
+crossScalaVersions := Seq("2.13.10", "3.2.2")
 scalacOptions += "-deprecation"
 
 resolvers += "jitpack.io" at "https://jitpack.io"
