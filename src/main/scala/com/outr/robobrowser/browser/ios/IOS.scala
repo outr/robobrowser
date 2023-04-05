@@ -125,7 +125,7 @@ object IOS {
       "nativeWebTap" -> true,
       "automationName" -> "XCUITest"
     ) ++ capabilities.toMap
-    IOSOptions(new ImmutableCapabilities(map.asJava))
+    IOSOptions(new ImmutableCapabilities(map.asJava), Nil)
   }
 
   object `iPhone 8 Plus` {

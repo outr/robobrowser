@@ -13,7 +13,7 @@ class Firefox(options: SeleniumFirefoxOptions) extends RoboBrowser(options) {
   override protected def createDriver(): FirefoxDriver = new FirefoxDriver(options)
 }
 
-object Firefox extends FirefoxOptions(new SeleniumFirefoxOptions) {
+object Firefox extends FirefoxOptions(new SeleniumFirefoxOptions, None, Nil) {
   // TODO: Support auto-download of chromedriver from https://chromedriver.storage.googleapis.com/index.html
   // TODO: Detect installed version of Chrome using google-chrome --version
   private val searchPaths = List("/usr/bin/geckodriver", "/opt/homebrew/bin/geckodriver")

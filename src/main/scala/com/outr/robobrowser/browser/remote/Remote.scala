@@ -18,4 +18,4 @@ class Remote(url: URL, capabilities: Capabilities, fileDetector: Option[FileDete
   }
 }
 
-object Remote extends RemoteOptions(new ImmutableCapabilities, None)
+object Remote extends RemoteOptions(new ImmutableCapabilities, None, Nil)

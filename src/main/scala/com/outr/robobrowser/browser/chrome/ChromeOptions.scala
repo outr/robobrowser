@@ -1,17 +1,21 @@
 package com.outr.robobrowser.browser.chrome
 
-import com.outr.robobrowser.{BrowserType, Notifications}
+import com.outr.robobrowser.{BrowserType, Notifications, RoboBrowser}
 import com.outr.robobrowser.browser.BrowserOptions
 import org.openqa.selenium.Capabilities
 import org.openqa.selenium.chrome.{ChromeOptions => SeleniumChromeOptions}
 import org.openqa.selenium.remote.LocalFileDetector
 import spice.net.URL
 
+import java.io.File
 import java.util
 
 case class ChromeOptions(options: SeleniumChromeOptions,
                          driverPath: Option[String] = None,
-                         prefs: util.HashMap[String, Any]) extends BrowserOptions[ChromeOptions] {
+                         prefs: util.HashMap[String, Any],
+                         postInit: List[RoboBrowser => Unit]) extends BrowserOptions[ChromeOptions] {
+  override def withPostInit(f: RoboBrowser => Unit): ChromeOptions = copy(postInit = postInit ::: List(f))
+
   override def capabilities: Capabilities = options
   override def merge(capabilities: Capabilities): ChromeOptions = copy(options.merge(capabilities))
 
@@ -95,6 +99,8 @@ case class ChromeOptions(options: SeleniumChromeOptions,
 
   def ignoreCertificateErrors: ChromeOptions = withArguments("--ignore-certificate-errors")
 
+  def ignoreSSLErrors: ChromeOptions = withArguments("--ignore-ssl-errors=yes")
+
   def noSandbox: ChromeOptions = withArguments("--no-sandbox")
 
   def disableDevSHMUsage: ChromeOptions = withArguments("--disable-dev-shm-usage")
@@ -110,8 +116,21 @@ case class ChromeOptions(options: SeleniumChromeOptions,
 
   def localFileDetector: ChromeOptions = withCapabilities("fileDetector" -> new LocalFileDetector())
 
+  /**
+   * Use a proxy server.
+   *
+   * @param proxy proxy server to use (ex. socks5://localhost:1234)
+   */
+  def proxyServer(proxy: String): ChromeOptions = withArguments(s"--proxy-server=$proxy")
+
+  def addExtensions(paths: File*): ChromeOptions = add { options =>
+    options.addExtensions(paths: _*)
+  }
+
   def create(): Chrome = {
     System.setProperty("webdriver.chrome.driver", driverPath.getOrElse(Chrome.findChromeDriver()))
-    new Chrome(options)
+    val b = new Chrome(options)
+    postInit.foreach(f => f(b))
+    b
   }
 }

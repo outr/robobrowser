@@ -22,6 +22,7 @@ import scala.annotation.tailrec
 import scala.concurrent.TimeoutException
 import scala.util.Try
 import fabric._
+import fabric.define.DefType
 import fabric.io.{JsonFormatter, JsonParser}
 import fabric.rw.{Asable, Convertible, RW}
 import org.openqa.selenium.support.events.EventFiringDecorator
@@ -70,7 +71,6 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   var verifyWindowInitializationCheck: Boolean = true
 
   val pageChanged: Trigger = Trigger()
-  val configuringOptions: Channel[ChromeOptions] = Channel[ChromeOptions]
   val initializing: Channel[Driver] = Channel[Driver]
   val loading: Channel[URL] = Channel[URL]
   val loaded: Channel[URL] = Channel[URL]
@@ -141,10 +141,6 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     }
   }
 
-  protected def configureOptions(options: ChromeOptions): Unit = {
-    configuringOptions @= options
-  }
-
   final def initialized: Boolean = _initialized.get()
 
   protected def initialize(): Unit = {
@@ -211,7 +207,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     }
     loaded @= url
   }
-  def url: URL = URL(withDriver(_.getCurrentUrl))
+  def url: URL = URL.parse(withDriver(_.getCurrentUrl))
   def content(context: Context = Context.Browser): String = withDriverAndContext(context)(_.getPageSource)
   def save(file: File, context: Context = Context.Browser): Unit = Streamer(content(context), file).unsafeRunSync()
   def screenshot(file: File): Unit = {
@@ -342,7 +338,10 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   object window {
     private def w: WebDriver.Window = withDriver(_.manage().window())
 
+    def fullScreen(): Unit = w.fullscreen()
+    def minimize(): Unit = w.minimize()
     def maximize(): Unit = w.maximize()
+    def activate(): Unit = switchTo(handle)
     def handle: WindowHandle = withDriver(driver => WindowHandle(driver.getWindowHandle))
     def handles: Set[WindowHandle] = withDriver(_.getWindowHandles.asScala.toSet.map(WindowHandle.apply))
     def switchTo(handle: WindowHandle): Unit = withDriver(_.switchTo().window(handle.handle))
@@ -383,7 +382,8 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
           case "lax" => SameSite.Lax
           case "strict" => SameSite.Strict
           case s => throw new RuntimeException(s"Unsupported value for SameSite: $s")
-        }
+        },
+        d = DefType.Str
       )
       private implicit val rw: RW[SpiceCookie.Response] = RW.gen
 

@@ -5,6 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import spice.net._
 
+import scala.concurrent.duration.DurationInt
 import scala.util.Try
 
 class MultiBrowserSpec extends AnyWordSpec with Matchers {
@@ -15,6 +16,12 @@ class MultiBrowserSpec extends AnyWordSpec with Matchers {
     "initialize and load first browser" in {
       browser1.load(url"https://outr.com")
       browser1.title should be("")
+    }
+    "minimize the first browser" in {
+      browser1.window.minimize()
+    }
+    "restore the browser" in {
+      browser1.window.activate()
     }
     "initialize and load second browser" in {
       browser2.load(url"https://google.com")

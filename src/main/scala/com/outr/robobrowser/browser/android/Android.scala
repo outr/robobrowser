@@ -63,7 +63,7 @@ object Android {
       "real_mobile" -> true,
       "automationName" -> "UIAutomator2"
     ) ++ capabilities.toMap
-    AndroidOptions(new ImmutableCapabilities(map.asJava))
+    AndroidOptions(new ImmutableCapabilities(map.asJava), Nil)
   }
 
   object `Vivo Y50` {

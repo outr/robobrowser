@@ -1,8 +1,11 @@
 //package spec
 //
+//import com.outr.robobrowser.browser.chrome.Chrome
+//import com.outr.robobrowser.AntiCaptcha._
 //import com.outr.robobrowser.{By, RoboBrowser}
 //import org.scalatest.matchers.should.Matchers
 //import org.scalatest.wordspec.AnyWordSpec
+//import profig.Profig
 //import spice.net.interpolation
 //
 //import java.io.File
@@ -11,16 +14,10 @@
 //class AntiCaptchaSpec extends AnyWordSpec with Matchers {
 //  "AntiCaptcha" should {
 //    val apiKey: String = {
-//      val file = new File("anticaptcha.key")
-//      assert(file.isFile, "You must create a file 'anticaptcha.key' in the working directory with your api key")
-//      val s = Source.fromFile(file)
-//      try {
-//        s.mkString.trim
-//      } finally {
-//        s.close()
-//      }
+//      Profig.initConfiguration()
+//      Profig("antiCaptchaKey").as[String]
 //    }
-//    lazy val browser = RoboBrowser.Remote.antiCaptcha(apiKey).create()
+//    lazy val browser = Chrome.withAntiCaptcha(apiKey).create()
 //    "load reCAPTCHA 2 to verify" in {
 //      browser.load(url"https://antcpt.com/eng/information/demo-form/recaptcha-2.html")
 //      browser.oneBy(By.css("[name='demo_text']")).sendKeys("Test input")

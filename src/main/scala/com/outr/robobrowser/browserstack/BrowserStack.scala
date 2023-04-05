@@ -60,10 +60,6 @@ object BrowserStack {
   def status(sessionId: String, username: String, automateKey: String): IO[Json] = client(sessionId, username, automateKey)
     .get
     .send()
-    .map {
-      case Success(value) => value
-      case Failure(exception) => throw exception
-    }
     .map(toJson)
 
   def mark(sessionId: String, username: String, automateKey: String, status: Status): IO[Json] = {
@@ -75,10 +71,6 @@ object BrowserStack {
       .method(HttpMethod.Put)
       .content(Content.json(json))
       .send()
-      .map {
-        case Success(value) => value
-        case Failure(exception) => throw exception
-      }
       .map(toJson)
   }
 }
