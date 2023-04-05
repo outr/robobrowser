@@ -25,12 +25,12 @@ developers := List(
   Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("https://matthicks.com"))
 )
 
-val seleniumVersion = "4.7.2"
+val seleniumVersion = "4.8.3"
 
 libraryDependencies ++= Seq(
   "com.outr" %% "scribe-slf4j" % "3.10.5",
-  "com.outr" %% "spice-client" % "0.0.6",
-  "com.outr" %% "spice-server-undertow" % "0.0.6",
+  "com.outr" %% "spice-client" % "0.0.22",
+  "com.outr" %% "spice-server-undertow" % "0.0.22",
   "org.jsoup" % "jsoup" % "1.15.4",
   "io.appium" % "java-client" % "8.3.0",
   "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
@@ -40,7 +40,7 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "htmlunit-driver" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
   "com.lihaoyi" %% "sourcecode" % "0.3.0",
-  "com.fifesoft" % "rsyntaxtextarea" % "3.3.1",
+  "com.fifesoft" % "rsyntaxtextarea" % "3.3.3",
   "org.scalatest" %% "scalatest" % "3.2.14" % "test"
 )
 
