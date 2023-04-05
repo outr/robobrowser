@@ -30,6 +30,8 @@ case class ChromeOptions(options: SeleniumChromeOptions,
 
   def headless: ChromeOptions = withArguments("--headless")
 
+  def remoteAllowOrigins(value: String = "*"): ChromeOptions = withArguments(s"--remote-allow-origins=*")
+
   def windowSize(width: Int, height: Int): ChromeOptions = withArguments(s"--window-size=$width,$height")
 
   def userDataDir(path: String): ChromeOptions = withArguments(

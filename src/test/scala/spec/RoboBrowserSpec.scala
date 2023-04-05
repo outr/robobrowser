@@ -17,14 +17,21 @@ import scala.concurrent.duration.DurationInt
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    lazy val browser = Chrome.headless.windowSize(1600, 1200).create()
+    lazy val browser = Chrome
+      .headless
+      .remoteAllowOrigins()
+      .windowSize(1600, 1200)
+      .create()
     lazy val screenshot = new File("screenshot.png")
     lazy val server = new MutableHttpServer {
       config.clearListeners().addListeners(HttpServerListener(port = 8888))
-      start().unsafeRunSync()
     }
     lazy val eventManager = new EventManager(browser, Some(server))
 
+    "start the server" in {
+      server.start().unsafeRunSync()
+      server.isRunning should be(true)
+    }
     "load Google" in {
       browser.load(url"https://google.com")
       browser.url should be(url"https://www.google.com")
