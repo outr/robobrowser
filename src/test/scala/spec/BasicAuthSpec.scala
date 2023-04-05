@@ -1,10 +1,9 @@
 package spec
 
-import com.outr.robobrowser.ReadyState
 import com.outr.robobrowser.browser.chrome.Chrome
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import spice.net.interpolation
+import spice.net._
 
 class BasicAuthSpec extends AnyWordSpec with Matchers {
   "Basic Auth" should {

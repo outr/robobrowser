@@ -1,11 +1,10 @@
 package com.outr.robobrowser
 
-import com.outr.robobrowser.browser.chrome.{Chrome, ChromeOptions}
-import spice.net.interpolation
+import com.outr.robobrowser.browser.chrome.ChromeOptions
+import spice.net._
 
 import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
-import scala.concurrent.duration.DurationInt
 
 object AntiCaptcha {
   implicit class ChromeOptionsExtras(options: ChromeOptions) {
