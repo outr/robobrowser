@@ -8,7 +8,7 @@ import io.appium.java_client.remote.SupportsContextSwitching
 
 import java.io.{File, FileWriter, InputStream, PrintWriter}
 import java.util.Date
-import org.openqa.selenium.{Capabilities, Cookie, JavascriptExecutor, Keys, OutputType, TakesScreenshot, WebDriver, WindowType}
+import org.openqa.selenium.{Capabilities, Cookie, Dimension, JavascriptExecutor, Keys, OutputType, Point, TakesScreenshot, WebDriver, WindowType}
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.html5.{LocalStorage, SessionStorage, WebStorage}
 import perfolation._
@@ -338,6 +338,17 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   object window {
     private def w: WebDriver.Window = withDriver(_.manage().window())
 
+    def size: (Int, Int) = {
+      val s = w.getSize
+      (s.width, s.height)
+    }
+    def size_=(s: (Int, Int)): Unit = w.setSize(new Dimension(s._1, s._2))
+    def position: (Int, Int) = {
+      val p = w.getPosition
+      (p.x, p.y)
+    }
+    def position_=(p: (Int, Int)): Unit = w.setPosition(new Point(p._1, p._2))
+
     def fullScreen(): Unit = w.fullscreen()
     def minimize(): Unit = w.minimize()
     def maximize(): Unit = w.maximize()
@@ -347,6 +358,10 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     def switchTo(handle: WindowHandle): Unit = withDriver(_.switchTo().window(handle.handle))
     def newTab(): WindowHandle = {
       withDriver(_.switchTo().newWindow(WindowType.TAB))
+      handle
+    }
+    def newWindow(): WindowHandle = {
+      withDriver(_.switchTo().newWindow(WindowType.WINDOW))
       handle
     }
     def close(): Unit = withDriver(_.close())
