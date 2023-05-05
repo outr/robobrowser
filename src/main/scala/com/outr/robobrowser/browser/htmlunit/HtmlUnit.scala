@@ -1,7 +1,7 @@
 package com.outr.robobrowser.browser.htmlunit
 
+import com.gargoylesoftware.htmlunit.BrowserVersion
 import com.outr.robobrowser.RoboBrowser
-import org.htmlunit.BrowserVersion
 import org.openqa.selenium.ImmutableCapabilities
 import org.openqa.selenium.htmlunit.HtmlUnitDriver
 

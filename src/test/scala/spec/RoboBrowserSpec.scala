@@ -24,7 +24,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       .create()
     lazy val screenshot = new File("screenshot.png")
     lazy val server = new MutableHttpServer {
-      config.clearListeners().addListeners(HttpServerListener(port = 8888))
+      config.clearListeners().addListeners(HttpServerListener(port = Some(8888)))
     }
     lazy val eventManager = new EventManager(browser, Some(server))
 

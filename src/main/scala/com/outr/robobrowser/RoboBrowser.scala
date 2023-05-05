@@ -7,7 +7,7 @@ import io.appium.java_client.PushesFiles
 import io.appium.java_client.remote.SupportsContextSwitching
 
 import java.io.{File, FileWriter, InputStream, PrintWriter}
-import java.util.Date
+import java.util.{Date, Optional}
 import org.openqa.selenium.{Capabilities, Cookie, Dimension, JavascriptExecutor, Keys, OutputType, Point, TakesScreenshot, WebDriver, WindowType}
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.html5.{LocalStorage, SessionStorage, WebStorage}
@@ -25,7 +25,9 @@ import fabric._
 import fabric.define.DefType
 import fabric.io.{JsonFormatter, JsonParser}
 import fabric.rw.{Asable, Convertible, RW}
-import org.openqa.selenium.support.events.EventFiringDecorator
+import org.openqa.selenium.devtools.{DevTools, HasDevTools}
+import org.openqa.selenium.devtools.v112.network.Network
+import org.openqa.selenium.devtools.v112.network.model.{RequestWillBeSent, ResponseReceived}
 import spice.http.cookie.SameSite
 import spice.http.cookie.{Cookie => SpiceCookie}
 import spice.net.URL
@@ -220,6 +222,33 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
     val e = Option(result.asInstanceOf[org.openqa.selenium.WebElement])
     e.map { element =>
       new SeleniumWebElement(element, context, this)
+    }
+  }
+
+  object devTools {
+    protected lazy val session: Option[DevTools] = _driver match {
+      case d: HasDevTools =>
+        val devTools = d.getDevTools
+        devTools.createSession()
+        devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()))
+        Some(devTools)
+      case _ => None
+    }
+
+    def requestWillBeSent(): Option[Channel[RequestWillBeSent]] = session.map { devTools =>
+      val channel = Channel[RequestWillBeSent]
+      devTools.addListener[RequestWillBeSent](Network.requestWillBeSent(), (evt: RequestWillBeSent) => {
+        channel @= evt
+      })
+      channel
+    }
+
+    def responseReceived(): Option[Channel[ResponseReceived]] = session.map { devTools =>
+      val channel = Channel[ResponseReceived]
+      devTools.addListener[ResponseReceived](Network.responseReceived(), (evt: ResponseReceived) => {
+        channel @= evt
+      })
+      channel
     }
   }
 
