@@ -24,7 +24,7 @@ class EventManager(browser: RoboBrowser, server: Option[MutableHttpServer] = Non
     browser.executeInputStream(input)
     server.foreach { s =>
       val l = s.config.listeners().head
-      browser.execute(s"window.roboEvents.serverURL = 'http://${l.host}:${l.port}/notify';")
+      browser.execute(s"window.roboEvents.serverURL = 'http://${l.host}:${l.port.get}/notify';")
       s.handler.matcher(paths.exact(path"/notify")).content {
         Try(check())
         Content.string("Notified!", ContentType.`text/plain`)

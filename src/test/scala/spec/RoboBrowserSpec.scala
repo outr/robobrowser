@@ -58,7 +58,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       val queue = eventManager.queue[Json]("test1")
       var received = List.empty[Event[Json]]
 
-      val input = browser.oneBy(By.css("[name=\"q\"][type=\"text\"]"))
+      val input = browser.oneBy(By.css("textarea[name=\"q\"]"))
       queue.listen { evt =>
         received = evt :: received
       }
