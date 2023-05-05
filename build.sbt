@@ -32,7 +32,7 @@ libraryDependencies ++= Seq(
   "com.outr" %% "scribe-slf4j" % "3.11.1",
   "com.outr" %% "spice-client-okhttp" % spiceVersion,
   "com.outr" %% "spice-server-undertow" % spiceVersion,
-  "org.jsoup" % "jsoup" % "1.15.4",
+  "org.jsoup" % "jsoup" % "1.16.1",
   "io.appium" % "java-client" % "8.3.0",
   "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
