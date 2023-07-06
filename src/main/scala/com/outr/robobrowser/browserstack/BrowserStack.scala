@@ -54,7 +54,7 @@ object BrowserStack {
     val content = response.content.getOrElse(
       throw new RuntimeException(s"No content for request: ${response.status}")
     )
-    JsonParser(content.asString)
+    JsonParser(content.asString.unsafeRunSync())
   }
 
   def status(sessionId: String, username: String, automateKey: String): IO[Json] = client(sessionId, username, automateKey)
