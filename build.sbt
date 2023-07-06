@@ -1,8 +1,8 @@
 name := "robobrowser"
 organization := "com.outr"
 version := "1.6.1-SNAPSHOT"
-scalaVersion := "2.13.10"
-crossScalaVersions := Seq("2.13.10", "3.2.2")
+scalaVersion := "2.13.11"
+crossScalaVersions := Seq("2.13.11", "3.3.0")
 scalacOptions += "-deprecation"
 
 resolvers += "jitpack.io" at "https://jitpack.io"
@@ -26,14 +26,15 @@ developers := List(
 )
 
 val seleniumVersion = "4.9.1"
-val spiceVersion = "0.0.28"
+
+val spiceVersion = "0.0.36"
 
 libraryDependencies ++= Seq(
-  "com.outr" %% "scribe-slf4j" % "3.11.1",
+  "com.outr" %% "scribe-slf4j" % "3.11.5",
   "com.outr" %% "spice-client-okhttp" % spiceVersion,
   "com.outr" %% "spice-server-undertow" % spiceVersion,
   "org.jsoup" % "jsoup" % "1.16.1",
-  "io.appium" % "java-client" % "8.3.0",
+  "io.appium" % "java-client" % "8.5.1",
   "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-firefox-driver" % seleniumVersion,
