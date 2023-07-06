@@ -27,7 +27,7 @@ developers := List(
 
 val seleniumVersion = "4.9.1"
 
-val spiceVersion = "0.0.36"
+val spiceVersion = "0.1.2"
 
 libraryDependencies ++= Seq(
   "com.outr" %% "scribe-slf4j" % "3.11.7",
