@@ -25,7 +25,7 @@ developers := List(
   Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("https://matthicks.com"))
 )
 
-val seleniumVersion = "4.10.0"
+val seleniumVersion = "4.11.0"
 
 val spiceVersion = "0.1.10"
 
