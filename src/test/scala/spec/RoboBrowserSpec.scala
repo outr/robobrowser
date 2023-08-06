@@ -5,6 +5,7 @@ import com.outr.robobrowser._
 import com.outr.robobrowser.browser.firefox.Firefox
 import com.outr.robobrowser.event.{Event, EventManager}
 import fabric._
+import fabric.rw._
 
 import java.io.File
 import org.scalatest.matchers.should.Matchers

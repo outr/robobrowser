@@ -6,6 +6,7 @@ import com.outr.robobrowser.integration.{IntegrationTestSuite, IntegrationTestsI
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import profig.Profig
+import fabric.rw._
 
 import com.outr.robobrowser.browserstack._
 

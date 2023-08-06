@@ -24,7 +24,7 @@ import scala.util.Try
 import fabric._
 import fabric.define.DefType
 import fabric.io.{JsonFormatter, JsonParser}
-import fabric.rw.{Asable, Convertible, RW}
+import fabric.rw._
 import org.openqa.selenium.devtools.{DevTools, HasDevTools}
 import org.openqa.selenium.devtools.v112.network.Network
 import org.openqa.selenium.devtools.v112.network.model.{RequestWillBeSent, ResponseReceived}

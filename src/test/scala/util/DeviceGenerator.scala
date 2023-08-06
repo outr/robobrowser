@@ -1,7 +1,7 @@
 package util
 
 import fabric.io.JsonParser
-import fabric.rw.{Asable, RW}
+import fabric.rw._
 import spice.streamer._
 
 import java.io.File

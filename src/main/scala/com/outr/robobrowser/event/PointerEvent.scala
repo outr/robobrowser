@@ -1,6 +1,6 @@
 package com.outr.robobrowser.event
 
-import fabric.rw.RW
+import fabric.rw._
 
 case class PointerEvent(button: Int,
                         buttons: Int,

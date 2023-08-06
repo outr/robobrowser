@@ -2,7 +2,7 @@ package com.outr.robobrowser.captcha
 
 import cats.effect.IO
 import fabric.Json
-import fabric.rw.RW
+import fabric.rw._
 import spice.http.client.{HttpClient, Proxy}
 import spice.net._
 
