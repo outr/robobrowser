@@ -2,8 +2,8 @@ package spec
 
 import cats.effect.unsafe.implicits.global
 import com.outr.robobrowser._
-import com.outr.robobrowser.browser.chrome.Chrome
 import com.outr.robobrowser.browser.firefox.Firefox
+import com.outr.robobrowser.browser.jbrowser.JBrowser
 import com.outr.robobrowser.event.{Event, EventManager}
 import fabric._
 
@@ -18,9 +18,9 @@ import scala.concurrent.duration.DurationInt
 
 class RoboBrowserSpec extends AnyWordSpec with Matchers {
   "RoboBrowser" should {
-    lazy val browser = Firefox
-      .headless
-      .windowSize(1600, 1200)
+    lazy val browser = JBrowser
+//      .headless
+//      .windowSize(1600, 1200)
       .create()
     lazy val screenshot = new File("screenshot.png")
     lazy val server = new MutableHttpServer {

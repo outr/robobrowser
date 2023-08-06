@@ -44,8 +44,6 @@ val sourcecodeVersion: String = "0.3.0"
 
 val rsyntaxtextareaVersion: String = "3.3.4"
 
-val jbrowserVersion: String = "1.1.1"
-
 val scalatestVersion: String = "3.2.16"
 
 libraryDependencies ++= Seq(
@@ -63,7 +61,6 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "selenium-devtools-v112" % seleniumVersion,
   "com.lihaoyi" %% "sourcecode" % sourcecodeVersion,
   "com.fifesoft" % "rsyntaxtextarea" % rsyntaxtextareaVersion,
-  "com.machinepublishers" % "jbrowserdriver" % jbrowserVersion,
   "org.scalatest" %% "scalatest" % scalatestVersion % "test"
 )
 
