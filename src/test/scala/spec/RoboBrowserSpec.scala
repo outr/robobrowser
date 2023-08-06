@@ -4,7 +4,6 @@ import cats.effect.unsafe.implicits.global
 import com.outr.robobrowser._
 import com.outr.robobrowser.browser.chrome.Chrome
 import com.outr.robobrowser.browser.firefox.Firefox
-import com.outr.robobrowser.browser.jbrowser.JBrowser
 import com.outr.robobrowser.event.{Event, EventManager}
 import fabric._
 
