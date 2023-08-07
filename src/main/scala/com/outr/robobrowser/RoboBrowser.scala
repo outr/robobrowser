@@ -416,7 +416,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   object storage {
     object cookies {
       private implicit val ssRW: RW[SameSite] = RW.from(
-        r = (ss: SameSite) => ss match {
+        r = {
           case SameSite.Normal => "normal"
           case SameSite.Lax => "lax"
           case SameSite.Strict => "strict"

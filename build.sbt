@@ -1,6 +1,6 @@
 name := "robobrowser"
 organization := "com.outr"
-version := "1.6.1"
+version := "1.7.0-SNAPSHOT"
 
 val scala213: String = "2.13.11"
 

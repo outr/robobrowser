@@ -4,11 +4,20 @@ import com.outr.robobrowser.RoboBrowser
 import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions => SeleniumFirefoxOptions}
 
 import java.io.{File, FileNotFoundException}
+import java.nio.file.Path
 
 class Firefox(options: SeleniumFirefoxOptions) extends RoboBrowser(options) {
   override type Driver = FirefoxDriver
 
   override def sessionId: String = "Firefox"
+
+  def installExtension(path: Path): String = withDriver { driver =>
+    driver.installExtension(path)
+  }
+
+  def uninstallExtension(extensionId: String): Unit = withDriver { driver =>
+    driver.uninstallExtension(extensionId)
+  }
 
   override protected def createDriver(): FirefoxDriver = new FirefoxDriver(options)
 }

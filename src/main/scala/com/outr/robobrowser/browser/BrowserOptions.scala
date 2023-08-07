@@ -36,12 +36,23 @@ trait BrowserOptions[O] {
 
   def url(url: URL): O = withCapabilities("url" -> url.toString())
 
-  def proxy(proxy: Proxy): O = {
+  def proxy(ftp: Option[String] = None,
+            http: Option[String] = None,
+            no: Option[String] = None,
+            ssl: Option[String] = None,
+            socks: Option[String] = None,
+            socksVersion: Option[Int] = None,
+            socksUsername: Option[String] = None,
+            socksPassword: Option[String] = None): O = {
     val p = new selenium.Proxy
-    // TODO: Support
-//    proxy.`type` match {
-//      case ProxyType.Direct => p.set
-//    }
+    ftp.foreach(p.setFtpProxy)
+    http.foreach(p.setHttpProxy)
+    no.foreach(p.setNoProxy)
+    ssl.foreach(p.setSslProxy)
+    socks.foreach(p.setSocksProxy)
+    socksVersion.foreach(i => p.setSocksVersion(i))
+    socksUsername.foreach(p.setSocksUsername)
+    socksPassword.foreach(p.setSocksPassword)
     withCapabilities(CapabilityType.PROXY -> p)
   }
 }
