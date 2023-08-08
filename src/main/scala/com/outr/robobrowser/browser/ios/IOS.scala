@@ -108,7 +108,7 @@ class IOS(url: URL, capabilities: Capabilities) extends RoboBrowser(capabilities
   }
 
   override protected def createDriver(): Driver = {
-    val javaURL = new java.net.URL(url.toString())
+    val javaURL = new java.net.URI(url.toString()).toURL
     new IOSDriver(javaURL, capabilities)
   }
 }

@@ -47,7 +47,7 @@ val rsyntaxtextareaVersion: String = "3.3.4"
 val scalatestVersion: String = "3.2.16"
 
 libraryDependencies ++= Seq(
-  "com.outr" %% "scribe-slf4j" % scribeVersion,
+  "com.outr" %% "scribe-slf4j2" % scribeVersion,
   "com.outr" %% "spice-client-okhttp" % spiceVersion,
   "com.outr" %% "spice-server-undertow" % spiceVersion,
   "org.jsoup" % "jsoup" % jsoupVersion,
