@@ -32,7 +32,7 @@ developers := List(
 
 val scribeVersion: String = "3.11.9"
 
-val seleniumVersion: String = "4.10.0"
+val seleniumVersion: String = "4.11.0"
 
 val spiceVersion: String = "0.1.10"
 
@@ -58,7 +58,7 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "selenium-remote-driver" % seleniumVersion,
   "org.seleniumhq.selenium" % "htmlunit-driver" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
-  "org.seleniumhq.selenium" % "selenium-devtools-v112" % seleniumVersion,
+  "org.seleniumhq.selenium" % "selenium-devtools-v115" % seleniumVersion,
   "com.lihaoyi" %% "sourcecode" % sourcecodeVersion,
   "com.fifesoft" % "rsyntaxtextarea" % rsyntaxtextareaVersion,
   "org.scalatest" %% "scalatest" % scalatestVersion % "test"

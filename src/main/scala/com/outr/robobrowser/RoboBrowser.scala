@@ -26,8 +26,8 @@ import fabric.define.DefType
 import fabric.io.{JsonFormatter, JsonParser}
 import fabric.rw._
 import org.openqa.selenium.devtools.{DevTools, HasDevTools}
-import org.openqa.selenium.devtools.v112.network.Network
-import org.openqa.selenium.devtools.v112.network.model.{RequestWillBeSent, ResponseReceived}
+import org.openqa.selenium.devtools.v115.network.Network
+import org.openqa.selenium.devtools.v115.network.model.{RequestWillBeSent, ResponseReceived}
 import spice.http.cookie.SameSite
 import spice.http.cookie.{Cookie => SpiceCookie}
 import spice.net.URL
