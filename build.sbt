@@ -2,9 +2,9 @@ name := "robobrowser"
 organization := "com.outr"
 version := "1.7.1"
 
-val scala213: String = "2.13.11"
+val scala213: String = "2.13.12"
 
-val scala3: String = "3.3.0"
+val scala3: String = "3.3.1"
 
 scalaVersion := scala213
 crossScalaVersions := Seq(scala213, scala3)
@@ -30,21 +30,21 @@ developers := List(
   Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("https://matthicks.com"))
 )
 
-val scribeVersion: String = "3.11.9"
+val scribeVersion: String = "3.13.0"
 
-val seleniumVersion: String = "4.12.0"
+val seleniumVersion: String = "4.16.1"
 
-val spiceVersion: String = "0.1.10"
+val spiceVersion: String = "0.1.12"
 
-val jsoupVersion: String = "1.16.1"
+val jsoupVersion: String = "1.16.2"
 
-val appiumVersion: String = "8.5.1"
+val appiumVersion: String = "8.6.0"
 
-val sourcecodeVersion: String = "0.3.0"
+val sourcecodeVersion: String = "0.3.1"
 
 val rsyntaxtextareaVersion: String = "3.3.4"
 
-val scalatestVersion: String = "3.2.16"
+val scalatestVersion: String = "3.2.17"
 
 libraryDependencies ++= Seq(
   "com.outr" %% "scribe-slf4j2" % scribeVersion,
