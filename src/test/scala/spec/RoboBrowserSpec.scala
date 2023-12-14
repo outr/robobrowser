@@ -1,5 +1,6 @@
 package spec
 
+import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import com.outr.robobrowser._
 import com.outr.robobrowser.browser.firefox.Firefox
@@ -10,7 +11,9 @@ import fabric.rw._
 import java.io.File
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import spice.http.server.MutableHttpServer
+import reactify.Var
+import spice.http.HttpExchange
+import spice.http.server.{ErrorHandler, MutableHttpServer}
 import spice.http.server.config.HttpServerListener
 import spice.net._
 

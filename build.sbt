@@ -34,7 +34,7 @@ val scribeVersion: String = "3.13.0"
 
 val seleniumVersion: String = "4.16.1"
 
-val spiceVersion: String = "0.2.0"
+val spiceVersion: String = "0.3.0"
 
 val jsoupVersion: String = "1.17.1"
 
@@ -56,9 +56,9 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-firefox-driver" % seleniumVersion,
   "org.seleniumhq.selenium" % "selenium-remote-driver" % seleniumVersion,
-  "org.seleniumhq.selenium" % "htmlunit-driver" % seleniumVersion,
+  "org.seleniumhq.selenium" % "htmlunit-driver" % "4.13.0",
   "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
-  "org.seleniumhq.selenium" % "selenium-devtools-v115" % seleniumVersion,
+  "org.seleniumhq.selenium" % "selenium-devtools-v120" % seleniumVersion,
   "com.lihaoyi" %% "sourcecode" % sourcecodeVersion,
   "com.fifesoft" % "rsyntaxtextarea" % rsyntaxtextareaVersion,
   "org.scalatest" %% "scalatest" % scalatestVersion % "test"

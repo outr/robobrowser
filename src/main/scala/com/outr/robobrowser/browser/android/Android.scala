@@ -41,7 +41,8 @@ class Android(url: URL, capabilities: Capabilities) extends RoboBrowser(capabili
   }
 
   def startActivity(activity: Activity): Unit = withDriver { driver =>
-    driver.startActivity(new io.appium.java_client.android.Activity(activity.packageName, activity.name))
+    // TODO: Test how this works - See https://github.com/appium/java-client/blob/master/docs/v8-to-v9-migration-guide.md
+//    driver.startActivity(new io.appium.java_client.android.Activity(activity.packageName, activity.name))
   }
 
   override def home(): Unit = keyboard.send.home()

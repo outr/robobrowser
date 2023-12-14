@@ -1,7 +1,7 @@
 package com.outr.robobrowser.integration
 
 import com.outr.robobrowser.RoboBrowser
-import scribe.data.MDC
+import scribe.mdc.MDC
 
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -96,7 +96,7 @@ trait IntegrationTests[Browser <: RoboBrowser] extends AssertionsSupport { suite
         }
         val start = System.nanoTime()
         try {
-          MDC.contextualize("test", s"$label should ${test.description}") {
+          MDC.context("test" -> s"$label should ${test.description}") {
             test.function() match {
               case f: Future[_] => Await.result(f, Duration.Inf)
               case _ => // Ignore everything else
