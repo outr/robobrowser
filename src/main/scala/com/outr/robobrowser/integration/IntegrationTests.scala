@@ -1,7 +1,7 @@
 package com.outr.robobrowser.integration
 
 import com.outr.robobrowser.RoboBrowser
-import scribe.mdc.MDC
+import scribe.mdc._
 
 import java.io.File
 import java.util.concurrent.TimeUnit
