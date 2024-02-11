@@ -44,7 +44,7 @@ val sourcecodeVersion: String = "0.3.1"
 
 val rsyntaxtextareaVersion: String = "3.3.4"
 
-val scalatestVersion: String = "3.2.17"
+val scalatestVersion: String = "3.2.18"
 
 libraryDependencies ++= Seq(
   "com.outr" %% "scribe-slf4j2" % scribeVersion,
