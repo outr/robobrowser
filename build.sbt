@@ -4,7 +4,7 @@ version := "1.7.2"
 
 val scala213: String = "2.13.13"
 
-val scala3: String = "3.3.1"
+val scala3: String = "3.3.3"
 
 scalaVersion := scala213
 crossScalaVersions := Seq(scala213, scala3)
