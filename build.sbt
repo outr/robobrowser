@@ -30,7 +30,7 @@ developers := List(
   Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("https://matthicks.com"))
 )
 
-val scribeVersion: String = "3.13.0"
+val scribeVersion: String = "3.13.4"
 
 val seleniumVersion: String = "4.18.1"
 
