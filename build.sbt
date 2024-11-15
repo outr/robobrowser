@@ -40,7 +40,7 @@ val jsoupVersion: String = "1.18.1"
 
 val appiumVersion: String = "9.3.0"
 
-val sourcecodeVersion: String = "0.3.1"
+val sourcecodeVersion: String = "0.4.2"
 
 val rsyntaxtextareaVersion: String = "3.4.1"
 
