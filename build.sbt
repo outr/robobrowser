@@ -1,6 +1,6 @@
 name := "robobrowser"
 organization := "com.outr"
-version := "1.7.2"
+version := "1.7.3-SNAPSHOT"
 
 val scala213: String = "2.13.15"
 
@@ -58,7 +58,7 @@ libraryDependencies ++= Seq(
   "org.seleniumhq.selenium" % "selenium-remote-driver" % seleniumVersion,
   "org.seleniumhq.selenium" % "htmlunit-driver" % "4.13.0",
   "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
-  "org.seleniumhq.selenium" % "selenium-devtools-v120" % seleniumVersion,
+  "org.seleniumhq.selenium" % "selenium-devtools-v130" % seleniumVersion,
   "com.lihaoyi" %% "sourcecode" % sourcecodeVersion,
   "com.fifesoft" % "rsyntaxtextarea" % rsyntaxtextareaVersion,
   "org.scalatest" %% "scalatest" % scalatestVersion % "test"

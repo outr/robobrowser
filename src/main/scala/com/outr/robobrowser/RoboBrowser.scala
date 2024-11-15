@@ -26,8 +26,8 @@ import fabric.define.DefType
 import fabric.io.{JsonFormatter, JsonParser}
 import fabric.rw._
 import org.openqa.selenium.devtools.{DevTools, HasDevTools}
-import org.openqa.selenium.devtools.v120.network.Network
-import org.openqa.selenium.devtools.v120.network.model.{RequestWillBeSent, ResponseReceived}
+import org.openqa.selenium.devtools.v130.network.Network
+import org.openqa.selenium.devtools.v130.network.model.{RequestWillBeSent, ResponseReceived}
 import spice.http.cookie.SameSite
 import spice.http.cookie.{Cookie => SpiceCookie}
 import spice.net.URL
@@ -46,6 +46,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
   // TODO: Figure out a way to support this with Appium
 //  protected final lazy val _driver: Driver = new EventFiringDecorator[Driver](listener).decorate(createDriver())
   protected final lazy val _driver: Driver = createDriver()
+  protected final lazy val webStorage: WebStorageUtil = WebStorageUtil(_driver)
 
   private lazy val mainContext: Context = scs(scs => {
     scs
@@ -491,6 +492,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
       }
     }
 
+    // TODO: Migrate to using WebStorageUtil
     object localStorage {
       private def ls[Return](f: LocalStorage => Return): Return = withDriver { driver =>
         f(driver.asInstanceOf[WebStorage].getLocalStorage)

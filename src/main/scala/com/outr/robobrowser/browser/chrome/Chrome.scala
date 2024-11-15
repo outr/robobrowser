@@ -2,8 +2,8 @@ package com.outr.robobrowser.browser.chrome
 
 import com.outr.robobrowser.RoboBrowser
 import org.openqa.selenium.chrome.{ChromeDriver, ChromeOptions => SeleniumChromeOptions}
-import org.openqa.selenium.devtools.v120.network.Network
-import org.openqa.selenium.devtools.v120.network.model.Headers
+import org.openqa.selenium.devtools.v130.network.Network
+import org.openqa.selenium.devtools.v130.network.model.Headers
 
 import java.io.{File, FileNotFoundException}
 import java.util
