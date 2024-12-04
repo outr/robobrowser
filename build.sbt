@@ -32,7 +32,7 @@ developers := List(
 
 val scribeVersion: String = "3.15.2"
 
-val seleniumVersion: String = "4.26.0"
+val seleniumVersion: String = "4.27.0"
 
 val spiceVersion: String = "0.6.0"
 
