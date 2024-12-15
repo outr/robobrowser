@@ -42,7 +42,7 @@ val appiumVersion: String = "9.3.0"
 
 val sourcecodeVersion: String = "0.4.2"
 
-val rsyntaxtextareaVersion: String = "3.5.2"
+val rsyntaxtextareaVersion: String = "3.5.3"
 
 val scalatestVersion: String = "3.2.19"
 
