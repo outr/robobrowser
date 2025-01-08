@@ -1,0 +1,69 @@
+package robobrowser.comm
+
+import fabric.Obj
+import fabric.filter.RemoveNullsFilter
+import fabric.io.{JsonFormatter, JsonParser}
+import fabric.rw.{Asable, Convertible}
+import rapid.Task
+import rapid.task.CompletableTask
+import robobrowser.event.EventManager
+import spice.http.WebSocket
+
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
+import scala.annotation.tailrec
+import scala.jdk.CollectionConverters.CollectionHasAsScala
+
+trait CommunicationManager extends EventManager {
+  protected def ws: WebSocket
+
+  private val idGenerator = new AtomicInteger(0)
+  private val callbacks = new ConcurrentHashMap[Int, CompletableTask[WSResponse]]
+
+  ws.receive.text.attach { s =>
+    scribe.debug(s"Received: $s")
+    try {
+      val json = JsonParser(s)
+      val response = json.as[WSResponse]
+      fire(response)
+    } catch {
+      case t: Throwable => scribe.error(s"Error receiving: $s", t)
+    }
+  }
+
+  override def fire(response: WSResponse): Unit = response.id match {
+    case Some(id) => retrieve(id, response)
+    case None => super.fire(response)
+  }
+
+  def send(method: String, params: Obj = Obj.empty, sessionId: Option[String] = None): Task[WSResponse] = {
+    val id = idGenerator.incrementAndGet()
+    val request = WSRequest(
+      id = id,
+      method = method,
+      params = params,
+      sessionId = sessionId
+    )
+    val callback = Task.completable[WSResponse]
+    scribe.debug(s"$method waiting for callback: $id")
+    callbacks.put(id, callback)
+
+    val json = request.json.filterOne(RemoveNullsFilter)
+    val jsonString = JsonFormatter.Compact(json)
+    ws.send.text := jsonString
+    callback
+  }
+
+  @tailrec
+  private def retrieve(id: Int,
+                       response: WSResponse,
+                       tries: Int = 0): Unit = Option(callbacks.remove(id)) match {
+    case Some(callback) => callback.success(response)
+    case None => if (tries > 2) {
+      scribe.warn(s"No callback found for $id - $response (callbacks: ${callbacks.keySet().asScala.mkString(", ")})")
+    } else {
+      Thread.sleep(250)
+      retrieve(id, response, tries + 1)
+    }
+  }
+}
