@@ -7,6 +7,7 @@ import fabric.rw.{Asable, Convertible}
 import rapid.Task
 import rapid.task.CompletableTask
 import robobrowser.event.EventManager
+import spice.UserException
 import spice.http.WebSocket
 
 import java.util.concurrent.ConcurrentHashMap
@@ -36,7 +37,10 @@ trait CommunicationManager extends EventManager {
     case None => super.fire(response)
   }
 
-  def send(method: String, params: Obj = Obj.empty, sessionId: Option[String] = None): Task[WSResponse] = {
+  def send(method: String,
+           params: Obj = Obj.empty,
+           sessionId: Option[String] = None,
+           errorThrowsException: Boolean = true): Task[WSResponse] = {
     val id = idGenerator.incrementAndGet()
     val request = WSRequest(
       id = id,
@@ -51,7 +55,12 @@ trait CommunicationManager extends EventManager {
     val json = request.json.filterOne(RemoveNullsFilter)
     val jsonString = JsonFormatter.Compact(json)
     ws.send.text := jsonString
-    callback
+    callback.map { response =>
+      response.error match {
+        case Some(error) if errorThrowsException => throw UserException(s"Method: $method, Error: ${error.message}")
+        case _ => response
+      }
+    }
   }
 
   @tailrec

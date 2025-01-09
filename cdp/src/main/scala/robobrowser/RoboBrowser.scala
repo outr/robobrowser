@@ -2,7 +2,11 @@ package robobrowser
 
 import fabric.obj
 import fabric.rw.Asable
-import rapid.Task
+import rapid.{Opt, Task}
+import reactify.{Val, Var}
+import robobrowser.dom.DOM
+import robobrowser.event.ExecutionContext
+import robobrowser.select.{Selection, Selector}
 import robobrowser.window.{Window, WindowState}
 import spice.http.WebSocket
 
@@ -12,15 +16,46 @@ import scribe.{rapid => logger}
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 class RoboBrowser private(protected val ws: WebSocket, process: Option[Process]) extends TabFeatures {
-  private var attached = true
+
+  private val _url: Var[String] = Var("about:blank")
+  private val _attached: Var[Boolean] = Var(true)
+
+  def url: Val[String] = _url
+  def attached: Val[Boolean] = _attached
+  def loaded: Val[Boolean] = _loaded
 
   event.inspector.detached.on {
-    attached = false
+    _attached @= false
   }
 
-  event.page.navigatedWithinDocumentEvent.attach { evt =>
-    scribe.info(s"Navigated: ${evt.frameId} / ${evt.navigationType} / ${evt.url}")
+  event.page.frameNavigated.attach { evt =>
+    if (evt.frame.id == targetId) {
+      _url @= evt.frame.url
+      _loaded @= false
+    }
   }
+
+  event.page.lifecycle.attach { evt =>
+    if (evt.frameId == targetId && evt.name == "load") {
+      _loaded @= true
+    }
+  }
+
+  event.runtime.executionContextCreated.attach { evt =>
+    _executionContexts @= evt.context :: _executionContexts()
+  }
+
+  event.runtime.executionContextsCleared.on {
+    _executionContexts @= Nil
+  }
+
+  lazy val dom: DOM = DOM(this)
+
+  def apply(selector: Selector): Selection = Selection(this, selector)
+
+  def enableRuntime: Task[Unit] = send(
+    method = "Runtime.enable"
+  ).unit
 
   def enableNetworkEvents: Task[Unit] = send(
     method = "Network.enable"
@@ -32,6 +67,13 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
 
   def enablePage: Task[Unit] = send(
     method = "Page.enable"
+  ).unit
+
+  def enableLifecycleEvents: Task[Unit] = send(
+    method = "Page.setLifecycleEventsEnabled",
+    params = obj(
+      "enabled" -> true
+    )
   ).unit
 
   def window: Task[Window] = send(
@@ -53,11 +95,15 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
     )
   } yield ()
 
-  def waitForDetach(cycle: FiniteDuration = 1.second): Task[Unit] = if (!attached) {
-    Task.unit
-  } else {
-    Task.sleep(cycle).flatMap(_ => waitForDetach(cycle))
+  def waitForCondition(condition: Task[Boolean],
+                       cycle: FiniteDuration = 250.millis): Task[Unit] = condition.flatMap {
+    case true => Task.unit
+    case false => Task.sleep(cycle).flatMap(_ => waitForCondition(condition, cycle))
   }
+
+  def waitForLoaded(cycle: FiniteDuration = 250.millis): Task[Unit] = waitForCondition(Task(loaded()), cycle)
+
+  def waitForDetach(cycle: FiniteDuration = 1.second): Task[Unit] = waitForCondition(Task(!attached()), cycle)
 
   private def createTarget(url: String): Task[String] = send(
     method = "Target.createTarget",
@@ -90,7 +136,9 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
 object RoboBrowser {
   def apply(browser: Browser = Browser.Chrome,
             config: BrowserConfig = BrowserConfig(),
+            enableRuntime: Boolean = true,
             enablePageEvents: Boolean = true,
+            enableLifecycleEvents: Boolean = true,
             enableDOMEvents: Boolean = true,
             enableNetworkEvents: Boolean = true,
             tabSelector: TabSelector = TabSelector.FirstPage): Task[RoboBrowser] = for {
@@ -100,7 +148,9 @@ object RoboBrowser {
     webSocketUrl = tabResults.head.webSocketDebuggerUrl
     webSocket <- CDP.connect(webSocketUrl)
     rb = new RoboBrowser(webSocket, Some(process))
+    _ <- rb.enableRuntime.when(enableRuntime)
     _ <- rb.enablePage.when(enablePageEvents)
+    _ <- rb.enableLifecycleEvents.when(enableLifecycleEvents)
     _ <- rb.enableDOM.when(enableDOMEvents)
     _ <- rb.enableNetworkEvents.when(enableNetworkEvents)
     existingTab = tabSelector.select(tabResults)

@@ -1,5 +1,6 @@
 package robobrowser.event
 
+import fabric.io.JsonFormatter
 import fabric.rw.RW
 import reactify.Channel
 import robobrowser.comm.WSResponse
@@ -14,43 +15,51 @@ trait EventManager {
   event.dom
   event.page
   event.inspector
+  event.runtime
 
   object event extends Channel[Event] {
     object target {
-      val attachedToTarget: Channel[AttachedToTargetEvent] = channel[AttachedToTargetEvent]("Target.attachedToTarget")
+      val attachedToTarget: Channel[AttachedToTargetEvent] = channel("Target.attachedToTarget")
     }
     object network {
-      val policyUpdated: Channel[PolicyUpdatedEvent] = channel[PolicyUpdatedEvent]("Network.policyUpdated")
-      val requestWillBeSent: Channel[RequestWillBeSentEvent] = channel[RequestWillBeSentEvent]("Network.requestWillBeSent")
-      val responseReceived: Channel[ResponseReceivedEvent] = channel[ResponseReceivedEvent]("Network.responseReceived")
-      val dataReceived: Channel[DataReceivedEvent] = channel[DataReceivedEvent]("Network.dataReceived")
-      val loadingFinished: Channel[LoadingFinishedEvent] = channel[LoadingFinishedEvent]("Network.loadingFinished")
-      val requestWillBeSentExtraInfo: Channel[RequestWillBeSentExtraInfoEvent] = channel[RequestWillBeSentExtraInfoEvent]("Network.requestWillBeSentExtraInfo")
-      val resourceChangedPriority: Channel[ResourceChangedPriorityEvent] = channel[ResourceChangedPriorityEvent]("Network.resourceChangedPriority")
-      val responseReceivedExtraInfo: Channel[ResponseReceivedExtraInfoEvent] = channel[ResponseReceivedExtraInfoEvent]("Network.responseReceivedExtraInfo")
-      val requestServedFromCache: Channel[RequestServedFromCacheEvent] = channel[RequestServedFromCacheEvent]("Network.requestServedFromCache")
-      val webSocketCreated: Channel[WebSocketCreatedEvent] = channel[WebSocketCreatedEvent]("Network.webSocketCreated")
-      val loadingFailed: Channel[LoadingFailedEvent] = channel[LoadingFailedEvent]("Network.loadingFailed")
+      val policyUpdated: Channel[PolicyUpdatedEvent] = channel("Network.policyUpdated")
+      val requestWillBeSent: Channel[RequestWillBeSentEvent] = channel("Network.requestWillBeSent")
+      val responseReceived: Channel[ResponseReceivedEvent] = channel("Network.responseReceived")
+      val dataReceived: Channel[DataReceivedEvent] = channel("Network.dataReceived")
+      val loadingFinished: Channel[LoadingFinishedEvent] = channel("Network.loadingFinished")
+      val requestWillBeSentExtraInfo: Channel[RequestWillBeSentExtraInfoEvent] = channel("Network.requestWillBeSentExtraInfo")
+      val resourceChangedPriority: Channel[ResourceChangedPriorityEvent] = channel("Network.resourceChangedPriority")
+      val responseReceivedExtraInfo: Channel[ResponseReceivedExtraInfoEvent] = channel("Network.responseReceivedExtraInfo")
+      val requestServedFromCache: Channel[RequestServedFromCacheEvent] = channel("Network.requestServedFromCache")
+      val webSocketCreated: Channel[WebSocketCreatedEvent] = channel("Network.webSocketCreated")
+      val loadingFailed: Channel[LoadingFailedEvent] = channel("Network.loadingFailed")
     }
     object dom {
-      val documentUpdated: Channel[DocumentUpdatedEvent] = channel[DocumentUpdatedEvent]("DOM.documentUpdated")
+      val documentUpdated: Channel[DocumentUpdatedEvent] = channel("DOM.documentUpdated")
     }
     object page {
-      val frameAttached: Channel[FrameAttachedEvent] = channel[FrameAttachedEvent]("Page.frameAttached")
-      val frameDetached: Channel[FrameDetachedEvent] = channel[FrameDetachedEvent]("Page.frameDetached")
-      val frameNavigated: Channel[FrameNavigatedEvent] = channel[FrameNavigatedEvent]("Page.frameNavigated")
-      val frameRequestedNavigation: Channel[FrameRequestedNavigationEvent] = channel[FrameRequestedNavigationEvent]("Page.frameRequestedNavigation")
-      val frameScheduledNavigation: Channel[FrameScheduledNavigationEvent] = channel[FrameScheduledNavigationEvent]("Page.frameScheduledNavigation")
-      val frameClearedScheduledNavigation: Channel[FrameClearedScheduledNavigationEvent] = channel[FrameClearedScheduledNavigationEvent]("Page.frameClearedScheduledNavigation")
-      val frameStartedLoading: Channel[FrameStartedLoadingEvent] = channel[FrameStartedLoadingEvent]("Page.frameStartedLoading")
-      val frameStoppedLoading: Channel[FrameStoppedLoadingEvent] = channel[FrameStoppedLoadingEvent]("Page.frameStoppedLoading")
-      val frameSubtreeWillBeDetached: Channel[FrameSubtreeWillBeDetachedEvent] = channel[FrameSubtreeWillBeDetachedEvent]("Page.frameSubtreeWillBeDetached")
-      val domContentEventFired: Channel[FrameAttachedEvent] = channel[FrameAttachedEvent]("Page.domContentEventFired")
-      val loadEventFired: Channel[LoadEventFiredEvent] = channel[LoadEventFiredEvent]("Page.loadEventFired")
-      val navigatedWithinDocumentEvent: Channel[NavigatedWithinDocumentEvent] = channel[NavigatedWithinDocumentEvent]("Page.navigatedWithinDocument")
+      val domContentEventFired: Channel[FrameAttachedEvent] = channel("Page.domContentEventFired")
+      val frameAttached: Channel[FrameAttachedEvent] = channel("Page.frameAttached")
+      val frameDetached: Channel[FrameDetachedEvent] = channel("Page.frameDetached")
+      val frameNavigated: Channel[FrameNavigatedEvent] = channel("Page.frameNavigated")
+      val frameRequestedNavigation: Channel[FrameRequestedNavigationEvent] = channel("Page.frameRequestedNavigation")
+      val frameScheduledNavigation: Channel[FrameScheduledNavigationEvent] = channel("Page.frameScheduledNavigation")
+      val frameClearedScheduledNavigation: Channel[FrameClearedScheduledNavigationEvent] = channel("Page.frameClearedScheduledNavigation")
+      val frameStartedLoading: Channel[FrameStartedLoadingEvent] = channel("Page.frameStartedLoading")
+      val frameStoppedLoading: Channel[FrameStoppedLoadingEvent] = channel("Page.frameStoppedLoading")
+      val frameSubtreeWillBeDetached: Channel[FrameSubtreeWillBeDetachedEvent] = channel("Page.frameSubtreeWillBeDetached")
+      val javascriptDialogOpening: Channel[JavascriptDialogOpeningEvent] = channel("Page.javascriptDialogOpening")
+      val javascriptDialogClosed: Channel[JavascriptDialogClosedEvent] = channel("Page.javascriptDialogClosed")
+      val lifecycle: Channel[LifecycleEvent] = channel("Page.lifecycleEvent")
+      val loadEventFired: Channel[LoadEventFiredEvent] = channel("Page.loadEventFired")
+      val navigatedWithinDocument: Channel[NavigatedWithinDocumentEvent] = channel("Page.navigatedWithinDocument")
     }
     object inspector {
-      val detached: Channel[DetachedEvent] = channel[DetachedEvent]("Inspector.detached")
+      val detached: Channel[DetachedEvent] = channel("Inspector.detached")
+    }
+    object runtime {
+      val executionContextCreated: Channel[ExecutionContextCreatedEvent] = channel("Runtime.executionContextCreated")
+      val executionContextsCleared: Channel[ExecutionContextsClearedEvent] = channel("Runtime.executionContextsCleared")
     }
   }
 
@@ -62,6 +71,6 @@ trait EventManager {
 
   def fire(response: WSResponse): Unit = channels.get(response.method.get) match {
     case Some(c) => c.fire(response.params)
-    case None => scribe.warn(s"No channel associated with method: ${response.method.get}")
+    case None => scribe.warn(s"No channel associated with method: ${response.method.get}\n${JsonFormatter.Default(response.params)}")
   }
 }
