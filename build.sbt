@@ -43,9 +43,9 @@ ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF
 
 val scribeVersion: String = "3.16.0"
 
-val rapidVersion: String = "0.8.0-SNAPSHOT"
+val rapidVersion: String = "0.8.0"
 
-val spiceVersion: String = "0.8.0-SNAPSHOT"
+val spiceVersion: String = "0.8.0"
 
 val seleniumVersion: String = "4.27.0"
 
@@ -105,6 +105,7 @@ lazy val cdp = project.in(file("cdp"))
       "com.outr" %% "spice-server-undertow" % spiceVersion,
       "com.outr" %% "rapid-core" % rapidVersion,
       "org.jsoup" % "jsoup" % jsoupVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "com.outr" %% "rapid-test" % rapidVersion % Test
     )
   )
