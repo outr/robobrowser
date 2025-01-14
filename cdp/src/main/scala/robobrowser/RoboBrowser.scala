@@ -15,6 +15,9 @@ import spice.http.WebSocket
 import scala.sys.process._
 import scribe.{rapid => logger}
 
+import java.io.File
+import java.nio.file.{Files, Path}
+import java.util.Base64
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 class RoboBrowser private(protected val ws: WebSocket, process: Option[Process]) extends TabFeatures {
@@ -57,6 +60,8 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
   lazy val dom: DOM = DOM(this)
   lazy val key: KeyFeatures = KeyFeatures(this)
 
+  def title: Task[String] = eval("document.title").map(_("result")("value").asString)
+
   def apply(selector: Selector): Selection = Selection(this, selector)
 
   def enableRuntime: Task[Unit] = send(
@@ -86,6 +91,14 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
     method = "Browser.getWindowForTarget"
   ).map { response =>
     response.result.as[Window]
+  }
+
+  def screenshot(file: Path): Task[Unit] = send(
+    method = "Page.captureScreenshot"
+  ).map { response =>
+    val base64 = response.result("data").asString
+    val bytes = Base64.getDecoder.decode(base64)
+    Files.write(file, bytes)
   }
 
   def windowState(state: WindowState): Task[Unit] = for {

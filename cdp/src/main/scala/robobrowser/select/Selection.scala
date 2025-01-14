@@ -16,6 +16,8 @@ case class Selection(browser: RoboBrowser, selector: Selector) {
 
   def click: Task[Unit] = browser.eval(s"$cssSelectorOne.click()").unit
 
+  def submit: Task[Unit] = browser.eval(s"$cssSelectorOne.submit()").unit
+
   def value: Task[Json] = browser.eval(s"$cssSelectorOne.value").map { json =>
     json("result")("value")
   }
