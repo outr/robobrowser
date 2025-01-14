@@ -1,40 +1,53 @@
-name := "robobrowser"
-organization := "com.outr"
-version := "1.7.3"
+// Variables
+val org: String = "com.outr"
+val projectName: String = "robobrowser"
+val githubOrg: String = "outr"
+val email: String = "matt@matthicks.com"
+val developerId: String = "darkfrog"
+val developerName: String = "Matt Hicks"
+val developerURL: String = "https://matthicks.com"
 
-val scala213: String = "2.13.15"
+name := projectName
+ThisBuild / organization := org
+ThisBuild / version := "2.0.0-SNAPSHOT3"
+ThisBuild / scalaVersion := "2.13.15"
+ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
-val scala3: String = "3.3.4"
-
-scalaVersion := scala213
-crossScalaVersions := Seq(scala213, scala3)
-scalacOptions += "-deprecation"
-
-resolvers += "jitpack.io" at "https://jitpack.io"
-
-sonatypeCredentialHost := "s01.oss.sonatype.org"
-sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
-publishTo := sonatypePublishToBundle.value
-sonatypeProfileName := "com.outr"
-publishMavenStyle := true
-licenses := Seq("MIT" -> url("https://github.com/outr/robobrowser/blob/master/LICENSE"))
-sonatypeProjectHosting := Some(xerial.sbt.Sonatype.GitHubHosting("outr", "robobrowser", "matt@matthicks.com"))
-homepage := Some(url("https://github.com/outr/robobrowser"))
-scmInfo := Some(
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+ThisBuild / sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+ThisBuild / publishTo := sonatypePublishToBundle.value
+ThisBuild / sonatypeProfileName := org
+ThisBuild / licenses := Seq("MIT" -> url(s"https://github.com/$githubOrg/$projectName/blob/master/LICENSE"))
+ThisBuild / sonatypeProjectHosting := Some(xerial.sbt.Sonatype.GitHubHosting(githubOrg, projectName, email))
+ThisBuild / homepage := Some(url(s"https://github.com/$githubOrg/$projectName"))
+ThisBuild / scmInfo := Some(
   ScmInfo(
-    url("https://github.com/outr/robobrowser"),
-    "scm:git@github.com:outr/robobrowser.git"
+    url(s"https://github.com/$githubOrg/$projectName"),
+    s"scm:git@github.com:$githubOrg/$projectName.git"
   )
 )
-developers := List(
-  Developer(id="darkfrog", name="Matt Hicks", email="matt@matthicks.com", url=url("https://matthicks.com"))
+ThisBuild / developers := List(
+  Developer(id=developerId, name=developerName, email=email, url=url(developerURL))
 )
 
-val scribeVersion: String = "3.15.3"
+ThisBuild / outputStrategy := Some(StdoutOutput)
+
+ThisBuild / fork := true
+
+ThisBuild / javaOptions ++= Seq(
+  "--enable-native-access=ALL-UNNAMED",
+  "--add-modules", "jdk.incubator.vector"
+)
+
+ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
+
+val scribeVersion: String = "3.16.0"
+
+val rapidVersion: String = "0.8.0"
+
+val spiceVersion: String = "0.8.0"
 
 val seleniumVersion: String = "4.27.0"
-
-val spiceVersion: String = "0.6.4"
 
 val jsoupVersion: String = "1.18.3"
 
@@ -46,23 +59,53 @@ val rsyntaxtextareaVersion: String = "3.5.3"
 
 val scalatestVersion: String = "3.2.19"
 
-libraryDependencies ++= Seq(
-  "com.outr" %% "scribe-slf4j2" % scribeVersion,
-  "com.outr" %% "spice-client-okhttp" % spiceVersion,
-  "com.outr" %% "spice-server-undertow" % spiceVersion,
-  "org.jsoup" % "jsoup" % jsoupVersion,
-  "io.appium" % "java-client" % appiumVersion,
-  "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
-  "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
-  "org.seleniumhq.selenium" % "selenium-firefox-driver" % seleniumVersion,
-  "org.seleniumhq.selenium" % "selenium-remote-driver" % seleniumVersion,
-  "org.seleniumhq.selenium" % "htmlunit-driver" % "4.13.0",
-  "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
-  "org.seleniumhq.selenium" % "selenium-devtools-v130" % seleniumVersion,
-  "com.lihaoyi" %% "sourcecode" % sourcecodeVersion,
-  "com.fifesoft" % "rsyntaxtextarea" % rsyntaxtextareaVersion,
-  "org.scalatest" %% "scalatest" % scalatestVersion % "test"
-)
+val root = project.in(file("."))
+  .aggregate(core, selenium, cdp)
+  .settings(
+    name := projectName,
+    publish := {},
+    publishLocal := {}
+  )
 
-fork := true
-outputStrategy := Some(StdoutOutput)
+lazy val core = project.in(file("core"))
+  .settings(
+    name := s"$projectName-core"
+  )
+
+lazy val selenium = project.in(file("selenium"))
+  .dependsOn(core)
+  .settings(
+    name := s"$projectName-selenium",
+    libraryDependencies ++= Seq(
+      "com.outr" %% "scribe-slf4j2" % scribeVersion,
+      "com.outr" %% "spice-client-jvm" % spiceVersion,
+      "com.outr" %% "spice-server-undertow" % spiceVersion,
+      "com.outr" %% "rapid-core" % rapidVersion,
+      "org.jsoup" % "jsoup" % jsoupVersion,
+      "io.appium" % "java-client" % appiumVersion,
+      "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
+      "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
+      "org.seleniumhq.selenium" % "selenium-firefox-driver" % seleniumVersion,
+      "org.seleniumhq.selenium" % "selenium-remote-driver" % seleniumVersion,
+      "org.seleniumhq.selenium" % "htmlunit-driver" % "4.13.0",
+      "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
+      "org.seleniumhq.selenium" % "selenium-devtools-v131" % seleniumVersion,
+      "com.lihaoyi" %% "sourcecode" % sourcecodeVersion,
+      "com.fifesoft" % "rsyntaxtextarea" % rsyntaxtextareaVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+    )
+  )
+
+lazy val cdp = project.in(file("cdp"))
+  .dependsOn(core)
+  .settings(
+    name := s"$projectName-cdp",
+    libraryDependencies ++= Seq(
+      "com.outr" %% "spice-client-okhttp" % spiceVersion,
+      "com.outr" %% "spice-server-undertow" % spiceVersion,
+      "com.outr" %% "rapid-core" % rapidVersion,
+      "org.jsoup" % "jsoup" % jsoupVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "com.outr" %% "rapid-test" % rapidVersion % Test
+    )
+  )
