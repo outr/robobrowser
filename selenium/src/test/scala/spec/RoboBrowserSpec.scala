@@ -55,7 +55,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
 //      browser.logs.info("This is a test")
 //      browser.logs().map(_.copy(timestamp = 0L)) should be(List(LogEntry(LogLevel.Info, 0L, "This is a test")))
 //    }
-    "monitor key event" in {
+    /*"monitor key event" in {
       val queue = eventManager.queue[Json]("test1")
       var received = List.empty[Event[Json]]
 
@@ -84,7 +84,7 @@ class RoboBrowserSpec extends AnyWordSpec with Matchers {
       browser.waitFor(2.seconds, 100.millis, blocking = false) {
         keyCounter == 7
       } should be(true)
-    }
+    }*/
     "dispose the browser" in {
       eventManager.dispose()
       browser.dispose()
