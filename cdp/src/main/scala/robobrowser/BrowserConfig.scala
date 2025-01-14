@@ -15,6 +15,7 @@ case class BrowserConfig(headless: Boolean = false,
                          disableInfobars: Boolean = false,
                          disableSync: Boolean = false,
                          disableSoftwareRasterizer: Boolean = false,
+                         allowRunningInsecureContent: Boolean = false,
                          singleProcess: Boolean = false,
                          disableCache: Boolean = false,
                          enableAutomation: Boolean = false,
@@ -46,6 +47,12 @@ case class BrowserConfig(headless: Boolean = false,
     Nil
   }
 
+  private def l(name: String, list: List[String]): List[String] = if (list.nonEmpty) {
+    List(s"$name=${list.mkString(",")}")
+  } else {
+    Nil
+  }
+
   lazy val options: List[String] = List(
     o(headless, if (useNewHeadlessMode) "--headless=new" else "--headless"),
     om(disableBackgrounding, List(
@@ -63,6 +70,7 @@ case class BrowserConfig(headless: Boolean = false,
     o(disableInfobars, "--disable-infobars"),
     o(disableSync, "--disable-sync"),
     o(disableSoftwareRasterizer, "--disable-software-rasterizer"),
+    o(allowRunningInsecureContent, "--allow-running-insecure-content"),
     o(singleProcess, "--single-process"),
     o(disableCache, "--disable-cache"),
     o(enableAutomation, "--enable-automation"),
@@ -80,7 +88,7 @@ case class BrowserConfig(headless: Boolean = false,
     forceDeviceScaleFactor.map(f => s"--force-device-scale-factor=$f").toList,
     userDataDir.map(dir => s"--user-data-dir=${dir.getAbsolutePath}").toList,
     proxyServer.map { case (host, port) => s"--proxy-server=$host:$port" }.toList,
-    proxyBypassList.map(pattern => s"--proxy-bypass-list=$pattern"),
-    disableFeatures.map(feature => s"--disable-features=$feature")
+    l("--proxy-bypass-list", proxyBypassList),
+    l("--disable-features", disableFeatures)
   ).flatten
 }

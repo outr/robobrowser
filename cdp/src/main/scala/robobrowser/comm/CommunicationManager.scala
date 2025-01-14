@@ -18,11 +18,14 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 trait CommunicationManager extends EventManager {
   protected def ws: WebSocket
 
+  private[robobrowser] var targetId: String = _
+  private[robobrowser] var sessionId: String = _
+
   private val idGenerator = new AtomicInteger(0)
   private val callbacks = new ConcurrentHashMap[Int, CompletableTask[WSResponse]]
 
   ws.receive.text.attach { s =>
-    scribe.debug(s"Received: $s")
+    if (debug) scribe.info(s"Received: ${s.take(200)}")
     try {
       val json = JsonParser(s)
       val response = json.as[WSResponse]
@@ -39,14 +42,13 @@ trait CommunicationManager extends EventManager {
 
   def send(method: String,
            params: Obj = Obj.empty,
-           sessionId: Option[String] = None,
-           errorThrowsException: Boolean = true): Task[WSResponse] = {
+           errorThrowsException: Boolean = true): Task[WSResponse] = Task {
     val id = idGenerator.incrementAndGet()
     val request = WSRequest(
       id = id,
       method = method,
       params = params,
-      sessionId = sessionId
+      sessionId = Option(sessionId)
     )
     val callback = Task.completable[WSResponse]
     scribe.debug(s"$method waiting for callback: $id")
@@ -54,6 +56,7 @@ trait CommunicationManager extends EventManager {
 
     val json = request.json.filterOne(RemoveNullsFilter)
     val jsonString = JsonFormatter.Compact(json)
+    if (debug) scribe.info(s"Sending: ${jsonString.take(200)}")
     ws.send.text := jsonString
     callback.map { response =>
       response.error match {
@@ -61,7 +64,7 @@ trait CommunicationManager extends EventManager {
         case _ => response
       }
     }
-  }
+  }.flatten
 
   @tailrec
   private def retrieve(id: Int,

@@ -12,6 +12,6 @@ object TabSelector {
   }
 
   case object FirstPage extends TabSelector {
-    override def select(list: List[CDPQueryResult]): Option[CDPQueryResult] = list.find(_.`type` == "page")
+    override def select(list: List[CDPQueryResult]): Option[CDPQueryResult] = list.find(r => r.`type` == "page" && r.title != "New Incognito Tab")
   }
 }

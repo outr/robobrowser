@@ -5,6 +5,9 @@ sealed trait Selector {
 }
 
 object Selector {
+  def apply(query: String): Selector = Query(query)
+
+  case class Query(query: String) extends Selector
   case object All extends Selector {
     override lazy val query: String = "*"
   }
@@ -19,6 +22,10 @@ object Selector {
   }
   case class Tag(tag: String) extends Selector {
     override lazy val query: String = tag
+  }
+
+  case class AttributeValue(name: String, value: String) extends Selector {
+    override lazy val query: String = s"[$name='$value']"
   }
 
   /**

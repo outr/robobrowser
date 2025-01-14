@@ -1,11 +1,13 @@
 package robobrowser
 
+import fabric.io.JsonFormatter
 import fabric.obj
-import fabric.rw.Asable
-import rapid.{Opt, Task}
+import fabric.rw.{Asable, Convertible}
+import rapid.{Forge, Opt, Task}
 import reactify.{Val, Var}
 import robobrowser.dom.DOM
 import robobrowser.event.ExecutionContext
+import robobrowser.input.KeyFeatures
 import robobrowser.select.{Selection, Selector}
 import robobrowser.window.{Window, WindowState}
 import spice.http.WebSocket
@@ -16,7 +18,6 @@ import scribe.{rapid => logger}
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 class RoboBrowser private(protected val ws: WebSocket, process: Option[Process]) extends TabFeatures {
-
   private val _url: Var[String] = Var("about:blank")
   private val _attached: Var[Boolean] = Var(true)
 
@@ -45,11 +46,16 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
     _executionContexts @= evt.context :: _executionContexts()
   }
 
+  event.runtime.executionContextDestroyed.attach { evt =>
+    _executionContexts @= _executionContexts().filterNot(_.id == evt.executionContextId)
+  }
+
   event.runtime.executionContextsCleared.on {
     _executionContexts @= Nil
   }
 
   lazy val dom: DOM = DOM(this)
+  lazy val key: KeyFeatures = KeyFeatures(this)
 
   def apply(selector: Selector): Selection = Selection(this, selector)
 
@@ -82,7 +88,7 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
     response.result.as[Window]
   }
 
-  def windowState_=(state: WindowState): Task[Unit] = for {
+  def windowState(state: WindowState): Task[Unit] = for {
     window <- this.window
     _ <- send(
       method = "Browser.setWindowBounds",
@@ -114,6 +120,15 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
     response.result("targetId").asString
   }
 
+  private def closeTarget(targetId: String): Task[Boolean] = send(
+    method = "Target.closeTarget",
+    params = obj(
+      "targetId" -> targetId
+    )
+  ).map { response =>
+    response.result("success").asBoolean
+  }
+
   private def attachToTarget(targetId: String): Task[String] = send(
     method = "Target.attachToTarget",
     params = obj(
@@ -134,26 +149,21 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
 }
 
 object RoboBrowser {
-  def apply(browser: Browser = Browser.Chrome,
-            config: BrowserConfig = BrowserConfig(),
-            enableRuntime: Boolean = true,
-            enablePageEvents: Boolean = true,
-            enableLifecycleEvents: Boolean = true,
-            enableDOMEvents: Boolean = true,
-            enableNetworkEvents: Boolean = true,
-            tabSelector: TabSelector = TabSelector.FirstPage): Task[RoboBrowser] = for {
-    process <- CDP.createProcess(browser, config)
+  def withBrowser[Return](config: RoboBrowserConfig = RoboBrowserConfig())
+                         (forge: Forge[RoboBrowser, Return]): Task[Return] = apply(config).flatMap { browser =>
+    forge(browser).guarantee {
+      browser.dispose()
+    }
+  }
+
+  def apply(config: RoboBrowserConfig = RoboBrowserConfig()): Task[RoboBrowser] = for {
+    process <- CDP.createProcess(config.browser, config.browserConfig)
     _ <- Task.sleep(500.millis)   // Give the browser time to launch
-    tabResults <- CDP.query(browser)
+    tabResults <- CDP.query(config.browser)
     webSocketUrl = tabResults.head.webSocketDebuggerUrl
     webSocket <- CDP.connect(webSocketUrl)
     rb = new RoboBrowser(webSocket, Some(process))
-    _ <- rb.enableRuntime.when(enableRuntime)
-    _ <- rb.enablePage.when(enablePageEvents)
-    _ <- rb.enableLifecycleEvents.when(enableLifecycleEvents)
-    _ <- rb.enableDOM.when(enableDOMEvents)
-    _ <- rb.enableNetworkEvents.when(enableNetworkEvents)
-    existingTab = tabSelector.select(tabResults)
+    existingTab = config.tabSelector.select(tabResults)
     _ <- existingTab match {
       case Some(tab) => rb.attachToTarget(tab.id).map { sessionId =>
         rb.targetId = tab.id
@@ -167,5 +177,10 @@ object RoboBrowser {
         rb.sessionId = sessionId
       }
     }
+    _ <- rb.enablePage.when(config.enablePageEvents)
+    _ <- rb.enableRuntime.when(config.enableRuntime)
+    _ <- rb.enableLifecycleEvents.when(config.enableLifecycleEvents)
+    _ <- rb.enableDOM.when(config.enableDOMEvents)
+    _ <- rb.enableNetworkEvents.when(config.enableNetworkEvents)
   } yield rb
 }

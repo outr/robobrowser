@@ -12,10 +12,12 @@ import scala.sys.process._
 
 object CDP {
   def createProcess(browser: Browser, config: BrowserConfig): Task[Process] = Task {
-    val pb = Process(List(
+    val cmd = List(
       browser.path,
       s"--remote-debugging-port=${browser.port}"
-    ) ::: config.options)
+    ) ::: config.options
+    scribe.info(cmd.mkString(" "))
+    val pb = Process(cmd)
     val logger = ProcessLogger(
       line => scribe.info(line),
       line => scribe.error(line)

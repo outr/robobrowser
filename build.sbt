@@ -9,7 +9,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.0.0-SNAPSHOT"
+ThisBuild / version := "2.0.0-SNAPSHOT3"
 ThisBuild / scalaVersion := "2.13.15"
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -41,9 +41,9 @@ ThisBuild / javaOptions ++= Seq(
 
 ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
 
-val scribeVersion: String = "3.15.3"
+val scribeVersion: String = "3.16.0"
 
-val rapidVersion: String = "0.7.0-SNAPSHOT"
+val rapidVersion: String = "0.8.0-SNAPSHOT"
 
 val spiceVersion: String = "0.8.0-SNAPSHOT"
 
@@ -78,7 +78,7 @@ lazy val selenium = project.in(file("selenium"))
     name := s"$projectName-selenium",
     libraryDependencies ++= Seq(
       "com.outr" %% "scribe-slf4j2" % scribeVersion,
-      "com.outr" %% "spice-client-okhttp" % spiceVersion,
+      "com.outr" %% "spice-client-jvm" % spiceVersion,
       "com.outr" %% "spice-server-undertow" % spiceVersion,
       "com.outr" %% "rapid-core" % rapidVersion,
       "org.jsoup" % "jsoup" % jsoupVersion,
