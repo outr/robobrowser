@@ -1,6 +1,6 @@
 package robobrowser
 
-case class RoboBrowserConfig(browser: Browser = Browser.Chrome,
+case class RoboBrowserConfig(browser: Browser = Browser.auto(),
                              browserConfig: BrowserConfig = BrowserConfig(),
                              enableRuntime: Boolean = true,
                              enablePageEvents: Boolean = true,

@@ -8,7 +8,7 @@ case class CDPQueryResult(description: String,
                           id: String,
                           title: String,
                           `type`: String,
-                          url: URL,
+                          url: String,
                           webSocketDebuggerUrl: URL)
 
 object CDPQueryResult {
