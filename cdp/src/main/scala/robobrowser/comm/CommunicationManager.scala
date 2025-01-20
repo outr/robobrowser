@@ -25,7 +25,7 @@ trait CommunicationManager extends EventManager {
   private val callbacks = new ConcurrentHashMap[Int, CompletableTask[WSResponse]]
 
   ws.receive.text.attach { s =>
-    if (debug) scribe.info(s"Received: ${s.take(200)}")
+    if (debug) scribe.info(s"Received: $s")
     try {
       val json = JsonParser(s)
       val response = json.as[WSResponse]
@@ -56,7 +56,7 @@ trait CommunicationManager extends EventManager {
 
     val json = request.json.filterOne(RemoveNullsFilter)
     val jsonString = JsonFormatter.Compact(json)
-    if (debug) scribe.info(s"Sending: ${jsonString.take(200)}")
+    if (debug) scribe.info(s"Sending: $jsonString}")
     ws.send.text := jsonString
     callback.map { response =>
       response.error match {
@@ -70,6 +70,7 @@ trait CommunicationManager extends EventManager {
   private def retrieve(id: Int,
                        response: WSResponse,
                        tries: Int = 0): Unit = Option(callbacks.remove(id)) match {
+//    case Some(callback) if response. => callback.success(response)
     case Some(callback) => callback.success(response)
     case None => if (tries > 2) {
       scribe.warn(s"No callback found for $id - $response (callbacks: ${callbacks.keySet().asScala.mkString(", ")})")

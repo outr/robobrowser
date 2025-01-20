@@ -5,7 +5,7 @@ import org.scalatest.wordspec.AsyncWordSpec
 import rapid.AsyncTaskSpec
 import robobrowser.input.Key
 import robobrowser.select.Selector
-import robobrowser.{BrowserConfig, RoboBrowser, RoboBrowserConfig}
+import robobrowser.{BrowserConfig, RoboBrowser, RoboBrowserConfig, TabSelector}
 
 import java.io.File
 import java.nio.file.{Files, Path}
@@ -18,7 +18,8 @@ class RoboBrowserSpec extends AsyncWordSpec with AsyncTaskSpec with Matchers {
 
     "create a new headless browser" in {
       RoboBrowser(config = RoboBrowserConfig(
-        browserConfig = BrowserConfig(headless = true)
+        browserConfig = BrowserConfig(headless = true),
+        tabSelector = TabSelector.AlwaysCreateNew
       )).map { browser =>
         this.browser = browser
         browser.url() should be("about:blank")

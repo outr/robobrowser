@@ -28,7 +28,10 @@ trait TabFeatures extends CommunicationManager {
         "url" -> url
       )
     ).map { response =>
-      Frame(response.result("frameId").asString)
+      response.result.get("errorText").map(_.asString) match {
+        case Some(errorText) => throw new RuntimeException(errorText)
+        case None => Frame(response.result("frameId").asString)
+      }
     }
   }
 
