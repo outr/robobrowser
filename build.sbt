@@ -51,7 +51,7 @@ val seleniumVersion: String = "4.27.0"
 
 val jsoupVersion: String = "1.18.3"
 
-val appiumVersion: String = "9.3.0"
+val appiumVersion: String = "9.4.0"
 
 val sourcecodeVersion: String = "0.4.2"
 
