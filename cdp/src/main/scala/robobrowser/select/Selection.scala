@@ -1,6 +1,6 @@
 package robobrowser.select
 
-import fabric.Json
+import fabric.{Json, Null}
 import rapid.Task
 import robobrowser.RoboBrowser
 
@@ -8,18 +8,22 @@ case class Selection(browser: RoboBrowser, selector: Selector) {
   private lazy val cssSelectorOne: String = s"document.querySelector(\"${selector.query}\")"
   private lazy val cssSelectorAll: String = s"document.querySelectorAll(\"${selector.query}\")"
 
+  def evalFirst(f: String => String): Task[Json] = browser.eval(f(cssSelectorOne))
+
   def count: Task[Int] = browser.eval(s"$cssSelectorAll.length").map { json =>
     json("result")("value").asInt
   }
 
-  def focus: Task[Unit] = browser.eval(s"$cssSelectorOne.focus()").unit
+  def focus: Task[Unit] = evalFirst(ref => s"$ref.focus()").unit
 
-  def click: Task[Unit] = browser.eval(s"$cssSelectorOne.click()").unit
+  def select: Task[Unit] = evalFirst(ref => s"$ref.select()").unit
 
-  def submit: Task[Unit] = browser.eval(s"$cssSelectorOne.submit()").unit
+  def click: Task[Unit] = evalFirst(ref => s"$ref.click()").unit
+
+  def submit: Task[Unit] = evalFirst(ref => s"$ref.submit()").unit
 
   def value: Task[Json] = browser.eval(s"$cssSelectorOne.value").map { json =>
-    json("result")("value")
+    json("result").get("value").getOrElse(Null)
   }
   def value(json: Json): Task[Unit] = browser.callFunction(
       s"""const elements = $cssSelectorAll;

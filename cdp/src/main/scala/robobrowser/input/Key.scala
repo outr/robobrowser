@@ -21,7 +21,7 @@ object Key {
     require(value >= 0 && value <= 9, "Digit must be between 0 and 9")
     val id: Int = 48 + value
 
-    override val char: Opt[Char] = Opt.Value(value.toChar)
+    override val char: Opt[Char] = Opt.Value(value.toString.charAt(0))
   }
 
   case object Space extends Key {
