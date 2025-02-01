@@ -1,6 +1,8 @@
 package robobrowser.event
 
 import fabric.io.JsonFormatter
+import rapid._
+import rapid.logger._
 import robobrowser.comm.WSResponse
 
 trait EventManager {
@@ -11,7 +13,7 @@ trait EventManager {
   val event: Events = Events(this)
 
   def fire(response: WSResponse): Unit = channels.get(response.method.get) match {
-    case Some(c) => c.fire(response.params)
+    case Some(c) => Task(c.fire(response.params)).logErrors.start()
     case None => scribe.warn(s"No channel associated with method: ${response.method.get}\n${JsonFormatter.Default(response.params)}")
   }
 }

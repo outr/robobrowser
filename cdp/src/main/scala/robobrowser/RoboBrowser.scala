@@ -2,20 +2,17 @@ package robobrowser
 
 import fabric.io.JsonFormatter
 import fabric.obj
-import fabric.rw.{Asable, Convertible}
-import rapid.{Forge, Opt, Task}
+import fabric.rw._
+import rapid.{Forge, Task}
 import reactify.{Val, Var}
 import robobrowser.dom.DOM
-import robobrowser.event.ExecutionContext
+import robobrowser.event.ResponseBody
 import robobrowser.input.KeyFeatures
 import robobrowser.select.{Selection, Selector}
 import robobrowser.window.{Window, WindowState}
 import spice.http.WebSocket
 
 import scala.sys.process._
-import scribe.{rapid => logger}
-
-import java.io.File
 import java.nio.file.{Files, Path}
 import java.util.Base64
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
@@ -30,6 +27,11 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
 
   event.inspector.detached.on {
     _attached @= false
+  }
+  event.target.detachedFromTarget.attach { evt =>
+    if (evt.sessionId == sessionId && evt.targetId == targetId) {
+      _attached @= false
+    }
   }
 
   event.page.frameNavigated.attach { evt =>
@@ -69,8 +71,18 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
   ).unit
 
   def enableNetworkEvents: Task[Unit] = send(
-    method = "Network.enable"
+    method = "Network.enable",
+    params = obj(
+      "maxResourceBufferSize" -> 5242880
+    )
   ).unit
+
+  def getResponseBody(requestId: String): Task[ResponseBody] = send(
+    method = "Network.getResponseBody",
+    params = obj(
+      "requestId" -> requestId
+    )
+  ).map(_.result.as[ResponseBody])
 
   def enableDOM: Task[Unit] = send(
     method = "DOM.enable"
@@ -100,6 +112,98 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
     val bytes = Base64.getDecoder.decode(base64)
     Files.write(file, bytes)
   }
+
+  /**
+   * Sends JavaScript to change document.querySelector and document.querySelectorAll to search the visible DOM as well
+   * as all shadow DOMs until it finds a result. Useful for sites that utilize shadow DOMs like
+   */
+  def shadowDOMFix(): Task[Unit] = eval(
+    """    // Prevent multiple patches
+      |    if (document.querySelector._patched) {
+      |        console.log("⚠️ Shadow DOM fix already applied. Skipping...");
+      |        return;
+      |    }
+      |
+      |    // Preserve original functions
+      |    const originalQuerySelector = document.querySelector.bind(document);
+      |    const originalQuerySelectorAll = document.querySelectorAll.bind(document);
+      |
+      |    // Function to collect all shadow roots dynamically
+      |    function collectShadowRoots(root = document, shadowRoots = new Set()) {
+      |        let shadowRootArray = [];
+      |
+      |        for (let elem of root.querySelectorAll("*")) {
+      |            if (elem.shadowRoot && !shadowRoots.has(elem.shadowRoot)) {
+      |                shadowRoots.add(elem.shadowRoot);
+      |                shadowRootArray.push(elem.shadowRoot);
+      |                shadowRootArray = shadowRootArray.concat(collectShadowRoots(elem.shadowRoot, shadowRoots));
+      |            }
+      |        }
+      |        return shadowRootArray;
+      |    }
+      |
+      |    // Global storage for shadow roots
+      |    let allShadowRoots = collectShadowRoots(document);
+      |
+      |    // Function to manually refresh shadow roots
+      |    window.refreshShadowRoots = function() {
+      |        allShadowRoots = collectShadowRoots(document);
+      |        console.log(`🔄 Manually refreshed shadow roots: ${allShadowRoots.length} found.`);
+      |    };
+      |
+      |    // Observe changes in the DOM to detect new shadow roots
+      |    const observer = new MutationObserver((mutations) => {
+      |        let updated = false;
+      |
+      |        mutations.forEach((mutation) => {
+      |            mutation.addedNodes.forEach((node) => {
+      |                if (node.nodeType === 1) { // Ensure it's an element
+      |                    const newRoots = collectShadowRoots(node);
+      |                    if (newRoots.length > 0) {
+      |                        allShadowRoots = allShadowRoots.concat(newRoots);
+      |                        updated = true;
+      |                    }
+      |                }
+      |            });
+      |        });
+      |
+      |        if (updated) {
+      |            console.log(`🔄 Shadow roots updated automatically: ${allShadowRoots.length} found.`);
+      |        }
+      |    });
+      |
+      |    observer.observe(document.documentElement, { childList: true, subtree: true });
+      |
+      |    // New querySelector that works across shadow DOMs
+      |    document.querySelector = function(selector) {
+      |        let element = originalQuerySelector(selector);
+      |        if (element) return element; // Found in Light DOM, return early
+      |
+      |        for (let shadowRoot of allShadowRoots) { // Now iterable
+      |            let el = shadowRoot.querySelector(selector);
+      |            if (el) return el; // Return first match
+      |        }
+      |        return null; // No match found
+      |    };
+      |
+      |    // New querySelectorAll that works across shadow DOMs
+      |    document.querySelectorAll = function(selector) {
+      |        let elements = [...originalQuerySelectorAll(selector)]; // Start with Light DOM results
+      |
+      |        for (let shadowRoot of allShadowRoots) { // Now iterable
+      |            elements.push(...shadowRoot.querySelectorAll(selector));
+      |        }
+      |
+      |        return elements.length ? elements : document.createDocumentFragment().childNodes;
+      |    };
+      |
+      |    // Mark querySelector as patched to prevent multiple overrides
+      |    document.querySelector._patched = true;
+      |
+      |    console.log("✅ Patched querySelector and querySelectorAll for dynamic shadow DOMs.");
+      |""".stripMargin).unit
+
+  def updateShadowDOM(): Task[Unit] = eval("window.refreshShadowRoots()").unit
 
   def windowState(state: WindowState): Task[Unit] = for {
     window <- this.window

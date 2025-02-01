@@ -9,8 +9,8 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.0.0-SNAPSHOT3"
-ThisBuild / scalaVersion := "2.13.15"
+ThisBuild / version := "2.0.0-SNAPSHOT4"
+ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
@@ -43,7 +43,7 @@ ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF
 
 val scribeVersion: String = "3.16.0"
 
-val rapidVersion: String = "0.8.0"
+val rapidVersion: String = "0.9.1"
 
 val spiceVersion: String = "0.8.0"
 
@@ -104,6 +104,7 @@ lazy val cdp = project.in(file("cdp"))
       "com.outr" %% "spice-client-okhttp" % spiceVersion,
       "com.outr" %% "spice-server-undertow" % spiceVersion,
       "com.outr" %% "rapid-core" % rapidVersion,
+      "com.outr" %% "rapid-scribe" % rapidVersion,
       "org.jsoup" % "jsoup" % jsoupVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "com.outr" %% "rapid-test" % rapidVersion % Test

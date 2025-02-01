@@ -35,15 +35,17 @@ trait TabFeatures extends CommunicationManager {
     }
   }
 
-  def eval(expression: String): Task[Json] = {
-//    scribe.info(s"Eval: $expression")
-    send(
-      method = "Runtime.evaluate",
-      params = obj(
-        "expression" -> expression,
-        "returnByValue" -> true
-      )
-    ).map(_.result)
+  def eval(expression: String): Task[Json] = send(
+    method = "Runtime.evaluate",
+    params = obj(
+      "expression" -> s"(function() { $expression })()",
+      "returnByValue" -> true
+    )
+  ).map { response =>
+    response.error match {
+      case Some(error) => throw new RuntimeException(s"Evaluation error for $expression: ${error.message} (${error.code})")
+      case None => response.result
+    }
   }
 
   def callFunction(expression: String, objects: Json*): Task[Json] = {
