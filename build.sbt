@@ -9,7 +9,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.0.0-SNAPSHOT4"
+ThisBuild / version := "2.0.0-SNAPSHOT5"
 ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -43,15 +43,15 @@ ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF
 
 val scribeVersion: String = "3.16.0"
 
-val rapidVersion: String = "0.9.1"
+val rapidVersion: String = "0.10.0"
 
-val spiceVersion: String = "0.8.0"
+val spiceVersion: String = "0.8.2"
 
-val seleniumVersion: String = "4.27.0"
+val seleniumVersion: String = "4.28.1"
 
 val jsoupVersion: String = "1.18.3"
 
-val appiumVersion: String = "9.3.0"
+val appiumVersion: String = "9.4.0"
 
 val sourcecodeVersion: String = "0.4.2"
 
