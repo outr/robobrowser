@@ -2,7 +2,7 @@ package spec
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
-import rapid.AsyncTaskSpec
+import rapid.{AsyncTaskSpec, logger}
 import robobrowser.input.Key
 import robobrowser.select.Selector
 import robobrowser.{BrowserConfig, RoboBrowser, RoboBrowserConfig, TabSelector}
@@ -18,7 +18,7 @@ class RoboBrowserSpec extends AsyncWordSpec with AsyncTaskSpec with Matchers {
 
     "create a new headless browser" in {
       RoboBrowser(config = RoboBrowserConfig(
-        browserConfig = BrowserConfig(headless = true),
+        browserConfig = BrowserConfig(headless = false),
         tabSelector = TabSelector.AlwaysCreateNew
       )).map { browser =>
         this.browser = browser
@@ -40,7 +40,9 @@ class RoboBrowserSpec extends AsyncWordSpec with AsyncTaskSpec with Matchers {
         _ <- browser(q).focus
         _ <- browser.key.send(Key.text("robobrowser"))
         _ <- browser.key.`type`(Key.Enter)
-        _ <- browser.waitForCondition(browser.title.map(_ == "robobrowser - Google Search"))
+        _ <- browser.waitForCondition(browser.title.map { title =>
+          title == "robobrowser - Google Search"
+        })
       } yield succeed
     }
     "create a screenshot" in {

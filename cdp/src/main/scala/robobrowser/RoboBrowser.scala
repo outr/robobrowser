@@ -62,7 +62,7 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
   lazy val dom: DOM = DOM(this)
   lazy val key: KeyFeatures = KeyFeatures(this)
 
-  def title: Task[String] = eval("document.title").map(_("result")("value").asString)
+  def title: Task[String] = Task.next(eval("return document.title").map(_("result")("value").asString))
 
   def apply(selector: Selector): Selection = Selection(this, selector)
 

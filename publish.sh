@@ -4,6 +4,6 @@ set -e
 
 sbt +clean
 sbt +compile
-sbt "+testOnly spec.RoboBrowserSpec"
+sbt "+cdp / testOnly spec.RoboBrowserSpec"
 sbt +publishSigned
 sbt sonatypeBundleRelease
