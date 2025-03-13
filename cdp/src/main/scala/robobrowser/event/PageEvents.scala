@@ -12,6 +12,7 @@ case class PageEvents(e: Events) {
   val frameNavigated: Channel[FrameNavigatedEvent] = e.channel("Page.frameNavigated")
   val frameRequestedNavigation: Channel[FrameRequestedNavigationEvent] = e.channel("Page.frameRequestedNavigation")
   val frameScheduledNavigation: Channel[FrameScheduledNavigationEvent] = e.channel("Page.frameScheduledNavigation")
+  val frameStartedNavigating: Channel[FrameStartedNavigatingEvent] = e.channel("Page.frameStartedNavigating")
   val frameClearedScheduledNavigation: Channel[FrameClearedScheduledNavigationEvent] = e.channel("Page.frameClearedScheduledNavigation")
   val frameResized: Channel[FrameResizedEvent] = e.channel("Page.frameResized")
   val frameStartedLoading: Channel[FrameStartedLoadingEvent] = e.channel("Page.frameStartedLoading")

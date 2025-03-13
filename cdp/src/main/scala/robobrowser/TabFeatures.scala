@@ -2,7 +2,7 @@ package robobrowser
 
 import fabric.io.JsonFormatter
 import fabric._
-import rapid.Task
+import rapid.{Task, logger}
 import reactify.{Val, Var}
 import robobrowser.comm.CommunicationManager
 import robobrowser.event.ExecutionContext
@@ -20,17 +20,20 @@ trait TabFeatures extends CommunicationManager {
     case ec if ec.auxData.frameId == targetId => ec
   })
 
-  def navigate(url: String): Task[Frame] = {
+  def navigate(url: String, attempts: Int = 0): Task[Frame] = {
     _loaded @= false
     send(
       method = "Page.navigate",
       params = obj(
         "url" -> url
       )
-    ).map { response =>
+    ).flatMap { response =>
       response.result.get("errorText").map(_.asString) match {
+        case Some(errorText) if attempts < RoboBrowser.NavigateRetries => logger.warn(s"Failed to navigate to $url (attempt: $attempts): $errorText. Trying again in five seconds...")
+          .next(Task.sleep(5.seconds))
+          .next(navigate(url, attempts + 1))
         case Some(errorText) => throw new RuntimeException(errorText)
-        case None => Frame(response.result("frameId").asString)
+        case None => Task.pure(Frame(response.result("frameId").asString))
       }
     }
   }

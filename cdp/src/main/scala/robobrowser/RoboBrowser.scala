@@ -266,6 +266,8 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
 }
 
 object RoboBrowser {
+  var NavigateRetries: Int = 3
+
   def withBrowser[Return](config: RoboBrowserConfig = RoboBrowserConfig())
                          (forge: Forge[RoboBrowser, Return]): Task[Return] = apply(config).flatMap { browser =>
     forge(browser).guarantee {
