@@ -45,7 +45,7 @@ val scribeVersion: String = "3.16.0"
 
 val rapidVersion: String = "0.10.0"
 
-val spiceVersion: String = "0.8.2"
+val spiceVersion: String = "0.8.3"
 
 val seleniumVersion: String = "4.29.0"
 
