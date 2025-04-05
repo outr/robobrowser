@@ -1,7 +1,6 @@
 package robobrowser
 
-import rapid.{RapidApp, Task}
-import scribe.{rapid => logger}
+import rapid._
 import spice.http.client.HttpClient
 
 import scala.util.Try

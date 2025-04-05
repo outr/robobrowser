@@ -8,7 +8,7 @@ import robobrowser.comm.WSResponse
 trait EventManager {
   val debug: Boolean = false
 
-  private[event] var channels = Map.empty[String, EventChannel[_ <: Event]]
+  private[event] var channels = Map.empty[String, EventChannel[? <: Event]]
 
   val event: Events = Events(this)
 

@@ -1,6 +1,6 @@
 package robobrowser.event
 
-import fabric.rw.RW
+import fabric.rw.*
 
 case class WebSocketWillSendHandshakeRequestEvent(requestId: String,
                                                   timestamp: Double,

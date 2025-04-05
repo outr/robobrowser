@@ -47,7 +47,7 @@ object DeviceGenerator {
          |      "browser" -> "android",
          |      "real_mobile" -> true
          |    )
-         |    .withCapabilities(capabilities: _*)
+         |    .withCapabilities(capabilities*)
          |    .withCreator(RoboAndroid.create)
          |
          |$objects
@@ -83,7 +83,7 @@ object DeviceGenerator {
          |      "browser" -> "iphone",
          |      "real_mobile" -> true
          |    )
-         |    .withCapabilities(capabilities: _*)
+         |    .withCapabilities(capabilities*)
          |    .withCreator(RoboIOS.create)
          |
          |$objects

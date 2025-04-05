@@ -1,6 +1,6 @@
 package robobrowser.dom
 
-import fabric.rw.RW
+import fabric.rw._
 
 case class Document(nodeId: Int,
                     nodeType: Int,

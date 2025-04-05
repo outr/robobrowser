@@ -9,8 +9,8 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.0.2"
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / version := "2.1.0-SNAPSHOT"
+ThisBuild / scalaVersion := "3.6.4"
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
@@ -81,6 +81,7 @@ lazy val selenium = project.in(file("selenium"))
       "com.outr" %% "spice-client-jvm" % spiceVersion,
       "com.outr" %% "spice-server-undertow" % spiceVersion,
       "com.outr" %% "rapid-core" % rapidVersion,
+      "com.outr" %% "rapid-scribe" % rapidVersion,
       "org.jsoup" % "jsoup" % jsoupVersion,
       "io.appium" % "java-client" % appiumVersion,
       "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
@@ -89,7 +90,7 @@ lazy val selenium = project.in(file("selenium"))
       "org.seleniumhq.selenium" % "selenium-remote-driver" % seleniumVersion,
       "org.seleniumhq.selenium" % "htmlunit-driver" % "4.13.0",
       "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
-      "org.seleniumhq.selenium" % "selenium-devtools-v131" % seleniumVersion,
+      "org.seleniumhq.selenium" % "selenium-devtools-v135" % seleniumVersion,
       "com.lihaoyi" %% "sourcecode" % sourcecodeVersion,
       "com.fifesoft" % "rsyntaxtextarea" % rsyntaxtextareaVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "test"

@@ -3,7 +3,7 @@ package robobrowser
 import fabric.io.JsonFormatter
 import fabric._
 import rapid.{Task, logger}
-import reactify.{Val, Var}
+import reactify._
 import robobrowser.comm.CommunicationManager
 import robobrowser.event.ExecutionContext
 import robobrowser.input.KeyFeatures

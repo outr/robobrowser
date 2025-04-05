@@ -1,6 +1,6 @@
 package robobrowser.event
 
-import fabric.rw.RW
+import fabric.rw.*
 
 case class FrameStartedNavigatingEvent(frameId: String, url: String, loaderId: String, navigationType: String) extends Event
 

@@ -98,7 +98,7 @@ trait IntegrationTests[Browser <: RoboBrowser] extends AssertionsSupport { suite
         try {
           MDC.context("test" -> s"$label should ${test.description}") {
             test.function() match {
-              case f: Future[_] => Await.result(f, Duration.Inf)
+              case f: Future[?] => Await.result(f, Duration.Inf)
               case _ => // Ignore everything else
             }
           }

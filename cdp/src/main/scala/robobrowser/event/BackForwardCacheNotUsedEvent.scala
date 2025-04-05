@@ -1,7 +1,7 @@
 package robobrowser.event
 
 import fabric.Json
-import fabric.rw.RW
+import fabric.rw.*
 
 case class BackForwardCacheNotUsedEvent(loaderId: String,
                                         frameId: String,

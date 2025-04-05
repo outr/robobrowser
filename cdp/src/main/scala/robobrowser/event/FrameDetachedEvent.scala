@@ -1,6 +1,6 @@
 package robobrowser.event
 
-import fabric.rw.RW
+import fabric.rw.*
 
 case class FrameDetachedEvent(frameId: String, reason: String) extends Event
 

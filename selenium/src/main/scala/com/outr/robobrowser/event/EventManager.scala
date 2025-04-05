@@ -15,7 +15,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 class EventManager(browser: RoboBrowser, server: Option[MutableHttpServer] = None) {
-  private var queueMap = Map.empty[String, EventManagerQueue[_]]
+  private var queueMap = Map.empty[String, EventManagerQueue[?]]
 
   init()
 

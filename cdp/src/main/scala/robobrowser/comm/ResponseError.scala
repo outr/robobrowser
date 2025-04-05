@@ -1,6 +1,6 @@
 package robobrowser.comm
 
-import fabric.rw.RW
+import fabric.rw._
 
 case class ResponseError(code: Int, message: String)
 

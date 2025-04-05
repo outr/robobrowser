@@ -1,6 +1,6 @@
 package robobrowser.event
 
-import fabric.rw.RW
+import fabric.rw._
 
 case class AuxData(isDefault: Boolean, `type`: String, frameId: String)
 

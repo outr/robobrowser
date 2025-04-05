@@ -11,7 +11,7 @@ import scala.language.implicitConversions
 
 trait IntegrationTestSuite {
   private var _browser: Option[RoboBrowser] = None
-  private var scenarios = List.empty[IntegrationTestsInstance[_ <: RoboBrowser]]
+  private var scenarios = List.empty[IntegrationTestsInstance[? <: RoboBrowser]]
 
   def stopOnAnyFailure: Boolean = false
   def logToConsole: Boolean = false
@@ -76,10 +76,10 @@ trait IntegrationTestSuite {
     failures
   }
 
-  private var running: Option[IntegrationTests[_ <: RoboBrowser]] = None
+  private var running: Option[IntegrationTests[? <: RoboBrowser]] = None
 
   @tailrec
-  private def recurse(scenarios: List[IntegrationTestsInstance[_ <: RoboBrowser]],
+  private def recurse(scenarios: List[IntegrationTestsInstance[? <: RoboBrowser]],
                       failures: List[RunResult.Failure],
                       failed: Int): List[RunResult.Failure] = if (scenarios.isEmpty) {
     _browser = None

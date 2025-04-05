@@ -1,6 +1,6 @@
 package robobrowser.event
 
-import fabric.rw.RW
+import fabric.rw.*
 
 case class ExecutionContextDestroyedEvent(executionContextId: Int, executionContextUniqueId: String) extends Event
 

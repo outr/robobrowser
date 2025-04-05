@@ -1,7 +1,7 @@
 package robobrowser.input
 
 import fabric._
-import rapid.Task
+import rapid._
 import robobrowser.RoboBrowser
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}

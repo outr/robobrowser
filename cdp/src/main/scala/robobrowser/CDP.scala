@@ -9,6 +9,7 @@ import spice.net.URL
 
 import scala.concurrent.duration.DurationInt
 import scala.sys.process._
+import fabric.rw._
 
 object CDP {
   def createProcess(browser: Browser, config: BrowserConfig): Task[Process] = Task {

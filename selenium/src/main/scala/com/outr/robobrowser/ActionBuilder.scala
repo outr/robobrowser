@@ -12,9 +12,9 @@ class ActionBuilder(browser: RoboBrowser) {
 
   private val actions = browser.withDriver(driver => new Actions(driver))
 
-  def sendKeys(keys: CharSequence*): ActionBuilder = actions.sendKeys(keys: _*)
+  def sendKeys(keys: CharSequence*): ActionBuilder = actions.sendKeys(keys*)
 
-  def sendKeys(element: WebElement, keys: CharSequence*): ActionBuilder = actions.sendKeys(element, keys: _*)
+  def sendKeys(element: WebElement, keys: CharSequence*): ActionBuilder = actions.sendKeys(element, keys*)
 
   def click(): ActionBuilder = actions.click()
 
