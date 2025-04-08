@@ -9,8 +9,8 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.1.0"
-ThisBuild / scalaVersion := "3.6.4"
+ThisBuild / version := "2.1.1-SNAPSHOT"
+ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"

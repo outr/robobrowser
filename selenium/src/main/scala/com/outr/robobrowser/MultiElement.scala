@@ -31,7 +31,7 @@ case class MultiElement(elements: List[WebElement]) extends WebElement {
     this
   }
 
-  override def sendKeys(keysToSend: CharSequence*): Unit = elements.foreach(_.sendKeys(keysToSend*))
+  override def sendKeys(keysToSend: CharSequence*): Unit = elements.foreach(_.sendKeys(keysToSend: _*))
 
   override def clear(native: Boolean = true): Unit = elements.foreach(_.clear(native))
 

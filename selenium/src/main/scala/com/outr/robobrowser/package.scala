@@ -5,7 +5,7 @@ import com.outr.robobrowser.appium.Appium
 import scala.language.implicitConversions
 
 package object robobrowser {
-  type MobileBrowser = RoboBrowser & Appium
+  type MobileBrowser = RoboBrowser with Appium
 
   // TODO: Revisit
 //  implicit class BuilderConversions[T <: RoboBrowser](builder: RoboBrowserBuilder[T]) {

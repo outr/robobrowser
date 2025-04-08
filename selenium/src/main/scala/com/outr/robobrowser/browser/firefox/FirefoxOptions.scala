@@ -22,7 +22,7 @@ case class FirefoxOptions(options: SeleniumFirefoxOptions,
     copy(options = options.merge(f(o)))
   }
 
-  protected def withArguments(arguments: String*): FirefoxOptions = add(_.addArguments(arguments*))
+  protected def withArguments(arguments: String*): FirefoxOptions = add(_.addArguments(arguments: _*))
 
   protected def withPreferences(prefs: (String, Any)*): FirefoxOptions =
     prefs.foldLeft(this)((opts, pref) => opts.add(_.addPreference(pref._1, pref._2)))

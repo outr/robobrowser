@@ -66,7 +66,7 @@ class SeleniumWebElement(private val e: org.openqa.selenium.WebElement,
 
   override def isSelected: Boolean = e.isSelected
 
-  override def sendKeys(keysToSend: CharSequence*): Unit = e.sendKeys(keysToSend*)
+  override def sendKeys(keysToSend: CharSequence*): Unit = e.sendKeys(keysToSend: _*)
 
   override def clear(native: Boolean = false): Unit = if (native) {
     e.clear()

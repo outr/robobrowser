@@ -26,7 +26,7 @@ case class ChromeOptions(options: SeleniumChromeOptions,
     copy(options = options.merge(f(o)))
   }
 
-  protected def withArguments(arguments: String*): ChromeOptions = add(_.addArguments(arguments*))
+  protected def withArguments(arguments: String*): ChromeOptions = add(_.addArguments(arguments: _*))
 
   def headless: ChromeOptions = withArguments("--headless")
 
@@ -126,7 +126,7 @@ case class ChromeOptions(options: SeleniumChromeOptions,
   def proxyServer(proxy: String): ChromeOptions = withArguments(s"--proxy-server=$proxy")
 
   def addExtensions(paths: File*): ChromeOptions = add { options =>
-    options.addExtensions(paths*)
+    options.addExtensions(paths: _*)
   }
 
   def create(): Chrome = {

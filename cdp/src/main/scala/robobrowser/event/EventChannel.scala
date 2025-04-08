@@ -1,7 +1,7 @@
 package robobrowser.event
 
 import fabric.Json
-import fabric.rw.*
+import fabric.rw._
 import reactify.Channel
 
 case class EventChannel[E <: Event](rw: RW[E]) extends Channel[E] {

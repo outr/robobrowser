@@ -10,30 +10,29 @@ import java.util.{Date, Optional}
 import org.openqa.selenium.{Capabilities, Cookie, Dimension, JavascriptExecutor, Keys, OutputType, Point, TakesScreenshot, WebDriver, WindowType}
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.html5.{LocalStorage, SessionStorage, WebStorage}
-import perfolation.*
+import perfolation._
 
 import java.util.concurrent.atomic.AtomicBoolean
-import scala.concurrent.duration.*
-import scala.jdk.CollectionConverters.*
-import reactify.*
+import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
+import reactify._
 
 import scala.annotation.{nowarn, tailrec}
 import scala.concurrent.TimeoutException
 import scala.util.Try
-import fabric.*
+import fabric._
 import fabric.define.DefType
 import fabric.io.{JsonFormatter, JsonParser}
-import fabric.rw.*
+import fabric.rw._
 import org.openqa.selenium.devtools.{DevTools, HasDevTools}
 import org.openqa.selenium.devtools.v135.network.Network
 import org.openqa.selenium.devtools.v135.network.model.{RequestWillBeSent, ResponseReceived}
 import spice.http.cookie.SameSite
-import spice.http.cookie.Cookie as SpiceCookie
+import spice.http.cookie.{Cookie => SpiceCookie}
 import spice.net.URL
-import spice.streamer.*
+import spice.streamer._
 
 import scala.collection.mutable
-import scala.compiletime.uninitialized
 
 abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractElement { rb =>
   type Driver <: WebDriver
@@ -97,7 +96,7 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
 
   override protected def browser: RoboBrowser = this
 
-  protected var chromeOptions: ChromeOptions = uninitialized
+  protected var chromeOptions: ChromeOptions = _
 
   private val _initialized = new AtomicBoolean(false)
 
@@ -337,23 +336,23 @@ abstract class RoboBrowser(val capabilities: Capabilities) extends AbstractEleme
       case arg => arg
     }
     driver match {
-      case e: JavascriptExecutor => e.executeScript(script, fixed*)
+      case e: JavascriptExecutor => e.executeScript(script, fixed: _*)
       case _ => null    // Ignore not supported
     }
   }
 
   def executeInputStream(input: InputStream, args: AnyRef*): AnyRef = {
     val script = Streamer(input, new mutable.StringBuilder).sync().toString
-    execute(script, args*)
+    execute(script, args: _*)
   }
 
-  def executeTyped[T](script: String, args: AnyRef*): T = execute(script, args*).asInstanceOf[T]
+  def executeTyped[T](script: String, args: AnyRef*): T = execute(script, args: _*).asInstanceOf[T]
 
   def action: ActionBuilder = new ActionBuilder(this)
 
   object keyboard {
     object send {
-      def apply(charSequence: CharSequence*): Unit = action.sendKeys(charSequence*).perform()
+      def apply(charSequence: CharSequence*): Unit = action.sendKeys(charSequence: _*).perform()
       def up(): Unit = apply(Keys.ARROW_UP)
       def down(): Unit = apply(Keys.ARROW_DOWN)
       def left(): Unit = apply(Keys.ARROW_LEFT)

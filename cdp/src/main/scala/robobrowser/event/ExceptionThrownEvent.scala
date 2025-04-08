@@ -1,6 +1,6 @@
 package robobrowser.event
 
-import fabric.rw.*
+import fabric.rw._
 
 case class ExceptionThrownEvent(timestamp: Double,
                                 exceptionDetails: ExceptionDetails) extends Event

@@ -4,8 +4,8 @@ import fabric.Obj
 import fabric.filter.RemoveNullsFilter
 import fabric.io.{JsonFormatter, JsonParser}
 import fabric.rw.{Asable, Convertible}
-import rapid.*
-import rapid.task.*
+import rapid._
+import rapid.task._
 import robobrowser.event.EventManager
 import spice.UserException
 import spice.http.WebSocket
@@ -13,14 +13,13 @@ import spice.http.WebSocket
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
-import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 trait CommunicationManager extends EventManager {
   protected def ws: WebSocket
 
-  private[robobrowser] var targetId: String = uninitialized
-  private[robobrowser] var sessionId: String = uninitialized
+  private[robobrowser] var targetId: String = _
+  private[robobrowser] var sessionId: String = _
 
   private val idGenerator = new AtomicInteger(0)
   private val callbacks = new ConcurrentHashMap[Int, CompletableTask[WSResponse]]

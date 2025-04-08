@@ -1,6 +1,6 @@
 package robobrowser.event
 
-import fabric.rw.*
+import fabric.rw._
 
 case class WindowOpenEvent(url: String,
                            windowName: String,
