@@ -9,7 +9,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.1.1-SNAPSHOT"
+ThisBuild / version := "2.1.1-SNAPSHOT1"
 ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -78,7 +78,7 @@ lazy val selenium = project.in(file("selenium"))
     name := s"$projectName-selenium",
     libraryDependencies ++= Seq(
       "com.outr" %% "scribe-slf4j2" % scribeVersion,
-      "com.outr" %% "spice-client-jvm" % spiceVersion,
+      "com.outr" %% "spice-client" % spiceVersion,
       "com.outr" %% "spice-server-undertow" % spiceVersion,
       "com.outr" %% "rapid-core" % rapidVersion,
       "com.outr" %% "rapid-scribe" % rapidVersion,
