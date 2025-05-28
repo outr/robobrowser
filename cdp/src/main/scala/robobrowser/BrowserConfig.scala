@@ -1,8 +1,10 @@
 package robobrowser
 
 import java.io.File
+import java.nio.file.Files
 
-case class BrowserConfig(headless: Boolean = false,
+case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Default"),
+                         headless: Boolean = false,
                          useNewHeadlessMode: Boolean = true,
                          disableBackgrounding: Boolean = false,
                          disableGPU: Boolean = false,
@@ -31,7 +33,6 @@ case class BrowserConfig(headless: Boolean = false,
                          noSandbox: Boolean = false,
                          windowSize: Option[(Int, Int)] = None,
                          forceDeviceScaleFactor: Option[Int] = None,
-                         userDataDir: Option[File] = None,
                          proxyServer: Option[(String, Int)] = None,
                          proxyBypassList: List[String] = Nil,
                          disableFeatures: List[String] = Nil) {
@@ -86,9 +87,17 @@ case class BrowserConfig(headless: Boolean = false,
     o(noSandbox, "--no-sandbox"),
     windowSize.map { case (w, h) => s"--window-size=$w,$h" }.toList,
     forceDeviceScaleFactor.map(f => s"--force-device-scale-factor=$f").toList,
-    userDataDir.map(dir => s"--user-data-dir=${dir.getAbsolutePath}").toList,
+    List(s"--user-data-dir=${userDataDir.getAbsolutePath}"),
     proxyServer.map { case (host, port) => s"--proxy-server=$host:$port" }.toList,
     l("--proxy-bypass-list", proxyBypassList),
     l("--disable-features", disableFeatures)
   ).flatten
+}
+
+object BrowserConfig {
+  def resolveDataDir(name: String): File = {
+    val f = new File(s"${System.getProperty("user.home")}/.config/robobrowser/$name")
+    Files.createDirectories(f.toPath)
+    f
+  }
 }

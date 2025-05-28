@@ -1,5 +1,7 @@
 package robobrowser
 
+import fabric.Json
+import fabric.io.JsonFormatter
 import rapid.Task
 import robobrowser.comm.CDPQueryResult
 import spice.UserException
@@ -15,7 +17,10 @@ object CDP {
   def createProcess(browser: Browser, config: BrowserConfig): Task[Process] = Task {
     val cmd = List(
       browser.path,
-      s"--remote-debugging-port=${browser.port}"
+      s"--remote-debugging-port=${browser.port}",
+      "--no-default-browser-check",
+      "--no-first-run",
+      s"--remote-allow-origins=http://localhost:${browser.port}"
     ) ::: config.options
     scribe.info(cmd.mkString(" "))
     val pb = Process(cmd)
@@ -28,7 +33,8 @@ object CDP {
 
   def query(browser: Browser = Browser.Chrome): Task[List[CDPQueryResult]] = HttpClient
     .retryManager(RetryManager.simple(5, 1.second))
-    .url(URL.parse(s"http://localhost:${browser.port}/json")).call[List[CDPQueryResult]]
+    .url(URL.parse(s"http://localhost:${browser.port}/json"))
+    .call[List[CDPQueryResult]]
 
   def connect(url: URL): Task[WebSocket] = Task {
     HttpClient

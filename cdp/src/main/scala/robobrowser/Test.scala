@@ -9,7 +9,7 @@ object Test extends RapidApp {
   override def run(args: List[String]): Task[Unit] = RoboBrowser.withBrowser(
     config = RoboBrowserConfig(
       browserConfig = BrowserConfig(
-        headless = true
+        headless = false
       )
     )
   ) { browser =>
@@ -17,6 +17,7 @@ object Test extends RapidApp {
       _ <- browser.navigate("https://outr.com")
       _ <- browser.waitForLoaded()
       _ <- logger.info("Loaded!")
+      _ <- browser.waitForDetach()
     } yield ()
   }
 

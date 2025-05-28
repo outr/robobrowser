@@ -9,7 +9,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.1.1-SNAPSHOT1"
+ThisBuild / version := "2.1.1-SNAPSHOT4"
 ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -45,7 +45,7 @@ val scribeVersion: String = "3.16.1"
 
 val rapidVersion: String = "0.11.2"
 
-val spiceVersion: String = "0.9.0"
+val spiceVersion: String = "0.10.1-SNAPSHOT"
 
 val seleniumVersion: String = "4.31.0"
 
@@ -102,12 +102,13 @@ lazy val cdp = project.in(file("cdp"))
   .settings(
     name := s"$projectName-cdp",
     libraryDependencies ++= Seq(
-      "com.outr" %% "spice-client-okhttp" % spiceVersion,
+      "com.outr" %% "spice-client" % spiceVersion,
       "com.outr" %% "spice-server-undertow" % spiceVersion,
       "com.outr" %% "rapid-core" % rapidVersion,
       "com.outr" %% "rapid-scribe" % rapidVersion,
       "org.jsoup" % "jsoup" % jsoupVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "com.outr" %% "rapid-test" % rapidVersion % Test
+      "com.outr" %% "rapid-test" % rapidVersion % Test,
+      "com.outr" %% "spice-client-netty" % spiceVersion % Test,
     )
   )
