@@ -1,6 +1,7 @@
 package robobrowser.input
 
 import fabric._
+import fabric.dsl._
 import rapid._
 import robobrowser.RoboBrowser
 

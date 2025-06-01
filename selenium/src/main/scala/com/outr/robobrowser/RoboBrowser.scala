@@ -21,6 +21,7 @@ import scala.annotation.{nowarn, tailrec}
 import scala.concurrent.TimeoutException
 import scala.util.Try
 import fabric._
+import fabric.dsl._
 import fabric.define.DefType
 import fabric.io.{JsonFormatter, JsonParser}
 import fabric.rw._

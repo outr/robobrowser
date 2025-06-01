@@ -3,6 +3,7 @@ package com.outr.robobrowser.event
 import com.outr.robobrowser.{RoboBrowser, WebElement}
 import fabric.Json
 import fabric.io.JsonFormatter
+import fabric.dsl._
 import fabric.rw._
 
 class EventManagerQueue[T](key: String, rw: RW[T], browser: RoboBrowser) {

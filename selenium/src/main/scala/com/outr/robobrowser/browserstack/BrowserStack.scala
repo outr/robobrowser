@@ -3,6 +3,7 @@ package com.outr.robobrowser.browserstack
 import com.outr.robobrowser.RoboBrowser
 import fabric.io.JsonParser
 import fabric._
+import fabric.dsl._
 import rapid.Task
 import spice.http.{Headers, HttpMethod, HttpResponse, HttpStatus}
 import spice.http.client.HttpClient

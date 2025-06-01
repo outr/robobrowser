@@ -2,6 +2,7 @@ package robobrowser
 
 import fabric.io.JsonFormatter
 import fabric._
+import fabric.dsl._
 import fabric.rw._
 import rapid.{Forge, Task, logger}
 import reactify.{Val, Var}
