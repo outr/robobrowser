@@ -25,6 +25,15 @@ class RoboBrowserSpec extends AsyncWordSpec with AsyncTaskSpec with Matchers {
         browser.url() should be("about:blank")
       }
     }
+    "load outr.com" in {
+      browser.navigate("https://outr.com").succeed
+    }
+    "wait for outr.com to load" in {
+      browser.waitForLoaded().succeed
+    }
+    "verify the browser title is set for outr.com" in {
+      browser.title.map(_ should be("OUTR Software, LLC | Expert Software Development for Web, Mobile, Desktop, and Server"))
+    }
     "load Google" in {
       browser.navigate("https://google.com").succeed
     }

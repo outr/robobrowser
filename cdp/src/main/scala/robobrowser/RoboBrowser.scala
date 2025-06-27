@@ -281,6 +281,7 @@ object RoboBrowser {
     _ <- Task.sleep(500.millis)   // Give the browser time to launch
     tabResults <- CDP.query(config.browser)
     webSocketUrl = tabResults.head.webSocketDebuggerUrl
+    _ <- logger.info(s"Connecting to WebSocket: $webSocketUrl")
     webSocket <- CDP.connect(webSocketUrl)
     rb = new RoboBrowser(webSocket, Some(process))
     existingTab = config.tabSelector.select(tabResults)
