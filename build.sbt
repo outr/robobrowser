@@ -56,7 +56,7 @@ val spiceVersion: String = "0.10.2"
 
 val seleniumVersion: String = "4.33.0"
 
-val jsoupVersion: String = "1.20.1"
+val jsoupVersion: String = "1.21.1"
 
 val appiumVersion: String = "9.4.0"
 
