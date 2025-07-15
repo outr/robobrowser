@@ -9,7 +9,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.1.2-SNAPSHOT1"
+ThisBuild / version := "2.1.2"
 
 val scala213: String = "2.13.16"
 val scala3: String = "3.7.1"
@@ -20,8 +20,8 @@ ThisBuild / crossScalaVersions := List(scala213, scala3)
 
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
-ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
-ThisBuild / sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+ThisBuild / sonatypeCredentialHost := xerial.sbt.Sonatype.sonatypeCentralHost
+ThisBuild / publishMavenStyle := true
 ThisBuild / publishTo := sonatypePublishToBundle.value
 ThisBuild / sonatypeProfileName := org
 ThisBuild / licenses := Seq("MIT" -> url(s"https://github.com/$githubOrg/$projectName/blob/master/LICENSE"))
