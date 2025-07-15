@@ -9,7 +9,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.1.1"
+ThisBuild / version := "2.1.2-SNAPSHOT1"
 
 val scala213: String = "2.13.16"
 val scala3: String = "3.7.1"
@@ -97,7 +97,7 @@ lazy val selenium = project.in(file("selenium"))
       "org.seleniumhq.selenium" % "selenium-remote-driver" % seleniumVersion,
       "org.seleniumhq.selenium" % "htmlunit-driver" % "4.13.0",
       "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
-      "org.seleniumhq.selenium" % "selenium-devtools-v135" % seleniumVersion,
+      "org.seleniumhq.selenium" % "selenium-devtools-v137" % seleniumVersion,
       "com.lihaoyi" %% "sourcecode" % sourcecodeVersion,
       "com.fifesoft" % "rsyntaxtextarea" % rsyntaxtextareaVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "test"

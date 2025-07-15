@@ -6,7 +6,7 @@ import rapid.logger._
 import robobrowser.comm.WSResponse
 
 trait EventManager {
-  val debug: Boolean = false
+  val debug: Boolean = true
 
   private[event] var channels = Map.empty[String, EventChannel[? <: Event]]
 
