@@ -48,7 +48,7 @@ ThisBuild / javaOptions ++= Seq(
 
 ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
 
-val scribeVersion: String = "3.16.1"
+val scribeVersion: String = "3.17.0"
 
 val rapidVersion: String = "0.16.0"
 
