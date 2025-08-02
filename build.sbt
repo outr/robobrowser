@@ -12,7 +12,7 @@ ThisBuild / organization := org
 ThisBuild / version := "2.1.2"
 
 val scala213: String = "2.13.16"
-val scala3: String = "3.7.1"
+val scala3: String = "3.7.2"
 
 ThisBuild / scalaVersion := scala3
 
