@@ -50,7 +50,7 @@ ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF
 
 val scribeVersion: String = "3.17.0"
 
-val rapidVersion: String = "0.16.0"
+val rapidVersion: String = "0.18.0"
 
 val spiceVersion: String = "0.10.3"
 
