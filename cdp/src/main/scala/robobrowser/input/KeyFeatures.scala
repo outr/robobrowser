@@ -12,14 +12,14 @@ case class KeyFeatures(browser: RoboBrowser) {
     method = "Input.dispatchKeyEvent",
     params = obj(
       "type" -> "keyDown",
-      "key" -> key.char.map(c => str(c.toString)).orElse(Null),
+      "key" -> key.char.map(c => str(c.toString)).getOrElse(Null),
       "windowsVirtualKeyCode" -> key.id,
       "nativeVirtualKeyCode" -> key.id
     )
   ).unit
 
   def char(key: Key): Task[Unit] = {
-    val char: Json = key.char.map(c => str(c.toString)).orElse(Null)
+    val char: Json = key.char.map(c => str(c.toString)).getOrElse(Null)
     browser.send(
       method = "Input.dispatchKeyEvent",
       params = obj(
@@ -36,7 +36,7 @@ case class KeyFeatures(browser: RoboBrowser) {
     method = "Input.dispatchKeyEvent",
     params = obj(
       "type" -> "keyUp",
-      "key" -> key.char.map(c => str(c.toString)).orElse(Null),
+      "key" -> key.char.map(c => str(c.toString)).getOrElse(Null),
       "windowsVirtualKeyCode" -> key.id,
       "nativeVirtualKeyCode" -> key.id
     )
@@ -45,7 +45,7 @@ case class KeyFeatures(browser: RoboBrowser) {
   def `type`(key: Key, delay: FiniteDuration = 0.millis): Task[Unit] = for {
     _ <- down(key)
     _ <- Task.sleep(delay)
-    _ <- char(key).when(key.char.notEmpty)
+    _ <- char(key).when(key.char.nonEmpty)
     _ <- Task.sleep(delay)
     _ <- up(key)
   } yield ()

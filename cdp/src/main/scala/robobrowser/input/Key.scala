@@ -1,10 +1,8 @@
 package robobrowser.input
 
-import rapid.Opt
-
 sealed trait Key {
   def id: Int
-  val char: Opt[Char] = Opt.Empty
+  val char: Option[Char] = None
 }
 
 object Key {
@@ -14,32 +12,32 @@ object Key {
     val id: Int = value.toUpper.toInt
     val isUpper: Boolean = value.isUpper
 
-    override val char: Opt[Char] = Opt.Value(value)
+    override val char: Option[Char] = Some(value)
   }
 
   case class Digit(value: Int) extends Key {
     require(value >= 0 && value <= 9, "Digit must be between 0 and 9")
     val id: Int = 48 + value
 
-    override val char: Opt[Char] = Opt.Value(value.toString.charAt(0))
+    override val char: Option[Char] = Some(value.toString.charAt(0))
   }
 
   case object Space extends Key {
     val id: Int = 32
 
-    override val char: Opt[Char] = Opt.Value(' ')
+    override val char: Option[Char] = Some(' ')
   }
   case class Punctuation(value: Char) extends Key {
     val id: Int = value.toInt
 
-    override val char: Opt[Char] = Opt.Value(value)
+    override val char: Option[Char] = Some(value)
   }
   case object Enter extends Key { val id: Int = 13 }
   case object Backspace extends Key { val id: Int = 8 }
   case object Tab extends Key {
     val id: Int = 9
 
-    override val char: Opt[Char] = Opt.Value('\t')
+    override val char: Option[Char] = Some('\t')
   }
 
   // Special keys
