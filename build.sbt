@@ -11,7 +11,8 @@ name := projectName
 ThisBuild / organization := org
 ThisBuild / version := "2.1.3"
 
-val scala213: String = "2.13.16"
+val scala213: String = "2.13.17"
+
 val scala3: String = "3.7.3"
 
 ThisBuild / scalaVersion := scala3
@@ -54,7 +55,7 @@ val rapidVersion: String = "0.18.0"
 
 val spiceVersion: String = "0.10.6"
 
-val seleniumVersion: String = "4.34.0"
+val seleniumVersion: String = "4.38.0"
 
 val jsoupVersion: String = "1.21.1"
 
