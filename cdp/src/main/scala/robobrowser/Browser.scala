@@ -13,7 +13,7 @@ object Browser {
   val Edge: Browser = Browser(List("/usr/bin/microsoft-edge"))
   val Vivaldi: Browser = Browser(List("/usr/bin/vivaldi"))
 
-  lazy val all: List[Browser] = List(Chromium, Chrome, Edge, Vivaldi)
+  lazy val all: List[Browser] = List(Chrome, Chromium, Edge, Vivaldi)
 
   def auto(available: List[Browser] = all): Browser = available
     .find(_.exists)

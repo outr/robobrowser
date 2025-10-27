@@ -22,7 +22,7 @@ trait CommunicationManager extends EventManager {
   private[robobrowser] var sessionId: String = _
 
   private val idGenerator = new AtomicInteger(0)
-  private val callbacks = new ConcurrentHashMap[Int, CompletableTask[WSResponse]]
+  private val callbacks = new ConcurrentHashMap[Int, Completable[WSResponse]]
 
   ws.receive.text.attach { s =>
     if (debug) scribe.info(s"Received: $s")

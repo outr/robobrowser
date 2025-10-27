@@ -9,7 +9,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.1.3"
+ThisBuild / version := "2.2.0"
 
 val scala213: String = "2.13.17"
 
@@ -51,24 +51,16 @@ ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF
 
 val scribeVersion: String = "3.17.0"
 
-val rapidVersion: String = "0.18.0"
+val rapidVersion: String = "2.2.0"
 
-val spiceVersion: String = "0.10.6"
-
-val seleniumVersion: String = "4.38.0"
+val spiceVersion: String = "0.10.15"
 
 val jsoupVersion: String = "1.21.2"
-
-val appiumVersion: String = "10.0.0"
-
-val sourcecodeVersion: String = "0.4.4"
-
-val rsyntaxtextareaVersion: String = "3.6.0"
 
 val scalatestVersion: String = "3.2.19"
 
 val root = project.in(file("."))
-  .aggregate(core, selenium, cdp)
+  .aggregate(core, cdp)
   .settings(
     name := projectName,
     publish := {},
@@ -78,31 +70,6 @@ val root = project.in(file("."))
 lazy val core = project.in(file("core"))
   .settings(
     name := s"$projectName-core"
-  )
-
-lazy val selenium = project.in(file("selenium"))
-  .dependsOn(core)
-  .settings(
-    name := s"$projectName-selenium",
-    libraryDependencies ++= Seq(
-      "com.outr" %% "scribe-slf4j2" % scribeVersion,
-      "com.outr" %% "spice-client" % spiceVersion,
-      "com.outr" %% "spice-server-undertow" % spiceVersion,
-      "com.outr" %% "rapid-core" % rapidVersion,
-      "com.outr" %% "rapid-scribe" % rapidVersion,
-      "org.jsoup" % "jsoup" % jsoupVersion,
-      "io.appium" % "java-client" % appiumVersion,
-      "org.seleniumhq.selenium" % "selenium-api" % seleniumVersion,
-      "org.seleniumhq.selenium" % "selenium-chrome-driver" % seleniumVersion,
-      "org.seleniumhq.selenium" % "selenium-firefox-driver" % seleniumVersion,
-      "org.seleniumhq.selenium" % "selenium-remote-driver" % seleniumVersion,
-      "org.seleniumhq.selenium" % "htmlunit-driver" % "4.13.0",
-      "org.seleniumhq.selenium" % "selenium-support" % seleniumVersion,
-      "org.seleniumhq.selenium" % "selenium-devtools-v137" % seleniumVersion,
-      "com.lihaoyi" %% "sourcecode" % sourcecodeVersion,
-      "com.fifesoft" % "rsyntaxtextarea" % rsyntaxtextareaVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
-    )
   )
 
 lazy val cdp = project.in(file("cdp"))
