@@ -9,6 +9,7 @@ import robobrowser.comm.CommunicationManager
 import robobrowser.event.ExecutionContext
 import robobrowser.input.KeyFeatures
 import robobrowser.window.Frame
+import spice.net.URL
 
 import scala.concurrent.duration.DurationInt
 
@@ -39,11 +40,12 @@ trait TabFeatures extends CommunicationManager {
     }
   }
 
-  def eval(expression: String): Task[Json] = send(
+  def eval(expression: String, awaitPromise: Boolean = false): Task[Json] = send(
     method = "Runtime.evaluate",
     params = obj(
       "expression" -> s"(function() { $expression })()",
-      "returnByValue" -> true
+      "returnByValue" -> true,
+      "awaitPromise" -> awaitPromise
     )
   ).map { response =>
     response.error match {
@@ -51,6 +53,52 @@ trait TabFeatures extends CommunicationManager {
       case None => response.result
     }
   }
+
+  def loadLibrary(url: String): Task[Json] = {
+    val urlEncoded = encodeForJsString(url)
+    val js =
+      s"""
+         |return (function() {
+         |  const url = $urlEncoded;
+         |  console.log("[CDP] loading script:", url);
+         |
+         |  // Avoid double injection
+         |  const existing = document.querySelector(
+         |    'script[data-cdp-injected="' + url + '"]'
+         |  );
+         |  if (existing) {
+         |    console.log("[CDP] already loaded:", url);
+         |    return "already-loaded";
+         |  }
+         |
+         |  return new Promise((resolve, reject) => {
+         |    const s = document.createElement('script');
+         |    s.src = url;
+         |    s.async = true;
+         |    s.dataset.cdpInjected = url;
+         |    s.onload = () => {
+         |      console.log("[CDP] loaded:", s.src);
+         |      resolve("ok");
+         |    };
+         |    s.onerror = (e) => {
+         |      console.error("[CDP] failed:", s.src, e);
+         |      reject(new Error("Failed to load " + s.src));
+         |    };
+         |    document.head.appendChild(s);
+         |  });
+         |})();
+         |""".stripMargin
+
+    eval(js, awaitPromise = true)
+  }
+
+  private def encodeForJsString(s: String): String =
+    "\"" + s
+      .replace("\\", "\\\\")
+      .replace("\"", "\\\"")
+      .replace("\n", "\\n")
+      .replace("\r", "\\r") + "\""
+
 
   def callFunction(expression: String, objects: Json*): Task[Json] = {
     val params = objects.indices.map(i => s"obj${i + 1}").mkString(", ")

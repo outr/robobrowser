@@ -18,8 +18,7 @@ class RoboBrowserSpec extends AsyncWordSpec with AsyncTaskSpec with Matchers {
 
     "create a new headless browser" in {
       RoboBrowser(config = RoboBrowserConfig(
-        browserConfig = BrowserConfig(headless = false),
-        tabSelector = TabSelector.AlwaysCreateNew
+        browserConfig = BrowserConfig(useNewHeadlessMode = false)
       )).map { browser =>
         this.browser = browser
         browser.url() should be("about:blank")

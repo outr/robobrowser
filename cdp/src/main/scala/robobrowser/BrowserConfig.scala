@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.Files
 
 case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Default"),
-                         headless: Boolean = false,
+                         headless: Boolean = true,
                          useNewHeadlessMode: Boolean = true,
                          disableBackgrounding: Boolean = false,
                          disableGPU: Boolean = false,
