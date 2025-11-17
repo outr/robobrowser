@@ -18,10 +18,14 @@ case class RoboScraper(browser: RoboBrowser,
     var queue = List(url)
 
     def recurse: Task[Unit] = queue.headOption match {
-      case Some(url) if scraped.contains(url) => recurse
+      case Some(url) if scraped.contains(url) || !handler.shouldScrape(url) =>
+        queue = queue.tail
+        logger.debug(s"*** Skipping already processed: $url")
+          .next(recurse)
       case Some(url) => for {
         _ <- Task {
           scraped = scraped + url
+          queue = queue.tail
         }
         page <- scrapePage(url)
         _ <- handler.handle(page)

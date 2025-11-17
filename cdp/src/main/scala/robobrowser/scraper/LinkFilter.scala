@@ -1,5 +1,7 @@
 package robobrowser.scraper
 
+import spice.net.URL
+
 trait LinkFilter {
   def evaluate(link: ScrapedLink): LinkAction
 }
@@ -11,5 +13,17 @@ object LinkFilter {
     } else {
       LinkAction.Nothing
     }
+  }
+
+  def include(f: URL => Boolean): LinkFilter = (link: ScrapedLink) => if (f(link.href)) {
+    LinkAction.Include
+  } else {
+    LinkAction.Nothing
+  }
+
+  def exclude(f: URL => Boolean): LinkFilter = (link: ScrapedLink) => if (f(link.href)) {
+    LinkAction.Exclude
+  } else {
+    LinkAction.Nothing
   }
 }

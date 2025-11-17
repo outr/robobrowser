@@ -8,6 +8,8 @@ class MemoryScrapeHandler extends ScrapeHandler {
 
   def map: Map[URL, ScrapedPage] = _map
 
+  override def shouldScrape(url: URL): Boolean = true
+
   override def handle(page: ScrapedPage): Task[Unit] = Task {
     _map += page.url -> page
   }
