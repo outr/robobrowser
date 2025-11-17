@@ -12,6 +12,7 @@ import robobrowser.window.Frame
 import spice.net.URL
 
 import scala.concurrent.duration.DurationInt
+import scala.io.Source
 
 trait TabFeatures extends CommunicationManager {
   protected val _loaded: Var[Boolean] = Var(true)
@@ -54,7 +55,18 @@ trait TabFeatures extends CommunicationManager {
     }
   }
 
-  def loadLibrary(url: String): Task[Json] = {
+  def executeScript(resourceName: String): Task[Json] = Task.defer {
+    val url = getClass.getClassLoader.getResource(resourceName)
+    val source = Source.fromURL(url)
+    val js = try {
+      source.mkString
+    } finally {
+      source.close()
+    }
+    eval(js)
+  }
+
+  def loadLibrary(url: String): Task[Json] = Task.defer {
     val urlEncoded = encodeForJsString(url)
     val js =
       s"""
