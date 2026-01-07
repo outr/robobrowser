@@ -57,6 +57,8 @@ val spiceVersion: String = "0.10.17"
 
 val jsoupVersion: String = "1.21.2"
 
+val tikaVersion: String = "3.2.3"
+
 val scalatestVersion: String = "3.2.19"
 
 val root = project.in(file("."))
@@ -82,7 +84,9 @@ lazy val cdp = project.in(file("cdp"))
       "com.outr" %% "rapid-core" % rapidVersion,
       "com.outr" %% "rapid-scribe" % rapidVersion,
       "org.jsoup" % "jsoup" % jsoupVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.apache.tika" % "tika-core" % tikaVersion,
+      "org.apache.tika" % "tika-parsers-standard-package" % tikaVersion,
+        "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "com.outr" %% "rapid-test" % rapidVersion % Test,
       "com.outr" %% "spice-client-netty" % spiceVersion % Test,
     )
