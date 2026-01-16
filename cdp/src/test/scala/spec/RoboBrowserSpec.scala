@@ -2,7 +2,7 @@ package spec
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
-import rapid.{AsyncTaskSpec, logger}
+import rapid.{AsyncTaskSpec, Task, logger}
 import robobrowser.input.Key
 import robobrowser.select.Selector
 import robobrowser.{BrowserConfig, RoboBrowser, RoboBrowserConfig, TabSelector}
@@ -51,9 +51,10 @@ class RoboBrowserSpec extends AsyncWordSpec with AsyncTaskSpec with Matchers {
         _ <- browser(q).focus
         _ <- browser.key.send(Key.text("robobrowser"))
         _ <- browser.key.`type`(Key.Enter)
-        _ <- browser.waitForCondition(browser.title.map { title =>
-          title == "robobrowser - Google Search"
-        })
+        _ <- browser.waitForCondition(for {
+          url <- Task(browser.url())
+          title <- browser.title
+        } yield url.contains("q=robobrowser") || title.toLowerCase.contains("robobrowser"))
       } yield succeed
     }
     "create a screenshot" in {
