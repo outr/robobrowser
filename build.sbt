@@ -79,7 +79,7 @@ lazy val cdp = project.in(file("cdp"))
       "org.jsoup" % "jsoup" % jsoupVersion,
       "org.apache.tika" % "tika-core" % tikaVersion,
       "org.apache.tika" % "tika-parsers-standard-package" % tikaVersion,
-        "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "com.outr" %% "rapid-test" % rapidVersion % Test,
       "com.outr" %% "spice-client-netty" % spiceVersion % Test,
     )
