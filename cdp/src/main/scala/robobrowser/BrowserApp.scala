@@ -12,7 +12,7 @@ trait BrowserApp extends RapidApp {
 
   final override def run(args: List[String]): Task[Unit] = RoboBrowser.withBrowser(
     config = browserConfig
-  )(run)
+  )(browser => run(browser))
 
   def run(browser: RoboBrowser): Task[Unit]
 }

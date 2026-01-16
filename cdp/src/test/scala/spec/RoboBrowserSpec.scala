@@ -9,15 +9,20 @@ import robobrowser.{BrowserConfig, RoboBrowser, RoboBrowserConfig, TabSelector}
 
 import java.io.File
 import java.nio.file.{Files, Path}
+import scala.compiletime.uninitialized
 
 class RoboBrowserSpec extends AsyncWordSpec with AsyncTaskSpec with Matchers {
-  private var browser: RoboBrowser = _
+  private var browser: RoboBrowser = uninitialized
 
   "RoboBrowser" should {
     lazy val screenshot = Path.of("screenshot.png")
 
     "create a new headless browser" in {
-      RoboBrowser().map { browser =>
+      RoboBrowser(RoboBrowserConfig(
+        browserConfig = BrowserConfig(
+          noSandbox = true, disableDevSHMUsage = true, disableGPU = true
+        )
+      )).map { browser =>
         this.browser = browser
         browser.url() should be("about:blank")
       }
