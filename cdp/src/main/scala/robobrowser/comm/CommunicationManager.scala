@@ -7,6 +7,7 @@ import fabric.rw.{Asable, Convertible}
 import rapid._
 import rapid.task._
 import robobrowser.event.EventManager
+import robobrowser.fetch.Fetch
 import spice.UserException
 import spice.http.WebSocket
 
@@ -35,6 +36,8 @@ trait CommunicationManager extends EventManager {
     }
   }
 
+  lazy val fetch: Fetch = new Fetch(this)
+
   override def fire(response: WSResponse): Unit = response.id match {
     case Some(id) => retrieve(id, response)
     case None => super.fire(response)
@@ -42,12 +45,13 @@ trait CommunicationManager extends EventManager {
 
   def send(method: String,
            params: Obj = Obj.empty,
-           errorThrowsException: Boolean = true): Task[WSResponse] = Task {
+           errorThrowsException: Boolean = true,
+           clearNulls: Boolean = true): Task[WSResponse] = Task {
     val id = idGenerator.incrementAndGet()
     val request = WSRequest(
       id = id,
       method = method,
-      params = params,
+      params = params.filterOne(RemoveNullsFilter),
       sessionId = Option(sessionId)
     )
     val callback = Task.completable[WSResponse]

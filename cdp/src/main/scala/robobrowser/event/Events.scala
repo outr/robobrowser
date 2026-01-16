@@ -10,6 +10,7 @@ case class Events(m: EventManager) {
   val page: PageEvents = PageEvents(this)
   val inspector: InspectorEvents = InspectorEvents(this)
   val runtime: RuntimeEvents = RuntimeEvents(this)
+  val fetch: FetchEvents = FetchEvents(this)
   
   private[event] def channel[E <: Event](method: String)(implicit rw: RW[E]): Channel[E] = synchronized {
     val c = EventChannel[E](rw)

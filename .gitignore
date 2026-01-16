@@ -5,3 +5,8 @@ anticaptcha.key
 screenshot.png
 config.json
 debug/
+.bloop/
+.metals/
+.vscode/
+cdp/scrape_test/
+metals.sbt

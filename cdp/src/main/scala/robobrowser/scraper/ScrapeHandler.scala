@@ -4,7 +4,7 @@ import rapid.Task
 import spice.net.URL
 
 trait ScrapeHandler {
-  def shouldScrape(url: URL): Boolean
+  def existing(url: URL): Option[ScrapedPage]
 
   def handle(page: ScrapedPage): Task[Unit]
 }

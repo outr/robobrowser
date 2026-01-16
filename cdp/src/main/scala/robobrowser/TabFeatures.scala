@@ -23,7 +23,7 @@ trait TabFeatures extends CommunicationManager {
     case ec if ec.auxData.frameId == targetId => ec
   })
 
-  def navigate(url: String, attempts: Int = 0): Task[Frame] = {
+  def navigate(url: String, attempts: Int = 0): Task[Option[Frame]] = {
     _loaded @= false
     send(
       method = "Page.navigate",
@@ -32,11 +32,28 @@ trait TabFeatures extends CommunicationManager {
       )
     ).flatMap { response =>
       response.result.get("errorText").map(_.asString) match {
+        case Some(errorText) if errorText == "net::ERR_ABORTED" =>
+          val parsed = URL.parse(url)
+          if (DownloadState.wasRecentlyTriggered(parsed, includeHost = true)) {
+            throw DownloadState.DownloadTriggeredException(parsed)
+          } else if (attempts < RoboBrowser.NavigateRetries) {
+            logger.warn(s"Failed to navigate to $url (attempt: $attempts): $errorText. Trying again in five seconds...")
+              .next(Task.sleep(5.seconds))
+              .next(navigate(url, attempts + 1))
+          } else {
+            throw new RuntimeException(errorText)
+          }
+        case Some(errorText) if errorText == "net::ERR_HTTP_RESPONSE_CODE_FAILURE" => logger
+          .warn(s"Response code failure ($url)! ${response.error}")
+          .map(_ => None)
+        case Some(errorText) if errorText == "net::ERR_NAME_NOT_RESOLVED" => logger
+          .warn(s"Name not resolved ($url)! ${response.error}")
+          .map(_ => None)
         case Some(errorText) if attempts < RoboBrowser.NavigateRetries => logger.warn(s"Failed to navigate to $url (attempt: $attempts): $errorText. Trying again in five seconds...")
           .next(Task.sleep(5.seconds))
           .next(navigate(url, attempts + 1))
-        case Some(errorText) => throw new RuntimeException(errorText)
-        case None => Task.pure(Frame(response.result("frameId").asString))
+        case Some(errorText) => throw new RuntimeException(s"$errorText for $url")
+        case None => Task.pure(Some(Frame(response.result("frameId").asString)))
       }
     }
   }

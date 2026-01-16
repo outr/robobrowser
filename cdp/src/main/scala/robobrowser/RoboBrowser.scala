@@ -93,6 +93,15 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
     method = "Page.enable"
   ).unit
 
+  def configureDownloadPath(path: Path): Task[Unit] = send(
+    method = "Page.setDownloadBehavior",
+    params = obj(
+      "behavior" -> "allowAndName",
+      "downloadPath" -> path.toAbsolutePath.normalize().toString,
+      "eventsEnabled" -> true
+    )
+  ).unit
+
   def enableLifecycleEvents: Task[Unit] = send(
     method = "Page.setLifecycleEventsEnabled",
     params = obj(
@@ -277,6 +286,7 @@ object RoboBrowser {
   }
 
   def apply(config: RoboBrowserConfig = RoboBrowserConfig()): Task[RoboBrowser] = for {
+    _ <- Task(config.browserConfig.prepareUserDataDir())
     process <- CDP.createProcess(config.browser, config.browserConfig)
     _ <- Task.sleep(500.millis)   // Give the browser time to launch
     tabResults <- CDP.query(config.browser)

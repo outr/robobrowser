@@ -1,4 +1,3 @@
-// Variables
 val org: String = "com.outr"
 val projectName: String = "robobrowser"
 val githubOrg: String = "outr"
@@ -9,15 +8,9 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.2.0"
+ThisBuild / version := "2.3.0-SNAPSHOT"
 
-val scala213: String = "2.13.18"
-
-val scala3: String = "3.7.4"
-
-ThisBuild / scalaVersion := scala3
-
-ThisBuild / crossScalaVersions := List(scala213, scala3)
+ThisBuild / scalaVersion := "3.7.4"
 
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -57,6 +50,8 @@ val spiceVersion: String = "0.10.19"
 
 val jsoupVersion: String = "1.22.1"
 
+val tikaVersion: String = "3.2.3"
+
 val scalatestVersion: String = "3.2.19"
 
 val root = project.in(file("."))
@@ -82,7 +77,9 @@ lazy val cdp = project.in(file("cdp"))
       "com.outr" %% "rapid-core" % rapidVersion,
       "com.outr" %% "rapid-scribe" % rapidVersion,
       "org.jsoup" % "jsoup" % jsoupVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.apache.tika" % "tika-core" % tikaVersion,
+      "org.apache.tika" % "tika-parsers-standard-package" % tikaVersion,
+        "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "com.outr" %% "rapid-test" % rapidVersion % Test,
       "com.outr" %% "spice-client-netty" % spiceVersion % Test,
     )
