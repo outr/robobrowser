@@ -1,4 +1,3 @@
-// Variables
 val org: String = "com.outr"
 val projectName: String = "robobrowser"
 val githubOrg: String = "outr"
@@ -9,15 +8,9 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.2.0"
+ThisBuild / version := "2.3.0-SNAPSHOT"
 
-val scala213: String = "2.13.17"
-
-val scala3: String = "3.7.4"
-
-ThisBuild / scalaVersion := scala3
-
-ThisBuild / crossScalaVersions := List(scala213, scala3)
+ThisBuild / scalaVersion := "3.7.4"
 
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 

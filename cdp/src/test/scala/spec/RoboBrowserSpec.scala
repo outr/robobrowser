@@ -17,9 +17,7 @@ class RoboBrowserSpec extends AsyncWordSpec with AsyncTaskSpec with Matchers {
     lazy val screenshot = Path.of("screenshot.png")
 
     "create a new headless browser" in {
-      RoboBrowser(config = RoboBrowserConfig(
-        browserConfig = BrowserConfig(useNewHeadlessMode = false)
-      )).map { browser =>
+      RoboBrowser().map { browser =>
         this.browser = browser
         browser.url() should be("about:blank")
       }
