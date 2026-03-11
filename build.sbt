@@ -10,7 +10,7 @@ name := projectName
 ThisBuild / organization := org
 ThisBuild / version := "2.3.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.7.4"
+ThisBuild / scalaVersion := "3.8.2"
 
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -42,11 +42,11 @@ ThisBuild / javaOptions ++= Seq(
 
 ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
 
-val scribeVersion: String = "3.17.0"
+val scribeVersion: String = "3.18.0"
 
-val rapidVersion: String = "2.3.2"
+val rapidVersion: String = "2.8.0"
 
-val spiceVersion: String = "0.10.19"
+val spiceVersion: String = "1.2.2-SNAPSHOT1"
 
 val jsoupVersion: String = "1.22.1"
 
@@ -75,7 +75,6 @@ lazy val cdp = project.in(file("cdp"))
       "com.outr" %% "spice-client" % spiceVersion,
       "com.outr" %% "spice-server-undertow" % spiceVersion,
       "com.outr" %% "rapid-core" % rapidVersion,
-      "com.outr" %% "rapid-scribe" % rapidVersion,
       "org.jsoup" % "jsoup" % jsoupVersion,
       "org.apache.tika" % "tika-core" % tikaVersion,
       "org.apache.tika" % "tika-parsers-standard-package" % tikaVersion,

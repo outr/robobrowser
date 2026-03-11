@@ -4,7 +4,7 @@ import rapid.{Task, logger}
 import rapid.logger._
 import robobrowser.{DownloadState, RoboBrowser}
 import robobrowser.event.{DownloadProgressEvent, DownloadWillBeginEvent, LoadingFailedEvent, LoadingFinishedEvent, ResponseBody, ResponseReceivedEvent}
-import spice.net.{Parameters, Protocol, URL, URLPath}
+import spice.net.{Parameters, Protocol, TLDValidation, URL, URLPath}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths, StandardCopyOption, StandardOpenOption}
@@ -348,7 +348,7 @@ class DownloadInterceptor(browser: RoboBrowser, config: DownloadConfig) {
 
   private def parseDownloadUrl(raw: String): Option[URL] = {
     val normalized = normalizeDownloadUrl(raw)
-    Try(URL.parse(normalized, validateTLD = false)).toOption
+    Try(URL.parse(normalized, tldValidation = TLDValidation.Off)).toOption
   }
 
   private def normalizeDownloadUrl(raw: String): String = {

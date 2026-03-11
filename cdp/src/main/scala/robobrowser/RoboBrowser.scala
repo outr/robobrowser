@@ -229,14 +229,23 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
   } yield ()
 
   def waitForCondition(condition: Task[Boolean],
-                       cycle: FiniteDuration = 250.millis): Task[Unit] = condition.flatMap {
-    case true => Task.unit
-    case false => Task.sleep(cycle).flatMap(_ => waitForCondition(condition, cycle))
+                       cycle: FiniteDuration = 250.millis,
+                       timeout: FiniteDuration = 1.hour,
+                       start: Long = System.currentTimeMillis()): Task[Boolean] = condition.flatMap {
+    case true => Task.pure(true)
+    case false =>
+      val elapsed = System.currentTimeMillis() - start
+      if (elapsed > timeout.toMillis) {
+        Task.pure(false)
+      } else {
+        Task.sleep(cycle).flatMap(_ => waitForCondition(condition, cycle, timeout, start))
+      }
   }
 
-  def waitForLoaded(cycle: FiniteDuration = 250.millis): Task[Unit] = waitForCondition(Task(loaded()), cycle)
+  def waitForLoaded(cycle: FiniteDuration = 250.millis,
+                    timeout: FiniteDuration = 5.minutes): Task[Boolean] = waitForCondition(Task(loaded()), cycle, timeout)
 
-  def waitForDetach(cycle: FiniteDuration = 1.second): Task[Unit] = waitForCondition(Task(!attached()), cycle)
+  def waitForDetach(cycle: FiniteDuration = 1.second): Task[Boolean] = waitForCondition(Task(!attached()), cycle, 7.days)
 
   private def createTarget(url: String): Task[String] = send(
     method = "Target.createTarget",
