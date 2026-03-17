@@ -13,5 +13,11 @@ case class NetworkEvents(e: Events) {
   val responseReceivedExtraInfo: Channel[ResponseReceivedExtraInfoEvent] = e.channel("Network.responseReceivedExtraInfo")
   val requestServedFromCache: Channel[RequestServedFromCacheEvent] = e.channel("Network.requestServedFromCache")
   val webSocketCreated: Channel[WebSocketCreatedEvent] = e.channel("Network.webSocketCreated")
+  val webSocketWillSendHandshakeRequest: Channel[WebSocketWillSendHandshakeRequestEvent] = e.channel("Network.webSocketWillSendHandshakeRequest")
+  val webSocketHandshakeResponseReceived: Channel[WebSocketHandshakeResponseReceivedEvent] = e.channel("Network.webSocketHandshakeResponseReceived")
+  val webSocketFrameReceived: Channel[WebSocketFrameReceivedEvent] = e.channel("Network.webSocketFrameReceived")
+  val webSocketFrameSent: Channel[WebSocketFrameSentEvent] = e.channel("Network.webSocketFrameSent")
+  val webSocketFrameError: Channel[WebSocketFrameErrorEvent] = e.channel("Network.webSocketFrameError")
+  val webSocketClosed: Channel[WebSocketClosedEvent] = e.channel("Network.webSocketClosed")
   val loadingFailed: Channel[LoadingFailedEvent] = e.channel("Network.loadingFailed")
 }

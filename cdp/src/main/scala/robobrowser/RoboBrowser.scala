@@ -295,10 +295,17 @@ object RoboBrowser {
   }
 
   def apply(config: RoboBrowserConfig = RoboBrowserConfig()): Task[RoboBrowser] = for {
-    _ <- Task(config.browserConfig.prepareUserDataDir())
-    process <- CDP.createProcess(config.browser, config.browserConfig)
+    browser <- Task(config.browser.resolvePort())
+    // Use a unique user data dir per instance to avoid Chrome's SingletonLock conflict
+    browserConfig = if (config.browser.port == 0) {
+      config.browserConfig.copy(userDataDir = BrowserConfig.resolveDataDir(s"instance-${browser.port}"))
+    } else {
+      config.browserConfig
+    }
+    _ <- Task(browserConfig.prepareUserDataDir())
+    process <- CDP.createProcess(browser, browserConfig)
     _ <- Task.sleep(500.millis)   // Give the browser time to launch
-    tabResults <- CDP.query(config.browser)
+    tabResults <- CDP.query(browser)
     webSocketUrl = tabResults.head.webSocketDebuggerUrl
     _ <- logger.info(s"Connecting to WebSocket: $webSocketUrl")
     webSocket <- CDP.connect(webSocketUrl)
