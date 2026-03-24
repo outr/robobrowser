@@ -50,7 +50,7 @@ val spiceVersion: String = "1.2.2"
 
 val jsoupVersion: String = "1.22.1"
 
-val tikaVersion: String = "3.2.3"
+val tikaVersion: String = "3.3.0"
 
 val scalatestVersion: String = "3.2.19"
 
