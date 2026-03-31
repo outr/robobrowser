@@ -115,12 +115,52 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
     response.result.as[Window]
   }
 
-  def screenshot(file: Path): Task[Unit] = send(
-    method = "Page.captureScreenshot"
-  ).map { response =>
-    val base64 = response.result("data").asString
-    val bytes = Base64.getDecoder.decode(base64)
-    Files.write(file, bytes)
+  def screenshot(file: Path): Task[Unit] = screenshotAs(file)
+
+  /** Set the browser viewport size via CDP device metrics emulation. */
+  def setViewportSize(width: Int, height: Int, deviceScaleFactor: Double = 1.0): Task[Unit] = send(
+    method = "Emulation.setDeviceMetricsOverride",
+    params = obj(
+      "width" -> width,
+      "height" -> height,
+      "deviceScaleFactor" -> deviceScaleFactor,
+      "mobile" -> false
+    )
+  ).unit
+
+  /** Clear device metrics override, restoring default viewport. */
+  def clearViewportOverride(): Task[Unit] = send(
+    method = "Emulation.clearDeviceMetricsOverride"
+  ).unit
+
+  /** Capture a screenshot with options.
+    * @param file            output file path
+    * @param format          image format: "png" (default) or "jpeg"
+    * @param quality         JPEG quality 0-100 (ignored for PNG)
+    * @param afterLoadDelay  extra time to wait after page load before capturing (for dynamic JS content)
+    *
+    * To control the viewport/image size, use `BrowserConfig.windowSize` when creating the browser,
+    * or call `setViewportSize()` before taking the screenshot.
+    */
+  def screenshotAs(file: Path,
+                   format: String = "png",
+                   quality: Option[Int] = None,
+                   afterLoadDelay: Option[FiniteDuration] = None): Task[Unit] = {
+    val delayTask = afterLoadDelay match {
+      case Some(d) => Task.sleep(d)
+      case None => Task.unit
+    }
+    delayTask.flatMap { _ =>
+      val params = quality match {
+        case Some(q) => obj("format" -> format, "quality" -> q)
+        case None => obj("format" -> format)
+      }
+      send(method = "Page.captureScreenshot", params = params).map { response =>
+        val base64 = response.result("data").asString
+        val bytes = Base64.getDecoder.decode(base64)
+        Files.write(file, bytes)
+      }
+    }
   }
 
   /**
