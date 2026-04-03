@@ -52,7 +52,7 @@ val jsoupVersion: String = "1.22.1"
 
 val tikaVersion: String = "3.2.3"
 
-val scalatestVersion: String = "3.2.19"
+val scalatestVersion: String = "3.2.20"
 
 val root = project.in(file("."))
   .aggregate(core, cdp)
