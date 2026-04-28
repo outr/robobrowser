@@ -48,7 +48,7 @@ val rapidVersion: String = "2.9.3"
 
 val spiceVersion: String = "1.2.2"
 
-val jsoupVersion: String = "1.22.1"
+val jsoupVersion: String = "1.22.2"
 
 val tikaVersion: String = "3.2.3"
 
