@@ -8,7 +8,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.3.2-SNAPSHOT"
+ThisBuild / version := "2.3.2"
 
 ThisBuild / scalaVersion := "3.8.2"
 
@@ -46,7 +46,7 @@ val scribeVersion: String = "3.18.0"
 
 val rapidVersion: String = "2.9.3"
 
-val spiceVersion: String = "1.2.5"
+val spiceVersion: String = "1.8.0"
 
 val jsoupVersion: String = "1.22.2"
 
