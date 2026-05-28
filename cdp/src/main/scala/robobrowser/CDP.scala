@@ -37,7 +37,7 @@ object CDP {
   }
 
   def query(browser: Browser = Browser.Chrome): Task[List[CDPQueryResult]] = HttpClient
-    .retryManager(RetryManager.simple(5, 1.second))
+    .retryManager(RetryManager.simple(20, 1.second))
     .url(URL.parse(s"http://localhost:${browser.port}/json"))
     .call[List[CDPQueryResult]]
 
