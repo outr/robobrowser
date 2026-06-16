@@ -8,7 +8,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.3.4-SNAPSHOT"
+ThisBuild / version := "2.3.4"
 
 ThisBuild / scalaVersion := "3.8.4"
 
@@ -44,9 +44,9 @@ ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF
 
 val scribeVersion: String = "3.18.0"
 
-val rapidVersion: String = "2.9.7"
+val rapidVersion: String = "2.9.8"
 
-val spiceVersion: String = "1.8.15"
+val spiceVersion: String = "1.10.1"
 
 val jsoupVersion: String = "1.22.2"
 
