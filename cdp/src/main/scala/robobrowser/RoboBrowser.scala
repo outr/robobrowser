@@ -62,6 +62,8 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
 
   lazy val dom: DOM = DOM(this)
   lazy val key: KeyFeatures = KeyFeatures(this)
+  lazy val screencast: Screencast = new Screencast(this)
+  lazy val mouse: Mouse = new Mouse(this)
 
   def title: Task[String] = Task.next(eval("return document.title").map(_("result")("value").asString))
 

@@ -1,12 +1,20 @@
 package robobrowser.select
 
-import fabric.{Json, Null}
+import fabric.{Json, Null, str}
+import fabric.io.JsonFormatter
 import rapid.Task
 import robobrowser.RoboBrowser
 
 case class Selection(browser: RoboBrowser, selector: Selector, document: String = "document") {
-  private lazy val cssSelectorOne: String = s"$document.querySelector(\"${selector.query}\")"
-  private lazy val cssSelectorAll: String = s"$document.querySelectorAll(\"${selector.query}\")"
+  // The selector is embedded into a JS string argument. Interpolating it
+  // raw broke on any selector containing a quote — e.g. the attribute
+  // selector `button[aria-label*="close"]` produced
+  // `querySelector("button[aria-label*="close"]")`, whose inner `"` ends
+  // the string early and yields `SyntaxError: missing ) after argument
+  // list`. JSON-encoding produces a properly-escaped JS string literal.
+  private lazy val queryLiteral: String = JsonFormatter.Compact(str(selector.query))
+  private lazy val cssSelectorOne: String = s"$document.querySelector($queryLiteral)"
+  private lazy val cssSelectorAll: String = s"$document.querySelectorAll($queryLiteral)"
 
   def evalFirst(f: String => String): Task[Json] = browser.eval(f(cssSelectorOne))
 
