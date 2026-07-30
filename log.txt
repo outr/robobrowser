@@ -1,0 +1,1437 @@
+[info] compiling 93 Scala sources to /home/mhicks/projects/open/robobrowser/cdp/target/scala-2.13/classes ...
+[info] running (fork) robobrowser.Test
+WARNING: Using incubator modules: jdk.incubator.vector
+2025.01.13 16:50:52:104 Simple-error-spawn-Thread-1 ERROR robobrowser.CDP.logger:21
+    [175591:175591:0113/165052.060694:WARNING:chrome_main_delegate.cc(672)] This is Chrome version 131.0.6778.264 (not a warning)
+    [175591:175591:0113/165052.062308:VERBOSE1:chrome_crash_reporter_client.cc(211)] GetCollectStatsConsent(): settings_consent: 0 so returning that
+    [175591:175591:0113/165052.065636:VERBOSE1:chrome_crash_reporter_client.cc(211)] GetCollectStatsConsent(): settings_consent: 0 so returning that
+    [175610:175610:0113/165052.095396:VERBOSE1:cdm_registration.cc(287)] Registering bundled Widevine 4.10.2830.0
+    [175610:175610:0113/165052.095629:INFO:cpu_info.cc(53)] Available number of cores: 32
+    [175610:175610:0113/165052.096122:VERBOSE1:zygote_main_linux.cc(201)] ZygoteMain: initializing 0 fork delegates
+    [1:1:0113/165052.096936:VERBOSE1:cdm_registration.cc(287)] Registering bundled Widevine 4.10.2830.0
+    [1:1:0113/165052.097164:INFO:cpu_info.cc(53)] Available number of cores: 32
+    [1:1:0113/165052.097667:VERBOSE1:zygote_main_linux.cc(201)] ZygoteMain: initializing 0 fork delegates
+    [175591:175591:0113/165052.099888:VERBOSE1:config_dir_policy_loader.cc(123)] Skipping mandatory platform policies because no policy file was found at: /etc/opt/chrome/policies/managed
+    [175591:175591:0113/165052.099894:VERBOSE1:config_dir_policy_loader.cc(123)] Skipping recommended platform policies because no policy file was found at: /etc/opt/chrome/policies/recommended
+    [175591:175591:0113/165052.099929:VERBOSE1:chrome_browser_cloud_management_controller.cc(97)] DM token = empty
+    [175591:175591:0113/165052.099931:VERBOSE1:chrome_browser_cloud_management_controller.cc(103)] Enrollment token =
+    [175591:175591:0113/165052.099933:VERBOSE1:chrome_browser_cloud_management_controller.cc(104)] Client ID = vLoKfYUqeqM-y0zDAKOqGJyuVUo
+    [175591:175591:0113/165052.100575:VERBOSE1:variations_field_trial_creator_base.cc(78)] VariationsSeedUsage:2
+    [175591:175591:0113/165052.100604:VERBOSE1:variations_field_trial_creator_base.cc(351)] VariationsSetupComplete
+    [175591:175621:0113/165052.101891:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.freedesktop.login1"
+
+    [175591:175624:0113/165052.102759:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.chromium.bluetooth.Manager"
+
+    [175591:175591:0113/165052.102844:VERBOSE1:webrtc_event_log_manager.cc(97)] WebRTC remote-bound event logging enabled.
+    [175591:175591:0113/165052.103543:VERBOSE1:proxy_config_service_linux.cc(508)] All gsettings tests OK. Will get proxy config from gsettings.
+    [175591:175591:0113/165052.103591:VERBOSE1:proxy_config_service_linux.cc(1304)] Obtained proxy settings from annotation hash code 11258689
+    [175591:175591:0113/165052.103611:VERBOSE1:pref_proxy_config_tracker_impl.cc(199)] 0x1ac400031080: set chrome proxy config service to 0x1ac4000e0ea0
+    [175591:175591:0113/165052.105172:VERBOSE1:cdm_registration.cc(287)] Registering bundled Widevine 4.10.2830.0
+    [175591:175621:0113/165052.105872:VERBOSE1:select_file_dialog_linux_portal.cc(296)] File chooser portal available: yes
+    [175591:175621:0113/165052.106178:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.freedesktop.portal.Desktop"
+
+    [175591:175622:0113/165052.106482:VERBOSE1:media_stream_manager.cc(1532)] MSM::InitializeMaybeAsync([this=0x1ac400094940])
+    [175591:175622:0113/165052.106507:VERBOSE1:media_stream_manager.cc(1532)] MDM::MediaDevicesManager()
+    [175591:175622:0113/165052.106511:VERBOSE1:media_stream_manager.cc(1532)] MSM::MediaStreamManager([this=0x1ac400094940]))
+    [175591:175617:0113/165052.110473:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Consent To Send Stats": No such file or directory (2)
+    [175591:175591:0113/165052.112320:VERBOSE1:key_storage_util_linux.cc(51)] Password storage detected desktop environment: GNOME
+    [175591:175591:0113/165052.112327:VERBOSE1:key_storage_linux.cc(118)] Selected backend for OSCrypt: GNOME_LIBSECRET
+    [175591:175591:0113/165052.124057:VERBOSE1:key_storage_linux.cc(165)] OSCrypt using Libsecret as backend.
+    [175591:175591:0113/165052.128047:VERBOSE1:key_storage_libsecret.cc(53)] Libsecret key created: 2024-12-15 23:44:08.000000 UTC
+    [175591:175591:0113/165052.128057:VERBOSE1:key_storage_libsecret.cc(54)] Libsecret key last modified: 2024-12-15 23:44:08.000000 UTC
+    [175591:175591:0113/165052.128278:VERBOSE1:chrome_browser_cloud_management_controller.cc(168)] Starting CBCM Controller Initialization
+    [175591:175591:0113/165052.128292:INFO:chrome_browser_cloud_management_controller.cc(196)] No machine level policy manager exists.
+    [175591:175617:0113/165052.134285:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Web Applications/Logs/WebAppInstallManager.log": No such file or directory (2)
+    [175591:175591:0113/165052.135364:VERBOSE1:proxy_config_service_linux.cc(508)] All gsettings tests OK. Will get proxy config from gsettings.
+    [175591:175591:0113/165052.135394:VERBOSE1:proxy_config_service_linux.cc(1304)] Obtained proxy settings from annotation hash code 11258689
+    [175591:175591:0113/165052.135405:VERBOSE1:pref_proxy_config_tracker_impl.cc(199)] 0x1ac400032680: set chrome proxy config service to 0x1ac4000e5ca0
+    [175591:175591:0113/165052.135497:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(280)] MutablePO2TS::MutablePO2TS
+    [175591:175617:0113/165052.136162:VERBOSE1:simple_index_file.cc(606)] Simple Cache Index is being restored from disk.
+    [175591:175619:0113/165052.136165:VERBOSE1:simple_index_file.cc(606)] Simple Cache Index is being restored from disk.
+    [175591:175617:0113/165052.136168:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Code Cache/js/index-dir/the-real-index": No such file or directory (2)
+    [175591:175619:0113/165052.136170:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Code Cache/wasm/index-dir/the-real-index": No such file or directory (2)
+    [175591:175591:0113/165052.136220:VERBOSE1:proxy_config_service_linux.cc(508)] All gsettings tests OK. Will get proxy config from gsettings.
+    [175591:175591:0113/165052.136242:VERBOSE1:proxy_config_service_linux.cc(1304)] Obtained proxy settings from annotation hash code 11258689
+    [175591:175591:0113/165052.136251:VERBOSE1:pref_proxy_config_tracker_impl.cc(199)] 0x1ac400033f40: set chrome proxy config service to 0x1ac4000e6320
+    [175591:175591:0113/165052.136348:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.136] Bluetooth: EVENT: bluetooth_api.cc:82 BluetoothAPI: 0x1ac400138400
+    [175591:175591:0113/165052.136992:VERBOSE1:bluetooth_low_energy_event_router.cc(294)] Initializing BluetoothLowEnergyEventRouter.
+    [175646:1:0113/165052.137304:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: utility.
+    [175591:175591:0113/165052.137607:VERBOSE1:account_reconcilor.cc(187)] AccountReconcilor::AccountReconcilor
+    [175591:175591:0113/165052.137611:VERBOSE1:account_reconcilor.cc(225)] AccountReconcilor::Initialize
+    [175591:175591:0113/165052.137622:VERBOSE1:account_reconcilor.cc(275)] AccountReconcilor::RegisterWithContentSettings
+    [175591:175591:0113/165052.137625:VERBOSE1:account_reconcilor.cc(296)] AccountReconcilor::RegisterWithIdentityManager
+    [175591:175591:0113/165052.137654:VERBOSE1:gaia_auth_util.cc(51)] Canonicalized @gmail.com to @gmail.com
+    [175591:175591:0113/165052.137657:VERBOSE1:gaia_auth_util.cc(51)] Canonicalized @gmail.com to @gmail.com
+    [175591:175631:0113/165052.137921:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Dictionaries/en-US-10-1.bdic": No such file or directory (2)
+    [175591:175591:0113/165052.139916:VERBOSE1:extension_service.cc(1600)] AddComponentExtension Web Store
+    [175591:175591:0113/165052.139921:VERBOSE1:extension_service.cc(1602)] Component extension Web Store (ahfgeienlihckogmohjhadlkjgocpleb) installing/upgrading from '' to 0.2
+    [175591:175621:0113/165052.140007:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.freedesktop.Notifications"
+
+    [175591:175621:0113/165052.140092:VERBOSE1:bus.cc(699)] Filter function already exists: 1 with associated data: 0x1ac40009d880
+    [175591:175621:0113/165052.140097:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.freedesktop.Notifications"
+
+    [175591:175621:0113/165052.140135:VERBOSE1:bus.cc(699)] Filter function already exists: 1 with associated data: 0x1ac40009d880
+    [175591:175621:0113/165052.140139:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.freedesktop.Notifications"
+
+    [175591:175591:0113/165052.140150:VERBOSE1:extension_service.cc(1600)] AddComponentExtension Chrome PDF Viewer
+    [175591:175591:0113/165052.140154:VERBOSE1:extension_service.cc(1602)] Component extension Chrome PDF Viewer (mhjfbmdgcfjbbpaeojofohoefgiehjai) installing/upgrading from '' to 1
+    [175591:175591:0113/165052.140314:VERBOSE1:extension_service.cc(1600)] AddComponentExtension Google Hangouts
+    [175591:175591:0113/165052.140318:VERBOSE1:extension_service.cc(1602)] Component extension Google Hangouts (nkeimhogjdpnpccoofpliimaahmaaome) installing/upgrading from '' to 1.3.22
+    [175591:175591:0113/165052.140510:VERBOSE1:extension_service.cc(1600)] AddComponentExtension Google Network Speech
+    [175591:175591:0113/165052.140513:VERBOSE1:extension_service.cc(1602)] Component extension Google Network Speech (neajdppkdcdipfabeoofebfddakdcjhd) installing/upgrading from '' to 1.0
+    [175591:175622:0113/165052.140820:VERBOSE1:content_verifier.cc(869)] OnFetchComplete ahfgeienlihckogmohjhadlkjgocpleb success:0
+    [175591:175622:0113/165052.140841:VERBOSE1:content_verifier.cc(869)] OnFetchComplete mhjfbmdgcfjbbpaeojofohoefgiehjai success:0
+    [175591:175622:0113/165052.140882:VERBOSE1:content_verifier.cc(869)] OnFetchComplete nkeimhogjdpnpccoofpliimaahmaaome success:0
+    [175591:175622:0113/165052.140886:VERBOSE1:content_verifier.cc(869)] OnFetchComplete neajdppkdcdipfabeoofebfddakdcjhd success:0
+    [175591:175591:0113/165052.141043:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.141053:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175631:0113/165052.141078:WARNING:external_pref_loader.cc(294)] You are using an old-style extension deployment method (external_extensions.json), which will soon be deprecated. (see http://developer.chrome.com/docs/ex
+    tensions/how-to/distribute/install-extensions)
+    [175591:175618:0113/165052.141467:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Policy/User Policy": No such file or directory (2)
+    [175591:175618:0113/165052.141479:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Policy/Signing Key": No such file or directory (2)
+    [175591:175591:0113/165052.141603:VERBOSE1:profile_manager.cc(1270)] AddKeepAlive(Default, kRemoteDebugging). keep_alives=[kWaitingForFirstBrowserWindow (1), kRemoteDebugging (1)]
+    [175591:175619:0113/165052.141716:VERBOSE1:component_installer.cc(482)] StartRegistration for Widevine Content Decryption Module
+    [175591:175630:0113/165052.141728:VERBOSE1:component_installer.cc(482)] StartRegistration for Subresource Filter Rules
+    [175591:175591:0113/165052.141733:VERBOSE1:on_device_head_suggest_component_installer.cc(61)] On Device Head Component will fetch model for locale: ENUS500000
+    [175591:175617:0113/165052.141753:VERBOSE1:component_installer.cc(482)] StartRegistration for OnDeviceHeadSuggest
+    [175591:175619:0113/165052.141760:VERBOSE1:component_installer.cc(317)] Preinstalled component found for Widevine Content Decryption Module at /opt/google/chrome/WidevineCdm with version 4.10.2830.0.
+    [175591:175591:0113/165052.141763:VERBOSE1:trust_token_key_commitments_component_installer.cc(30)] Registering Trust Token Key Commitments component.
+    [175591:175618:0113/165052.141769:VERBOSE1:component_installer.cc(482)] StartRegistration for Optimization Hints
+    [175591:175591:0113/165052.141772:VERBOSE1:first_party_sets_component_installer.cc(39)] Registering Related Website Sets component.
+    [175591:175630:0113/165052.141777:VERBOSE1:component_installer.cc(482)] StartRegistration for Trust Token Key Commitments
+    [175591:175591:0113/165052.141778:VERBOSE1:privacy_sandbox_attestations_component_installer.cc(190)] Registering Privacy Sandbox Attestations component
+
+    DevTools listening on ws://127.0.0.1:9222/devtools/browser/f185ce59-4351-4bcb-90bb-274a3a177e00
+    [175591:175617:0113/165052.141802:VERBOSE1:component_installer.cc(482)] StartRegistration for Privacy Sandbox Attestations
+    [175591:175591:0113/165052.141815:VERBOSE1:file_type_policies_component_installer.cc(134)] Registering File Type Policies component.
+    [175591:175631:0113/165052.141824:VERBOSE1:component_installer.cc(482)] StartRegistration for Certificate Error Assistant
+    [175591:175617:0113/165052.141840:VERBOSE1:component_installer.cc(317)] Preinstalled component found for Privacy Sandbox Attestations at /opt/google/chrome/PrivacySandboxAttestationsPreloaded with version 2024.8.23.0.
+    [175591:175618:0113/165052.141842:VERBOSE1:component_installer.cc(482)] StartRegistration for File Type Policies
+    [175591:175619:0113/165052.141855:VERBOSE1:component_installer.cc(482)] StartRegistration for CRLSet
+    [175591:175631:0113/165052.141859:VERBOSE1:component_installer.cc(482)] StartRegistration for Origin Trials
+    [175591:175630:0113/165052.141869:VERBOSE1:component_installer.cc(482)] StartRegistration for MEI Preload
+    [175591:175617:0113/165052.141880:VERBOSE1:component_installer.cc(482)] StartRegistration for PKI Metadata
+    [175591:175630:0113/165052.141891:VERBOSE1:component_installer.cc(317)] Preinstalled component found for MEI Preload at /opt/google/chrome/MEIPreload with version 1.0.7.1652906823.
+    [175591:175591:0113/165052.141893:VERBOSE1:hyphenation_component_installer.cc(157)] Registering Hyphenation component.
+    [175591:175619:0113/165052.141893:VERBOSE1:component_installer.cc(482)] StartRegistration for Crowd Deny
+    [175591:175633:0113/165052.141893:VERBOSE1:component_installer.cc(482)] StartRegistration for Safety Tips
+    [175591:175618:0113/165052.141919:VERBOSE1:component_installer.cc(482)] StartRegistration for Hyphenation
+    [175591:175618:0113/165052.141966:VERBOSE1:component_installer.cc(482)] StartRegistration for Zxcvbn Data Dictionaries
+    [175591:175633:0113/165052.141974:VERBOSE1:component_installer.cc(482)] StartRegistration for Autofill States Data
+    [175591:175591:0113/165052.141992:VERBOSE1:tpcd_metadata_component_installer.cc(23)] Third Party Cookie Deprecation Metadata component.
+    [175591:175591:0113/165052.142002:VERBOSE1:translate_kit_component_installer.cc(159)] Registering TranslateKit component.
+    [175591:175633:0113/165052.142001:VERBOSE1:component_installer.cc(482)] StartRegistration for Third-Party Cookie Deprecation Metadata
+    [175591:175591:0113/165052.142351:VERBOSE1:profile_manager.cc(1270)] AddKeepAlive(Default, kOffTheRecordProfile). keep_alives=[kWaitingForFirstBrowserWindow (1), kOffTheRecordProfile (1), kRemoteDebugging (1)]
+    [175591:175591:0113/165052.143522:VERBOSE1:proxy_config_service_linux.cc(508)] All gsettings tests OK. Will get proxy config from gsettings.
+    [175591:175591:0113/165052.143553:VERBOSE1:proxy_config_service_linux.cc(1304)] Obtained proxy settings from annotation hash code 11258689
+    [175591:175591:0113/165052.143562:VERBOSE1:pref_proxy_config_tracker_impl.cc(199)] 0x1ac400036040: set chrome proxy config service to 0x1ac4009589c0
+    [175662:1:0113/165052.160122:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175665:1:0113/165052.161989:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175591:175624:0113/165052.164730:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.bluez"
+
+    [175591:175624:0113/165052.164813:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.bluez"
+
+    [175591:175621:0113/165052.169729:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.freedesktop.portal.Desktop"
+
+    [175641:175655:0113/165052.170631:VERBOSE1:simple_index_file.cc(606)] Simple Cache Index is being restored from disk.
+    [175641:175655:0113/165052.170685:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Shared Dictionary/cache/index-dir/the-real-index": No such file or directory (2)
+    [175591:175621:0113/165052.170991:VERBOSE1:object_proxy.cc(513)] Signal received: message_type: MESSAGE_SIGNAL
+    destination: :1.879
+    path: /org/freedesktop/portal/desktop/request/1_879/cr_secret_portal_response_token
+    interface: org.freedesktop.portal.Request
+    member: Response
+    sender: :1.97
+    signature: ua{sv}
+    serial: 1543
+
+    uint32_t 0
+    array [
+    ]
+
+    [175641:175657:0113/165052.171055:VERBOSE1:network_delegate.cc(36)] NetworkDelegate::NotifyBeforeURLRequest: https://redirector.gvt1.com/edgedl/chrome/dict/en-us-10-1.bdic
+    [175641:175655:0113/165052.171241:VERBOSE1:simple_index_file.cc(606)] Simple Cache Index is being restored from disk.
+    [175641:175655:0113/165052.171249:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Cache/Cache_Data/index-dir/the-real-index": No such file or directory (2)
+    [175641:175695:0113/165052.171314:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Cache/Cache_Data/ed5152d08612b2ae_0": No such file or directory (2)
+    [175641:175695:0113/165052.171340:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Cache/Cache_Data/ed5152d08612b2ae_1": No such file or directory (2)
+    [175641:175695:0113/165052.171348:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Cache/Cache_Data/ed5152d08612b2ae_s": No such file or directory (2)
+    [175591:175591:0113/165052.173212:VERBOSE1:profile_manager.cc(1270)] AddKeepAlive(Default, kExtensionUpdater). keep_alives=[kWaitingForFirstBrowserWindow (1), kOffTheRecordProfile (1), kExtensionUpdater (1), kRemoteDebugging (
+    1)]
+    [175641:175657:0113/165052.173338:VERBOSE1:network_delegate.cc(36)] NetworkDelegate::NotifyBeforeURLRequest: https://clients2.google.com/service/update2/crx?os=linux&arch=x64&os_arch=x86_64&nacl_arch=x86-64&prod=chromecrx&prod
+    channel=&prodversion=131.0.6778.264&lang=en-US&acceptformat=crx3,puff&x=id%3Dghbmnnjooekpmoecnnnilnnbdlolhkhi%26v%3D0.0.0.0%26installedby%3Dinternal%26uc%26ping%3Dr%253D-1%2526e%253D1&x=id%3Dnmmhkkegccagdldgiimedpiccmgmieda%26
+    v%3D0.0.0.0%26installedby%3Dother%26uc%26ping%3Dr%253D-1%2526e%253D1
+    [175591:175591:0113/165052.173343:VERBOSE1:gaia_cookie_manager_service.cc(833)] GaiaCookieManagerService::ListAccounts
+    [175641:175657:0113/165052.173473:VERBOSE1:network_delegate.cc(36)] NetworkDelegate::NotifyBeforeURLRequest: https://accounts.google.com/ListAccounts?gpsia=1&source=ChromiumBrowser&json=standard
+    [175641:175657:0113/165052.173546:VERBOSE1:network_delegate.cc(36)] NetworkDelegate::NotifyBeforeURLRequest: https://clientservices.googleapis.com/chrome-variations/seed?osname=linux&channel=stable&milestone=131
+    [175591:175591:0113/165052.173575:VERBOSE1:component_installer.cc(561)] FinishRegistration for Subresource Filter Rules
+    [175591:175591:0113/165052.173594:VERBOSE1:component_updater_service.cc(164)] CrxUpdateService starting up. First update attempt will take place in 60 s seconds. Next update attempt will take place in 18000 s seconds.
+    [175591:175591:0113/165052.173604:VERBOSE1:component_installer.cc(561)] FinishRegistration for OnDeviceHeadSuggest
+    [175591:175591:0113/165052.173613:VERBOSE1:component_installer.cc(561)] FinishRegistration for Trust Token Key Commitments
+    [175591:175591:0113/165052.173621:VERBOSE1:component_installer.cc(561)] FinishRegistration for Widevine Content Decryption Module
+    [175591:175591:0113/165052.173626:VERBOSE1:component_installer.cc(602)] Component ready, version 4.10.2830.0 in /opt/google/chrome/WidevineCdm
+    [175591:175591:0113/165052.173634:VERBOSE1:component_installer.cc(561)] FinishRegistration for Optimization Hints
+    [175591:175591:0113/165052.173640:VERBOSE1:component_installer.cc(561)] FinishRegistration for Certificate Error Assistant
+    [175591:175618:0113/165052.173643:VERBOSE1:widevine_cdm_component_installer.cc(402)] Updating hint file with Widevine CDM 4.10.2830.0
+    [175591:175591:0113/165052.173654:VERBOSE1:component_installer.cc(561)] FinishRegistration for Privacy Sandbox Attestations
+    [175591:175591:0113/165052.173660:VERBOSE1:component_installer.cc(602)] Component ready, version 2024.8.23.0 in /opt/google/chrome/PrivacySandboxAttestationsPreloaded
+    [175591:175591:0113/165052.173669:VERBOSE1:privacy_sandbox_attestations_component_installer.cc(120)] Privacy Sandbox Attestations Component ready, version 2024.8.23.0 in /opt/google/chrome/PrivacySandboxAttestationsPreloaded
+    [175591:175591:0113/165052.173672:VERBOSE1:privacy_sandbox_attestations_component_installer.cc(197)] Received privacy sandbox attestations file
+    [175591:175591:0113/165052.173677:VERBOSE1:component_installer.cc(561)] FinishRegistration for File Type Policies
+    [175591:175591:0113/165052.173684:VERBOSE1:component_installer.cc(561)] FinishRegistration for CRLSet
+    [175591:175591:0113/165052.173690:VERBOSE1:component_installer.cc(561)] FinishRegistration for Origin Trials
+    [175591:175591:0113/165052.173703:VERBOSE1:component_installer.cc(561)] FinishRegistration for PKI Metadata
+    [175591:175591:0113/165052.173719:VERBOSE1:component_installer.cc(561)] FinishRegistration for Crowd Deny
+    [175591:175591:0113/165052.173724:VERBOSE1:component_installer.cc(561)] FinishRegistration for Hyphenation
+    [175591:175591:0113/165052.173729:VERBOSE1:component_installer.cc(561)] FinishRegistration for Safety Tips
+    [175591:175591:0113/165052.173736:VERBOSE1:component_installer.cc(561)] FinishRegistration for MEI Preload
+    [175591:175591:0113/165052.173740:VERBOSE1:component_installer.cc(602)] Component ready, version 1.0.7.1652906823 in /opt/google/chrome/MEIPreload
+    [175591:175591:0113/165052.173749:VERBOSE1:component_installer.cc(561)] FinishRegistration for Zxcvbn Data Dictionaries
+    [175591:175591:0113/165052.173755:VERBOSE1:component_installer.cc(561)] FinishRegistration for Autofill States Data
+    [175591:175591:0113/165052.173763:VERBOSE1:component_installer.cc(561)] FinishRegistration for Third-Party Cookie Deprecation Metadata
+    [175641:175657:0113/165052.173792:VERBOSE1:network_delegate.cc(36)] NetworkDelegate::NotifyBeforeURLRequest: https://safebrowsingohttpgateway.googleapis.com/v1/ohttp/hpkekeyconfig?key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw
+    [175591:175624:0113/165052.175479:VERBOSE1:bus.cc(699)] Filter function already exists: 1 with associated data: 0x1ac40009c460
+    [175591:175624:0113/165052.175492:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.bluez"
+
+    [175591:175624:0113/165052.175684:VERBOSE1:bus.cc(699)] Filter function already exists: 1 with associated data: 0x1ac40009c460
+    [175591:175624:0113/165052.175692:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.bluez"
+
+    [175591:175712:0113/165052.175986:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.freedesktop.UPower"
+
+    [175591:175712:0113/165052.176092:VERBOSE1:bus.cc(699)] Filter function already exists: 1 with associated data: 0x1ac400a1ff00
+    [175591:175712:0113/165052.176097:VERBOSE1:bus.cc(916)] Method call: message_type: MESSAGE_METHOD_CALL
+    interface: org.freedesktop.DBus
+    member: GetNameOwner
+    signature: s
+
+    string "org.freedesktop.UPower"
+
+    [175591:175712:0113/165052.177136:VERBOSE1:bus.cc(720)] Requested to remove an unknown filter function: 1 with associated data: 0x1ac400a1fe20
+    [175591:175712:0113/165052.177148:VERBOSE1:bus.cc(720)] Requested to remove an unknown filter function: 1 with associated data: 0x1ac400a1fd40
+    [175591:175591:0113/165052.179543:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.179756:VERBOSE1:privacy_sandbox_attestations.cc(406)] Parsed Privacy Sandbox Attestation list version: 2024.8.23.0
+    [175591:175591:0113/165052.179760:VERBOSE1:privacy_sandbox_attestations.cc(408)] Number of attestation entries: 253
+    [175591:175591:0113/165052.179969:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.181315:VERBOSE1:partitioned_lock_manager.cc(212)] Acquiring <PartitionedLockId>{id: 0x31, partition: 0} for Start@chrome/browser/web_applications/generated_icon_fix_manager.cc:58
+    [175591:175591:0113/165052.181325:VERBOSE1:partitioned_lock_manager.cc(194)] All locks acquired for Start@chrome/browser/web_applications/generated_icon_fix_manager.cc:58
+    [175591:175591:0113/165052.181785:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing Session.TotalDuration
+    [175591:175591:0113/165052.181789:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing Commerce.PriceDrops.ActiveTabNavigationComplete.IsProductDetailPage
+    [175591:175591:0113/165052.181791:VERBOSE1:signal_filter_processor.cc(54)] Segmentation platform started observing Autofill_PolledCreditCardSuggestions
+    [175591:175591:0113/165052.181793:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing IOS.ParcelTracking.Tracked.AutoTrack
+    [175591:175591:0113/165052.181795:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing Omnibox.SuggestionUsed.ClientSummarizedResultType
+    [175591:175591:0113/165052.181797:VERBOSE1:signal_filter_processor.cc(54)] Segmentation platform started observing MetadataWriter
+    [175591:175591:0113/165052.181799:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing Sync.DeviceCount2
+    [175591:175591:0113/165052.181801:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing Sync.DeviceCount2.Phone
+    [175591:175591:0113/165052.181802:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing Sync.DeviceCount2.Desktop
+    [175591:175591:0113/165052.181804:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing Sync.DeviceCount2.Tablet
+    [175591:175591:0113/165052.181806:VERBOSE1:signal_filter_processor.cc(54)] Segmentation platform started observing MobileBookmarkManagerOpen
+    [175591:175591:0113/165052.181807:VERBOSE1:signal_filter_processor.cc(54)] Segmentation platform started observing NewTabPage.MostVisited.Clicked
+    [175591:175591:0113/165052.181809:VERBOSE1:signal_filter_processor.cc(54)] Segmentation platform started observing TabGroup.Created.OpenInNewTab
+    [175591:175591:0113/165052.181811:VERBOSE1:signal_filter_processor.cc(54)] Segmentation platform started observing Android.HistoryPage.OpenItem
+    [175591:175591:0113/165052.181813:VERBOSE1:signal_filter_processor.cc(54)] Segmentation platform started observing MobileMenuRecentTabs
+    [175591:175591:0113/165052.181815:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing PasswordManager.ManagePasswordsReferrer
+    [175591:175591:0113/165052.181816:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing PasswordManager.ProfileStore.TotalAccountsHiRes3.WithScheme.Https
+    [175591:175591:0113/165052.181819:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing PasswordManager.FillingAssistance
+    [175591:175591:0113/165052.181820:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing PasswordManager.SavedPasswordIsGenerated
+    [175591:175591:0113/165052.181822:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing PasswordManager.SaveUIDismissalReason
+    [175591:175591:0113/165052.181823:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing PasswordManager.SaveUIDismissalReason
+    [175591:175591:0113/165052.181826:VERBOSE1:signal_filter_processor.cc(61)] Segmentation platform started observing IOS.CredentialExtension.IsEnabled.Startup
+    [175713:1:0113/165052.182579:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175591:175591:0113/165052.183228:VERBOSE1:partitioned_lock_manager.cc(236)] Releasing <PartitionedLockId>{id: 0x31, partition: 0} requested by Start@chrome/browser/web_applications/generated_icon_fix_manager.cc:58
+    [175591:175591:0113/165052.184318:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175714:1:0113/165052.184635:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175591:175591:0113/165052.185209:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175617:0113/165052.185563:VERBOSE1:token_service_table.cc(202)] Loaded tokens: result = 3 ; number of tokens loaded = 0
+    [175591:175591:0113/165052.186037:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(464)] MutablePO2TS::OnWebDataServiceRequestDone. Result type: 5
+    [175591:175591:0113/165052.186041:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(524)] MutablePO2TS::LoadAllCredentialsIntoMemory; 0 credential(s).
+    [175591:175591:0113/165052.186087:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.186091:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.186093:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.186175:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.186188:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.186191:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.186197:VERBOSE1:account_reconcilor.cc(398)] AccountReconcilor::OnEndBatchOfRefreshTokenStateChanges. Reconcilor state: 1
+    [175722:1:0113/165052.186703:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175726:1:0113/165052.188416:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175732:1:0113/165052.190044:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175741:1:0113/165052.191465:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175751:1:0113/165052.193659:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175714:1:0113/165052.194196:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           nkeimhogjdpnpccoofpliimaahmaaome
+      frame:                  0x190c0014ea40
+      URL:
+      context_type:           BLESSED_EXTENSION
+      effective extension id: nkeimhogjdpnpccoofpliimaahmaaome
+      effective context type: BLESSED_EXTENSION
+    [175714:1:0113/165052.194488:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           (none)
+      frame:                  (nil)
+      URL:
+      context_type:           UNSPECIFIED
+      effective extension id: (none)
+      effective context type: UNSPECIFIED
+    [175714:1:0113/165052.195019:VERBOSE1:dispatcher.cc(543)] Num tracked contexts: 1
+    [175756:1:0113/165052.195289:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175726:1:0113/165052.197291:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           nkeimhogjdpnpccoofpliimaahmaaome
+      frame:                  0x190c0014ea40
+      URL:
+      context_type:           BLESSED_EXTENSION
+      effective extension id: nkeimhogjdpnpccoofpliimaahmaaome
+      effective context type: BLESSED_EXTENSION
+    [175726:1:0113/165052.197636:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           (none)
+      frame:                  (nil)
+      URL:
+      context_type:           UNSPECIFIED
+      effective extension id: (none)
+      effective context type: UNSPECIFIED
+    [175726:1:0113/165052.198200:VERBOSE1:dispatcher.cc(543)] Num tracked contexts: 1
+    [175741:1:0113/165052.200783:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           neajdppkdcdipfabeoofebfddakdcjhd
+      frame:                  0x190c0014ea40
+      URL:
+      context_type:           BLESSED_EXTENSION
+      effective extension id: neajdppkdcdipfabeoofebfddakdcjhd
+      effective context type: BLESSED_EXTENSION
+    [175741:1:0113/165052.201088:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           (none)
+      frame:                  (nil)
+      URL:
+      context_type:           UNSPECIFIED
+      effective extension id: (none)
+      effective context type: UNSPECIFIED
+    [175741:1:0113/165052.201557:VERBOSE1:dispatcher.cc(543)] Num tracked contexts: 1
+    [175640:175640:0113/165052.226680:WARNING:vaapi_wrapper.cc(1534)] Skipping nVidia device named: nvidia-drm
+    [175641:175657:0113/165052.236022:VERBOSE1:network_delegate.cc(36)] NetworkDelegate::NotifyBeforeURLRequest: https://r2---sn-v34pcxg-v3je.gvt1.com/edgedl/chrome/dict/en-us-10-1.bdic?cms_redirect=yes&met=1736808652,&mh=7g&mip=1
+    58.62.177.164&mm=28&mn=sn-v34pcxg-v3je&ms=nvh&mt=1736808257&mv=m&mvi=2&pl=18&rms=nvh,nvh&shardbypass=sd&smhost=r1---sn-v34pcxg-v3jl.gvt1.com
+    [175640:175640:0113/165052.239033:WARNING:sandbox_linux.cc(430)] InitializeSandbox() called with multiple threads in process gpu-process.
+    [175640:175640:0113/165052.239452:WARNING:viz_main_impl.cc(85)] VizNullHypothesis is disabled (not a warning)
+    [175641:175655:0113/165052.239906:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Cache/Cache_Data/dc76683fa5e501c0_0": No such file or directory (2)
+    [175641:175655:0113/165052.239921:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Cache/Cache_Data/dc76683fa5e501c0_1": No such file or directory (2)
+    [175641:175655:0113/165052.239927:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Cache/Cache_Data/dc76683fa5e501c0_s": No such file or directory (2)
+    [175800:1:0113/165052.240243:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: utility.
+    [175591:175591:0113/165052.241060:VERBOSE1:gaia_cookie_manager_service.cc(697)] ListAccounts successful
+    [175591:175591:0113/165052.241088:VERBOSE1:gaia_cookie_manager_service.cc(869)] GaiaCookieManagerService::HandleNextRequest
+    [175591:175591:0113/165052.241154:VERBOSE1:account_reconcilor.cc(618)] AccountReconcilor::OnAccountsInCookieUpdated: CookieJar 0 accounts, Reconcilor's state is 1, Error was
+    [175591:175591:0113/165052.241163:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.241166:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.241170:VERBOSE1:account_reconcilor.cc(707)] AccountReconcilor::LoadValidAccountsFromTokenService: Chrome 0 accounts
+    [175591:175591:0113/165052.241179:VERBOSE1:account_reconcilor.cc(834)] AccountReconcilor::CalculateIfMultiloginReconcileIsDone: Error was
+    [175591:175591:0113/165052.241188:VERBOSE1:account_reconcilor.cc(742)] AccountReconcilor::StartReconcileIfChromeAccountsChanged
+    [175591:175591:0113/165052.241363:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.241368:VERBOSE1:account_reconcilor.cc(618)] AccountReconcilor::OnAccountsInCookieUpdated: CookieJar 0 accounts, Reconcilor's state is 1, Error was
+    [175591:175591:0113/165052.241372:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.241375:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175591:175591:0113/165052.241378:VERBOSE1:account_reconcilor.cc(707)] AccountReconcilor::LoadValidAccountsFromTokenService: Chrome 0 accounts
+    [175591:175591:0113/165052.241381:VERBOSE1:account_reconcilor.cc(834)] AccountReconcilor::CalculateIfMultiloginReconcileIsDone: Error was
+    [175591:175591:0113/165052.241384:VERBOSE1:account_reconcilor.cc(742)] AccountReconcilor::StartReconcileIfChromeAccountsChanged
+    [175641:175657:0113/165052.241832:VERBOSE1:network_delegate.cc(36)] NetworkDelegate::NotifyBeforeURLRequest: https://clients2.googleusercontent.com/crx/blobs/AcmIXbpGoRruM6Rg2pdHIUfNGnvAwJcqpFoWJV4Xd6PeYFnv5YpJ0-GVzjWL6XpCDzrg
+    9cVo2bTwfPVau85UdyeFfZQe-rOdS7oyguq-391NmfeQd9WZZkjpgIbL1I5KKEcAxlKa5Z8JDrufy52udyO9TokqhOw4Sbnj/GHBMNNJOOEKPMOECNNNILNNBDLOLHKHI_1_85_1_0.crx
+    [175800:1:0113/165052.242169:VERBOSE1:statistics_recorder.cc(607)] Collections of all histograms
+    Histogram: HangWatcher.UtilityProcess.UncoveredStartupTime recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Memory.PartitionAlloc.PartitionRoot.ExtrasSize recorded 1 samples, mean = 4.0 (flags = 0x1)
+    0  ...
+    4  -O                                                                        (1 = 100.0%) {0.0%}
+    5  ...
+
+    Histogram: Mojo.Channel.WriteReceiveMessageProcessType recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Mojo.EndToEndLatencyUs.ChildIOThread recorded 0 samples (flags = 0x1)
+    0 ...
+
+    Histogram: Security.GwpAsan.Activated.Malloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.GwpAsan.Activated.PartitionAlloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.JSONParser.ParsingTime recorded 1 samples, mean = 16.0 (flags = 0x1)
+    0   ...
+    16  -O                                                                        (1 = 100.0%) {0.0%}
+    21  ...
+
+    Histogram: Startup.LoadTime.RecordedProcessCreation recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  O                                                                         (0 = 0.0%) {100.0%}
+
+    Histogram: UMA.ChildProcess.Ping.SharedMemorySetUp recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  ...
+
+    Histogram: V8.CFIPageSizeMismatch recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Variations.Limits.VariationKeySize.Default recorded 3 samples, mean = 0.0 (flags = 0x1)
+    0  ---O                                                                      (3 = 100.0%)
+    1  ...
+
+
+    [175665:1:0113/165052.243939:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           (none)
+      frame:                  0x190c0014ea40
+      URL:
+      context_type:           WEBUI
+      effective extension id: (none)
+      effective context type: WEBUI
+    [175665:1:0113/165052.244360:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           (none)
+      frame:                  (nil)
+      URL:
+      context_type:           UNSPECIFIED
+      effective extension id: (none)
+      effective context type: UNSPECIFIED
+    [175665:1:0113/165052.244776:VERBOSE1:dispatcher.cc(543)] Num tracked contexts: 1
+    [175591:175591:0113/165052.247140:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175641:175657:0113/165052.249743:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.255100:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.255153:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.255162:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.255185:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.255190:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.256193:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175591:175591:0113/165052.325569:VERBOSE1:profile_manager.cc(1270)] AddKeepAlive(Default, kCrxInstaller). keep_alives=[kWaitingForFirstBrowserWindow (1), kOffTheRecordProfile (1), kExtensionUpdater (1), kCrxInstaller (1), kRe
+    moteDebugging (1)]
+    [175641:175657:0113/165052.325671:VERBOSE1:network_delegate.cc(36)] NetworkDelegate::NotifyBeforeURLRequest: http://redirector.gvt1.com/edgedl/chromewebstore/L2Nocm9tZV9leHRlbnNpb24vYmxvYnMvNzI0QUFXNV9zT2RvdUwyMERESEZGVmJnQQ/1
+    .0.0.6_nmmhkkegccagdldgiimedpiccmgmieda.crx
+    [175591:175591:0113/165052.353781:VERBOSE1:proxy_config_service_linux.cc(1410)] Detected no-op change to proxy settings. Doing nothing.
+    [175641:175657:0113/165052.363051:VERBOSE1:network_delegate.cc(36)] NetworkDelegate::NotifyBeforeURLRequest: http://r2---sn-v34pcxg-v3je.gvt1.com/edgedl/chromewebstore/L2Nocm9tZV9leHRlbnNpb24vYmxvYnMvNzI0QUFXNV9zT2RvdUwyMERESE
+    ZGVmJnQQ/1.0.0.6_nmmhkkegccagdldgiimedpiccmgmieda.crx?cms_redirect=yes&met=1736808652,&mh=e_&mip=158.62.177.164&mm=28&mn=sn-v34pcxg-v3je&ms=nvh&mt=1736808257&mv=m&mvi=2&pl=18&rmhost=r1---sn-v34pcxg-v3je.gvt1.com&rms=nvh,nvh&sh
+    ardbypass=sd&smhost=r1---sn-v34pcxg-v3jl.gvt1.com
+    [175641:175657:0113/165052.363383:VERBOSE1:network_delegate.cc(36)] NetworkDelegate::NotifyBeforeURLRequest: https://r2---sn-v34pcxg-v3je.gvt1.com/edgedl/chromewebstore/L2Nocm9tZV9leHRlbnNpb24vYmxvYnMvNzI0QUFXNV9zT2RvdUwyMERES
+    EZGVmJnQQ/1.0.0.6_nmmhkkegccagdldgiimedpiccmgmieda.crx?cms_redirect=yes&met=1736808652,&mh=e_&mip=158.62.177.164&mm=28&mn=sn-v34pcxg-v3je&ms=nvh&mt=1736808257&mv=m&mvi=2&pl=18&rmhost=r1---sn-v34pcxg-v3je.gvt1.com&rms=nvh,nvh&s
+    hardbypass=sd&smhost=r1---sn-v34pcxg-v3jl.gvt1.com
+    [175641:175657:0113/165052.363639:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.367570:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.367613:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.367622:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.367638:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.367644:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175591:175591:0113/165052.380179:VERBOSE1:profile_manager.cc(1270)] AddKeepAlive(Default, kCrxInstaller). keep_alives=[kWaitingForFirstBrowserWindow (1), kOffTheRecordProfile (1), kExtensionUpdater (1), kCrxInstaller (2), kRe
+    moteDebugging (1)]
+    [175591:175591:0113/165052.382288:VERBOSE1:segment_result_provider.cc(136)] GetSegmentResult: segment=OPTIMIZATION_TARGET_SEGMENTATION_DEVICE_SWITCHER ignoring DB score, executing model.
+    [175591:175591:0113/165052.382294:VERBOSE1:segment_result_provider.cc(277)] ExecuteModelAndGetScore: segment=OPTIMIZATION_TARGET_SEGMENTATION_DEVICE_SWITCHER server segment info not available
+    [175591:175591:0113/165052.382298:VERBOSE1:segment_result_provider.cc(210)] OnGotModelScore: segment=OPTIMIZATION_TARGET_SEGMENTATION_DEVICE_SWITCHER failed to get database model score, trying default model.
+    [175591:175591:0113/165052.386065:VERBOSE1:proxy_config_service_linux.cc(1410)] Detected no-op change to proxy settings. Doing nothing.
+    [175591:175591:0113/165052.387143:VERBOSE1:proxy_config_service_linux.cc(1410)] Detected no-op change to proxy settings. Doing nothing.
+    [175591:175591:0113/165052.394217:VERBOSE1:proxy_config_service_linux.cc(1410)] Detected no-op change to proxy settings. Doing nothing.
+2025.01.13 16:50:52:879 main INFO robobrowser.comm.CommunicationManager.send:57
+    Sending: {"id":1,"method":"Page.enable","params":{}}
+2025.01.13 16:50:52:881 OkHttp http://localhost:9222/... INFO robobrowser.comm.CommunicationManager.CommunicationManager:25
+    Received: {"id":1,"result":{}}
+2025.01.13 16:50:52:883 main INFO robobrowser.comm.CommunicationManager.send:57
+    Sending: {"id":2,"method":"Runtime.enable","params":{}}
+2025.01.13 16:50:52:883 OkHttp http://localhost:9222/... INFO robobrowser.comm.CommunicationManager.CommunicationManager:25
+    Received: {"method":"Runtime.executionContextCreated","params":{"context":{"id":1,"origin":"chrome-extension://neajdppkdcdipfabeoofebfddakdcjhd","name":"","uniqueId":"-64659748994695160.-560741296368075016","auxData":{"isDefau
+    lt":true,"type":"default","frameId":"8D747FAB1E6BEA4FD48BED160061513D"}}}}
+    Received: {"id":2,"result":{}}
+2025.01.13 16:50:52:889 main INFO robobrowser.comm.CommunicationManager.send:57
+    Sending: {"id":3,"method":"Page.setLifecycleEventsEnabled","params":{"enabled":true}}
+2025.01.13 16:50:52:889 OkHttp http://localhost:9222/... INFO robobrowser.comm.CommunicationManager.CommunicationManager:25
+    Received: {"method":"Page.lifecycleEvent","params":{"frameId":"8D747FAB1E6BEA4FD48BED160061513D","loaderId":"8C25334447EB7965A8EEB3E416EA63DE","name":"commit","timestamp":74204.233428}}
+    Received: {"method":"Page.lifecycleEvent","params":{"frameId":"8D747FAB1E6BEA4FD48BED160061513D","loaderId":"8C25334447EB7965A8EEB3E416EA63DE","name":"DOMContentLoaded","timestamp":74204.253533}}
+    Received: {"method":"Page.lifecycleEvent","params":{"frameId":"8D747FAB1E6BEA4FD48BED160061513D","loaderId":"8C25334447EB7965A8EEB3E416EA63DE","name":"load","timestamp":74204.25494}}
+    Received: {"method":"Page.lifecycleEvent","params":{"frameId":"8D747FAB1E6BEA4FD48BED160061513D","loaderId":"8C25334447EB7965A8EEB3E416EA63DE","name":"networkAlmostIdle","timestamp":74204.254875}}
+    Received: {"method":"Page.lifecycleEvent","params":{"frameId":"8D747FAB1E6BEA4FD48BED160061513D","loaderId":"8C25334447EB7965A8EEB3E416EA63DE","name":"networkIdle","timestamp":74204.254875}}
+    Received: {"id":3,"result":{}}
+2025.01.13 16:50:52:892 main INFO robobrowser.comm.CommunicationManager.send:57
+    Sending: {"id":4,"method":"DOM.enable","params":{}}
+2025.01.13 16:50:52:893 OkHttp http://localhost:9222/... INFO robobrowser.comm.CommunicationManager.CommunicationManager:25
+    Received: {"id":4,"result":{}}
+2025.01.13 16:50:52:893 main INFO robobrowser.comm.CommunicationManager.send:57
+    Sending: {"id":5,"method":"Network.enable","params":{}}
+2025.01.13 16:50:52:894 OkHttp http://localhost:9222/... INFO robobrowser.comm.CommunicationManager.CommunicationManager:25
+    Received: {"id":5,"result":{}}
+2025.01.13 16:50:52:894 main INFO robobrowser.comm.CommunicationManager.send:57
+    Sending: {"id":6,"method":"Target.attachToTarget","params":{"targetId":"314929027D6F46329DC321B97077E366","flatten":true}}
+2025.01.13 16:50:52:895 OkHttp http://localhost:9222/... INFO robobrowser.comm.CommunicationManager.CommunicationManager:25
+    Received: {"method":"Target.attachedToTarget","params":{"sessionId":"72D641DDB96882FA4F94194353BFABA7","targetInfo":{"targetId":"314929027D6F46329DC321B97077E366","type":"page","title":"New Incognito Tab","url":"chrome://newta
+    b/","attached":true,"canAccessOpener":false,"browserContextId":"70B83F31E836886838F3BCA10D66B218"},"waitingForDebugger":false}}
+    Received: {"id":6,"result":{"sessionId":"72D641DDB96882FA4F94194353BFABA7"}}
+2025.01.13 16:50:52:896 main INFO robobrowser.comm.CommunicationManager.send:57
+    Sending: {"id":7,"method":"Page.navigate","params":{"url":"https:\/\/google.com"}}
+2025.01.13 16:50:52:897 OkHttp http://localhost:9222/... INFO robobrowser.comm.CommunicationManager.CommunicationManager:25
+    Received: {"method":"Page.frameStartedLoading","params":{"frameId":"8D747FAB1E6BEA4FD48BED160061513D"}}
+    Received: {"method":"Network.loadingFailed","params":{"requestId":"57239C2B55E2D9FD7C4FFE0F25F5D994","timestamp":74204.945874,"type":"Document","errorText":"net::ERR_ABORTED","canceled":true}}
+    Received: {"id":7,"result":{"frameId":"8D747FAB1E6BEA4FD48BED160061513D","loaderId":"57239C2B55E2D9FD7C4FFE0F25F5D994","errorText":"net::ERR_ABORTED"}}
+    Received: {"method":"Page.frameStoppedLoading","params":{"frameId":"8D747FAB1E6BEA4FD48BED160061513D"}}
+2025.01.13 16:50:52:899 Simple-error-spawn-Thread-1 ERROR robobrowser.CDP.logger:21
+    [175591:175618:0113/165052.899328:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/BrowserMetrics": No such file or directory (2)
+    [175821:1:0113/165052.900361:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175591:175618:0113/165052.901816:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/DeferredBrowserMetrics": No such file or directory (2)
+    [175591:175618:0113/165052.901880:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/CrashpadMetrics.pma": No such file or directory (2)
+    [175591:175591:0113/165052.902035:VERBOSE1:crash_reporting_context.cc(236)] enterprise.crash_reporting: crash event reporting initializing
+    [175591:175591:0113/165052.902065:VERBOSE1:crash_reporting_context.cc(79)] enterprise.crash_reporting: crash reporting enabled: 0
+    [175591:175591:0113/165052.902088:VERBOSE1:crash_reporting_context.cc(119)] enterprise.crash_reporting: crashpad polling interval set to 3600 s
+    [175591:175618:0113/165052.902223:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Breadcrumbs": No such file or directory (2)
+    [175591:175618:0113/165052.902262:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Media Cache": No such file or directory (2)
+    [175591:175617:0113/165052.902718:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/databases": No such file or directory (2)
+    [175591:175617:0113/165052.902849:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/optimization_guide_prediction_model_downloads": No such file or directory (2)
+    [175591:175617:0113/165052.902880:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/webrtc_event_logs": No such file or directory (2)
+    [175591:175591:0113/165052.903030:VERBOSE1:partitioned_lock_manager.cc(212)] Acquiring <PartitionedLockId>{id: 0x31, partition: 0} for SynchronizeInstalledApps@chrome/browser/web_applications/externally_managed_app_manager.cc:
+    186
+    [175591:175591:0113/165052.903048:VERBOSE1:partitioned_lock_manager.cc(194)] All locks acquired for SynchronizeInstalledApps@chrome/browser/web_applications/externally_managed_app_manager.cc:186
+    [175591:175591:0113/165052.903245:VERBOSE1:partitioned_lock_manager.cc(236)] Releasing <PartitionedLockId>{id: 0x31, partition: 0} requested by SynchronizeInstalledApps@chrome/browser/web_applications/externally_managed_app_ma
+    nager.cc:186
+    [175591:175617:0113/165052.903572:VERBOSE1:component_installer.cc(482)] StartRegistration for Related Website Sets
+    [175591:175617:0113/165052.903635:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/UrlParamClassifications": No such file or directory (2)
+    [175591:175591:0113/165052.903641:VERBOSE1:component_installer.cc(561)] FinishRegistration for Related Website Sets
+    [175591:175617:0113/165052.903645:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/DesktopSharingHub": No such file or directory (2)
+    [175591:175617:0113/165052.903654:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/HistorySearch": No such file or directory (2)
+    [175591:175591:0113/165052.903678:VERBOSE1:first_party_sets_component_installer.cc(44)] Received Related Website Sets
+    [175641:175657:0113/165052.908356:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175591:175617:0113/165052.910915:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/optimization_guide_prediction_model_downloads": No such file or directory (2)
+    [175591:175591:0113/165052.912830:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.912] USB: EVENT: usb_device_linux.cc:158 Failed to open /dev/bus/usb/003/004: Permission denied (13)
+    [175591:175591:0113/165052.912902:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.912] USB: USER: usb_service_linux.cc:302 USB device added: path=/dev/bus/usb/003/004 vendor=1133 "", product=2142 "Logitech BRIO", serial="888
+    08019", guid=09012194-c017-4ea0-9985-743eb9ac8304
+    [175591:175591:0113/165052.913492:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.913] USB: USER: usb_service_linux.cc:302 USB device added: path=/dev/bus/usb/003/009 vendor=1133 "Logitech", product=50475 "USB Receiver", ser
+    ial="", guid=477f08ba-c22f-4bcf-9829-fd139ab0d1fe
+    [175591:175591:0113/165052.914264:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.914] USB: USER: usb_service_linux.cc:302 USB device added: path=/dev/bus/usb/003/011 vendor=3034 "Generic", product=18672 "USB Audio", serial=
+    "", guid=08f8545e-bed9-4c47-bdc0-6cc8e2130611
+    [175591:175591:0113/165052.914584:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.914] USB: USER: usb_service_linux.cc:302 USB device added: path=/dev/bus/usb/003/008 vendor=2821 "Generic", product=6739 "USB Audio", serial="
+    ", guid=7f8466eb-fca6-4827-a984-d26ee66e5081
+    [175591:175591:0113/165052.915082:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.915] USB: USER: usb_service_linux.cc:302 USB device added: path=/dev/bus/usb/003/003 vendor=12771 "Wooting", product=4656 "Wooting Two HE (ARM
+    )", serial="A02B2322W042H07340", guid=d209d946-f41a-487f-acc3-7ef75b9e2d02
+    [175591:175591:0113/165052.915543:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.915] USB: USER: usb_service_linux.cc:302 USB device added: path=/dev/bus/usb/003/007 vendor=32903 "", product=50 "", serial="", guid=26fafb49-
+    2f2d-486a-8b4e-d8c9d942cb5e
+    [175591:175591:0113/165052.915912:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.915] USB: USER: usb_service_linux.cc:302 USB device added: path=/dev/bus/usb/005/005 vendor=2821 "AsusTek Computer Inc.", product=6387 "AURA L
+    ED Controller", serial="9876543210", guid=e487f997-c708-430a-b4b5-2ef6f61f3dda
+    [175591:175591:0113/165052.916178:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.916] USB: USER: usb_service_linux.cc:302 USB device added: path=/dev/bus/usb/005/003 vendor=7793 "NZXT, Inc.", product=12300 "NZXT Kraken Elit
+    e", serial="493892820E88312D", guid=749da72e-1e06-4b93-b889-79ab70d501b3
+    [175591:175591:0113/165052.916360:VERBOSE1:device_event_log_impl.cc(203)] [16:50:52.916] USB: USER: usb_service_linux.cc:302 USB device added: path=/dev/bus/usb/005/004 vendor=7793 "NZXT, Inc.", product=8210 "NZXT RGB Controll
+    er", serial="0F04A013AABBA489612F181E", guid=fcaca0bc-60f6-45c7-8b89-1172c037ba8f
+    [175641:175657:0113/165052.921475:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.921489:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.921619:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.921630:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175641:175657:0113/165052.921644:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175836:1:0113/165052.921610:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: utility.
+    [175836:4:0113/165052.922839:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'offscreendocument.html'
+    [175836:4:0113/165052.922928:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'offscreendocument_main.js'
+    [175836:4:0113/165052.922991:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fil/messages.json'
+    [175836:4:0113/165052.923060:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/en_US/messages.json'
+    [175836:4:0113/165052.923117:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ro/messages.json'
+    [175836:4:0113/165052.923183:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/am/messages.json'
+    [175836:4:0113/165052.923236:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fi/messages.json'
+    [175836:4:0113/165052.923291:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ko/messages.json'
+    [175836:4:0113/165052.923343:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ta/messages.json'
+    [175836:4:0113/165052.923395:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sr/messages.json'
+    [175836:4:0113/165052.923446:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/da/messages.json'
+    [175836:4:0113/165052.923497:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ar/messages.json'
+    [175836:4:0113/165052.923548:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/zh_CN/messages.json'
+    [175836:4:0113/165052.923599:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/tr/messages.json'
+    [175836:4:0113/165052.923653:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ja/messages.json'
+    [175842:1:0113/165052.923670:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: utility.
+    [175836:4:0113/165052.923742:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/lt/messages.json'
+    [175836:4:0113/165052.923841:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/el/messages.json'
+    [175836:4:0113/165052.923903:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/no/messages.json'
+    [175836:4:0113/165052.923963:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/is/messages.json'
+    [175836:4:0113/165052.924023:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sw/messages.json'
+    [175836:4:0113/165052.924089:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/en_CA/messages.json'
+    [175836:4:0113/165052.924229:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/mr/messages.json'
+    [175836:4:0113/165052.924294:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/my/messages.json'
+    [175836:4:0113/165052.924351:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/it/messages.json'
+    [175836:4:0113/165052.924411:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ca/messages.json'
+    [175836:4:0113/165052.924469:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/cs/messages.json'
+    [175836:4:0113/165052.924522:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/et/messages.json'
+    [175836:4:0113/165052.924577:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/az/messages.json'
+    [175836:4:0113/165052.924629:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/uk/messages.json'
+    [175836:4:0113/165052.924716:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/mn/messages.json'
+    [175842:4:0113/165052.924727:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/'
+    [175836:4:0113/165052.924805:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/es/messages.json'
+    [175842:4:0113/165052.924835:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/bg/'
+    [175836:4:0113/165052.924884:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/iw/messages.json'
+    [175842:4:0113/165052.924910:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/bg/messages.json'
+    [175842:4:0113/165052.924961:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ca/'
+    [175836:4:0113/165052.924960:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/pa/messages.json'
+    [175842:4:0113/165052.925015:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ca/messages.json'
+    [175836:4:0113/165052.925043:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/en/messages.json'
+    [175842:4:0113/165052.925064:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/cs/'
+    [175836:4:0113/165052.925105:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/zh_TW/messages.json'
+    [175842:4:0113/165052.925109:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/cs/messages.json'
+    [175836:4:0113/165052.925164:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sl/messages.json'
+    [175842:4:0113/165052.925167:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/da/'
+    [175836:4:0113/165052.925215:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/pl/messages.json'
+    [175842:4:0113/165052.925217:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/da/messages.json'
+    [175842:4:0113/165052.925270:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/de/'
+    [175836:4:0113/165052.925268:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/eu/messages.json'
+    [175842:4:0113/165052.925320:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/de/messages.json'
+    [175836:4:0113/165052.925335:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/cy/messages.json'
+    [175842:4:0113/165052.925371:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/el/'
+    [175836:4:0113/165052.925391:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fr_CA/messages.json'
+    [175842:4:0113/165052.925425:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/el/messages.json'
+    [175836:4:0113/165052.925455:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ms/messages.json'
+    [175842:4:0113/165052.925494:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/en/'
+    [175836:4:0113/165052.925525:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ml/messages.json'
+    [175842:4:0113/165052.925559:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/en/messages.json'
+    [175836:4:0113/165052.925585:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/nn/messages.json'
+    [175842:4:0113/165052.925609:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/en_GB/'
+    [175836:4:0113/165052.925641:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/lv/messages.json'
+    [175842:4:0113/165052.925664:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/en_GB/messages.json'
+    [175836:4:0113/165052.925701:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/be/messages.json'
+    [175842:4:0113/165052.925713:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/es/'
+    [175836:4:0113/165052.925758:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/gl/messages.json'
+    [175842:4:0113/165052.925761:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/es/messages.json'
+    [175842:4:0113/165052.925812:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/es_419/'
+    [175836:4:0113/165052.925810:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/nl/messages.json'
+    [175842:4:0113/165052.925860:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/es_419/messages.json'
+    [175836:4:0113/165052.925870:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/gu/messages.json'
+    [175842:4:0113/165052.925915:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/et/'
+    [175836:4:0113/165052.925929:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/vi/messages.json'
+    [175842:4:0113/165052.925979:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/et/messages.json'
+    [175836:4:0113/165052.925984:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/zu/messages.json'
+    [175842:4:0113/165052.926032:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fi/'
+    [175836:4:0113/165052.926041:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fa/messages.json'
+    [175842:4:0113/165052.926086:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fi/messages.json'
+    [175836:4:0113/165052.926091:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ur/messages.json'
+    [175842:4:0113/165052.926136:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fil/'
+    [175836:4:0113/165052.926144:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/hy/messages.json'
+    [175842:4:0113/165052.926187:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fil/messages.json'
+    [175836:4:0113/165052.926193:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/th/messages.json'
+    [175842:4:0113/165052.926241:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fr/'
+    [175836:4:0113/165052.926249:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/de/messages.json'
+    [175842:4:0113/165052.926293:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fr/messages.json'
+    [175836:4:0113/165052.926304:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/af/messages.json'
+    [175836:4:0113/165052.926359:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/te/messages.json'
+    [175842:4:0113/165052.926358:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/hi/'
+    [175836:4:0113/165052.926410:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sk/messages.json'
+    [175842:4:0113/165052.926428:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/hi/messages.json'
+    [175836:4:0113/165052.926461:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/bn/messages.json'
+    [175842:4:0113/165052.926505:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/hr/'
+    [175836:4:0113/165052.926514:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/es_419/messages.json'
+    [175842:4:0113/165052.926562:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/hr/messages.json'
+    [175836:4:0113/165052.926568:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/pt_PT/messages.json'
+    [175836:4:0113/165052.926622:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/kn/messages.json'
+    [175842:4:0113/165052.926626:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/hu/'
+    [175836:4:0113/165052.926678:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/kk/messages.json'
+    [175842:4:0113/165052.926706:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/hu/messages.json'
+    [175836:4:0113/165052.926780:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/hu/messages.json'
+    [175842:4:0113/165052.926782:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/id/'
+    [175836:4:0113/165052.926845:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/fr/messages.json'
+    [175842:4:0113/165052.926891:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/id/messages.json'
+    [175836:4:0113/165052.926929:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/lo/messages.json'
+    [175842:4:0113/165052.926973:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/it/'
+    [175836:4:0113/165052.926997:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/id/messages.json'
+    [175842:4:0113/165052.927055:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/it/messages.json'
+    [175836:4:0113/165052.927117:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sv/messages.json'
+    [175842:4:0113/165052.927127:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ja/'
+    [175836:4:0113/165052.927179:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ru/messages.json'
+    [175842:4:0113/165052.927187:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ja/messages.json'
+    [175836:4:0113/165052.927252:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ne/messages.json'
+    [175842:4:0113/165052.927255:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ko/'
+    [175836:4:0113/165052.927313:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/si/messages.json'
+    [175842:4:0113/165052.927329:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ko/messages.json'
+    [175836:4:0113/165052.927369:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/en_GB/messages.json'
+    [175842:4:0113/165052.927396:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/lt/'
+    [175836:4:0113/165052.927427:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/hi/messages.json'
+    [175842:4:0113/165052.927454:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/lt/messages.json'
+    [175836:4:0113/165052.927486:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ka/messages.json'
+    [175842:4:0113/165052.927528:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/lv/'
+    [175836:4:0113/165052.927542:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/pt_BR/messages.json'
+    [175836:4:0113/165052.927598:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/zh_HK/messages.json'
+    [175842:4:0113/165052.927600:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/lv/messages.json'
+    [175836:4:0113/165052.927659:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/hr/messages.json'
+    [175842:4:0113/165052.927671:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/nb/'
+    [175836:4:0113/165052.927732:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/km/messages.json'
+    [175842:4:0113/165052.927741:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/nb/messages.json'
+    [175842:4:0113/165052.927817:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/nl/'
+    [175836:4:0113/165052.927825:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/bg/messages.json'
+    [175842:4:0113/165052.927891:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/nl/messages.json'
+    [175836:4:0113/165052.927919:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'dasherSettingSchema.json'
+    [175842:4:0113/165052.927969:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/pl/'
+    [175836:4:0113/165052.928017:VERBOSE1:zip.cc(215)] Skipped ZIP entry '128.png'
+    [175842:4:0113/165052.928046:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/pl/messages.json'
+    [175842:4:0113/165052.928106:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/pt_BR/'
+    [175836:4:0113/165052.928114:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'service_worker_bin_prod.js'
+    [175842:4:0113/165052.928168:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/pt_BR/messages.json'
+    [175842:4:0113/165052.928224:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/pt_PT/'
+    [175842:4:0113/165052.928273:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/pt_PT/messages.json'
+    [175842:4:0113/165052.928329:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ro/'
+    [175836:4:0113/165052.928363:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'page_embed_script.js'
+    [175842:4:0113/165052.928379:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ro/messages.json'
+    [175842:4:0113/165052.928429:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ru/'
+    [175842:4:0113/165052.928484:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/ru/messages.json'
+    [175842:4:0113/165052.928536:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sk/'
+    [175842:4:0113/165052.928593:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sk/messages.json'
+    [175842:4:0113/165052.928652:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sl/'
+    [175842:4:0113/165052.928704:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sl/messages.json'
+    [175842:4:0113/165052.928762:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sr/'
+    [175842:4:0113/165052.928838:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sr/messages.json'
+    [175836:1:0113/165052.928888:VERBOSE1:statistics_recorder.cc(607)] Collections of all histograms
+    Histogram: HangWatcher.UtilityProcess.UncoveredStartupTime recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Memory.PartitionAlloc.PartitionRoot.ExtrasSize recorded 1 samples, mean = 4.0 (flags = 0x1)
+    0  ...
+    4  -O                                                                        (1 = 100.0%) {0.0%}
+    5  ...
+
+    Histogram: Mojo.Channel.WriteMessageSize recorded 1 samples, mean = 112.0 (flags = 0x1)
+    0   ...
+    95  -O                                                                        (1 = 100.0%) {0.0%}
+    119 ...
+
+    Histogram: Mojo.Channel.WriteSendMessageProcessType recorded 1 samples, mean = 11.0 (flags = 0x1)
+    0   ...
+    11  -O                                                                        (1 = 100.0%) {0.0%}
+    12  ...
+
+    Histogram: Mojo.Channel.WriteToReadLatencyUs recorded 2 samples, mean = 65.5 (flags = 0x1)
+    0    ...
+    8    -O                                                                        (1 = 50.0%) {0.0%}
+    9    ...
+    114  -O                                                                        (1 = 50.0%) {50.0%}
+    130  ...
+
+    Histogram: Mojo.EndToEndLatencyUs.ChildIOThread recorded 0 samples (flags = 0x1)
+    0 ...
+
+    Histogram: Security.GwpAsan.Activated.Malloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.GwpAsan.Activated.PartitionAlloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.JSONParser.ParsingTime recorded 1 samples, mean = 16.0 (flags = 0x1)
+    0   ...
+    16  -O                                                                        (1 = 100.0%) {0.0%}
+    21  ...
+
+    Histogram: Startup.LoadTime.RecordedProcessCreation recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  O                                                                         (0 = 0.0%) {100.0%}
+
+    Histogram: UMA.ChildProcess.Ping.SharedMemorySetUp recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  ...
+
+    Histogram: V8.CFIPageSizeMismatch recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Variations.Limits.VariationKeySize.Default recorded 2 samples, mean = 0.0 (flags = 0x1)
+    0  --O                                                                       (2 = 100.0%)
+    1  ...
+
+
+    [175842:4:0113/165052.928902:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sv/'
+    [175842:4:0113/165052.928996:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/sv/messages.json'
+    [175842:4:0113/165052.929059:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/th/'
+    [175842:4:0113/165052.929118:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/th/messages.json'
+    [175842:4:0113/165052.929170:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/tr/'
+    [175842:4:0113/165052.929229:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/tr/messages.json'
+    [175842:4:0113/165052.929280:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/uk/'
+    [175842:4:0113/165052.929330:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/uk/messages.json'
+    [175842:4:0113/165052.929380:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/vi/'
+    [175842:4:0113/165052.929429:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/vi/messages.json'
+    [175842:4:0113/165052.929478:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/zh_CN/'
+    [175842:4:0113/165052.929540:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/zh_CN/messages.json'
+    [175842:4:0113/165052.929591:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/zh_TW/'
+    [175842:4:0113/165052.929645:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_locales/zh_TW/messages.json'
+    [175842:4:0113/165052.929714:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'craw_background.js'
+    [175842:4:0113/165052.929822:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'craw_window.js'
+    [175842:4:0113/165052.929946:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'css/'
+    [175842:4:0113/165052.930027:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'css/craw_window.css'
+    [175842:4:0113/165052.930087:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'html/'
+    [175842:4:0113/165052.930138:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'html/craw_window.html'
+    [175842:4:0113/165052.930186:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'images/'
+    [175842:4:0113/165052.930234:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'images/flapper.gif'
+    [175842:4:0113/165052.930282:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'images/icon_128.png'
+    [175842:4:0113/165052.930340:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'images/icon_16.png'
+    [175842:4:0113/165052.930389:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'images/topbar_floating_button.png'
+    [175842:4:0113/165052.930437:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'images/topbar_floating_button_close.png'
+    [175842:4:0113/165052.930486:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'images/topbar_floating_button_hover.png'
+    [175842:4:0113/165052.930535:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'images/topbar_floating_button_maximize.png'
+    [175842:4:0113/165052.930597:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'images/topbar_floating_button_pressed.png'
+    [175842:4:0113/165052.930852:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_metadata/'
+    [175842:4:0113/165052.930909:VERBOSE1:zip.cc(215)] Skipped ZIP entry '_metadata/verified_contents.json'
+    [175842:1:0113/165052.931436:VERBOSE1:statistics_recorder.cc(607)] Collections of all histograms
+    Histogram: HangWatcher.UtilityProcess.UncoveredStartupTime recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Memory.PartitionAlloc.PartitionRoot.ExtrasSize recorded 1 samples, mean = 4.0 (flags = 0x1)
+    0  ...
+    4  -O                                                                        (1 = 100.0%) {0.0%}
+    5  ...
+
+    Histogram: Mojo.Channel.WriteMessageLatency recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Mojo.Channel.WriteMessageSize recorded 1 samples, mean = 112.0 (flags = 0x1)
+    0   ...
+    95  -O                                                                        (1 = 100.0%) {0.0%}
+    119 ...
+
+    Histogram: Mojo.Channel.WriteSendMessageProcessType recorded 1 samples, mean = 11.0 (flags = 0x1)
+    0   ...
+    11  -O                                                                        (1 = 100.0%) {0.0%}
+    12  ...
+
+    Histogram: Mojo.EndToEndLatencyUs.ChildIOThread recorded 0 samples (flags = 0x1)
+    0 ...
+
+    Histogram: Security.GwpAsan.Activated.Malloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.GwpAsan.Activated.PartitionAlloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.JSONParser.ParsingTime recorded 1 samples, mean = 16.0 (flags = 0x1)
+    0   ...
+    16  -O                                                                        (1 = 100.0%) {0.0%}
+    21  ...
+
+    Histogram: Startup.LoadTime.RecordedProcessCreation recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  O                                                                         (0 = 0.0%) {100.0%}
+
+    Histogram: UMA.ChildProcess.Ping.SharedMemorySetUp recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  ...
+
+    Histogram: V8.CFIPageSizeMismatch recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Variations.Limits.VariationKeySize.Default recorded 2 samples, mean = 0.0 (flags = 0x1)
+    0  --O                                                                       (2 = 100.0%)
+    1  ...
+
+
+    [175641:175657:0113/165052.931895:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175848:1:0113/165052.932112:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: utility.
+    [175641:175657:0113/165052.933191:VERBOSE1:tls_handshaker.cc(105)] TlsClient: Continuing handshake
+    [175848:1:0113/165052.933592:VERBOSE1:statistics_recorder.cc(607)] Collections of all histograms
+    Histogram: HangWatcher.UtilityProcess.UncoveredStartupTime recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Memory.PartitionAlloc.PartitionRoot.ExtrasSize recorded 1 samples, mean = 4.0 (flags = 0x1)
+    0  ...
+    4  -O                                                                        (1 = 100.0%) {0.0%}
+    5  ...
+
+    Histogram: Mojo.EndToEndLatencyUs.ChildIOThread recorded 0 samples (flags = 0x1)
+    0 ...
+
+    Histogram: Security.GwpAsan.Activated.Malloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.GwpAsan.Activated.PartitionAlloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.JSONParser.ParsingTime recorded 2 samples, mean = 24.5 (flags = 0x1)
+    0   ...
+    16  -O                                                                        (1 = 50.0%) {0.0%}
+    21  O                                                                         (0 = 0.0%) {50.0%}
+    28  -O                                                                        (1 = 50.0%) {50.0%}
+    37  ...
+
+    Histogram: Startup.LoadTime.RecordedProcessCreation recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  O                                                                         (0 = 0.0%) {100.0%}
+
+    Histogram: UMA.ChildProcess.Ping.SharedMemorySetUp recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  ...
+
+    Histogram: V8.CFIPageSizeMismatch recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Variations.Limits.VariationKeySize.Default recorded 2 samples, mean = 0.0 (flags = 0x1)
+    0  --O                                                                       (2 = 100.0%)
+    1  ...
+
+
+    [175854:1:0113/165052.934408:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: utility.
+    [175854:1:0113/165052.935709:VERBOSE1:statistics_recorder.cc(607)] Collections of all histograms
+    Histogram: HangWatcher.UtilityProcess.UncoveredStartupTime recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Memory.PartitionAlloc.PartitionRoot.ExtrasSize recorded 1 samples, mean = 4.0 (flags = 0x1)
+    0  ...
+    4  -O                                                                        (1 = 100.0%) {0.0%}
+    5  ...
+
+    Histogram: Mojo.EndToEndLatencyUs.ChildIOThread recorded 0 samples (flags = 0x1)
+    0 ...
+
+    Histogram: Security.GwpAsan.Activated.Malloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.GwpAsan.Activated.PartitionAlloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.JSONParser.ParsingTime recorded 2 samples, mean = 17.0 (flags = 0x1)
+    0   ...
+    16  --O                                                                       (2 = 100.0%) {0.0%}
+    21  ...
+
+    Histogram: Startup.LoadTime.RecordedProcessCreation recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  O                                                                         (0 = 0.0%) {100.0%}
+
+    Histogram: UMA.ChildProcess.Ping.SharedMemorySetUp recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  ...
+
+    Histogram: V8.CFIPageSizeMismatch recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Variations.Limits.VariationKeySize.Default recorded 2 samples, mean = 0.0 (flags = 0x1)
+    0  --O                                                                       (2 = 100.0%)
+    1  ...
+
+
+    [175860:1:0113/165052.936696:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: utility.
+    [175861:1:0113/165052.937851:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: utility.
+    [175860:4:0113/165052.947502:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'manifest.json'
+    [175860:1:0113/165052.947972:VERBOSE1:statistics_recorder.cc(607)] Collections of all histograms
+    Histogram: HangWatcher.UtilityProcess.UncoveredStartupTime recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Memory.PartitionAlloc.PartitionRoot.ExtrasSize recorded 1 samples, mean = 4.0 (flags = 0x1)
+    0  ...
+    4  -O                                                                        (1 = 100.0%) {0.0%}
+    5  ...
+
+    Histogram: Mojo.EndToEndLatencyUs.ChildIOThread recorded 0 samples (flags = 0x1)
+    0 ...
+
+    Histogram: Mojo.EndToEndLatencyUs.Default recorded 1 samples, mean = 14.0 (flags = 0x1)
+    0   ...
+    13  -O                                                                        (1 = 100.0%) {0.0%}
+    15  ...
+
+    Histogram: Security.GwpAsan.Activated.Malloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.GwpAsan.Activated.PartitionAlloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.JSONParser.ParsingTime recorded 1 samples, mean = 16.0 (flags = 0x1)
+    0   ...
+    16  -O                                                                        (1 = 100.0%) {0.0%}
+    21  ...
+
+    Histogram: Startup.LoadTime.RecordedProcessCreation recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  O                                                                         (0 = 0.0%) {100.0%}
+
+    Histogram: UMA.ChildProcess.Ping.SharedMemorySetUp recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  ...
+
+    Histogram: V8.CFIPageSizeMismatch recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Variations.Limits.VariationKeySize.Default recorded 2 samples, mean = 0.0 (flags = 0x1)
+    0  --O                                                                       (2 = 100.0%)
+    1  ...
+
+
+    [175861:4:0113/165052.948327:VERBOSE1:zip.cc(215)] Skipped ZIP entry 'manifest.json'
+    [175861:1:0113/165052.948879:VERBOSE1:statistics_recorder.cc(607)] Collections of all histograms
+    Histogram: HangWatcher.UtilityProcess.UncoveredStartupTime recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Memory.PartitionAlloc.PartitionRoot.ExtrasSize recorded 1 samples, mean = 4.0 (flags = 0x1)
+    0  ...
+    4  -O                                                                        (1 = 100.0%) {0.0%}
+    5  ...
+
+    Histogram: Mojo.Channel.WriteReceiveMessageProcessType recorded 1 samples, mean = 11.0 (flags = 0x1)
+    0   ...
+    11  -O                                                                        (1 = 100.0%) {0.0%}
+    12  ...
+
+    Histogram: Mojo.EndToEndLatencyUs.ChildIOThread recorded 0 samples (flags = 0x1)
+    0 ...
+
+    Histogram: Mojo.EndToEndLatencyUs.Default recorded 1 samples, mean = 16.0 (flags = 0x1)
+    0   ...
+    15  -O                                                                        (1 = 100.0%) {0.0%}
+    17  ...
+
+    Histogram: Security.GwpAsan.Activated.Malloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.GwpAsan.Activated.PartitionAlloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.JSONParser.ParsingTime recorded 1 samples, mean = 16.0 (flags = 0x1)
+    0   ...
+    16  -O                                                                        (1 = 100.0%) {0.0%}
+    21  ...
+
+    Histogram: Startup.LoadTime.RecordedProcessCreation recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  O                                                                         (0 = 0.0%) {100.0%}
+
+    Histogram: UMA.ChildProcess.Ping.SharedMemorySetUp recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  ...
+
+    Histogram: V8.CFIPageSizeMismatch recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Variations.Limits.VariationKeySize.Default recorded 2 samples, mean = 0.0 (flags = 0x1)
+    0  --O                                                                       (2 = 100.0%)
+    1  ...
+
+
+    [175872:1:0113/165052.950836:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: utility.
+    [175877:1:0113/165052.952673:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: utility.
+    [175877:1:0113/165052.959178:VERBOSE1:statistics_recorder.cc(607)] Collections of all histograms
+    Histogram: HangWatcher.UtilityProcess.UncoveredStartupTime recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Memory.PartitionAlloc.PartitionRoot.ExtrasSize recorded 1 samples, mean = 4.0 (flags = 0x1)
+    0  ...
+    4  -O                                                                        (1 = 100.0%) {0.0%}
+    5  ...
+
+    Histogram: Mojo.EndToEndLatencyUs.ChildIOThread recorded 0 samples (flags = 0x1)
+    0 ...
+
+    Histogram: Security.GwpAsan.Activated.Malloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.GwpAsan.Activated.PartitionAlloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.JSONParser.ParsingTime recorded 42 samples, mean = 3.5 (flags = 0x1)
+    0   O                                                                         (0 = 0.0%)
+    1   -O                                                                        (1 = 2.4%) {0.0%}
+    2   -----------------------O                                                  (23 = 54.8%) {2.4%}
+    3   ----------O                                                               (10 = 23.8%) {57.1%}
+    4   -----O                                                                    (5 = 11.9%) {81.0%}
+    5   ...
+    9   -O                                                                        (1 = 2.4%) {92.9%}
+    12  O                                                                         (0 = 0.0%) {95.2%}
+    16  -O                                                                        (1 = 2.4%) {95.2%}
+    21  -O                                                                        (1 = 2.4%) {97.6%}
+    28  ...
+
+    Histogram: Startup.LoadTime.RecordedProcessCreation recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  O                                                                         (0 = 0.0%) {100.0%}
+
+    Histogram: ThreadPool.UnnecessaryWakeup.ContentChild.Foreground recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  O                                                                         (0 = 0.0%) {100.0%}
+
+    Histogram: UMA.ChildProcess.Ping.SharedMemorySetUp recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  ...
+
+    Histogram: V8.CFIPageSizeMismatch recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Variations.Limits.VariationKeySize.Default recorded 2 samples, mean = 0.0 (flags = 0x1)
+    0  --O                                                                       (2 = 100.0%)
+    1  ...
+
+
+    [175591:175591:0113/165052.961878:VERBOSE1:profile_manager.cc(1326)] RemoveKeepAlive(Default, kCrxInstaller). keep_alives=[kWaitingForFirstBrowserWindow (1), kOffTheRecordProfile (1), kExtensionUpdater (1), kCrxInstaller (1),
+    kRemoteDebugging (1)]
+    [175591:175619:0113/165052.962504:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Storage/ext/nmmhkkegccagdldgiimedpiccmgmieda/def/Media Cache": No such file or directory (2)
+    [175872:1:0113/165052.962486:VERBOSE1:statistics_recorder.cc(607)] Collections of all histograms
+    Histogram: HangWatcher.UtilityProcess.UncoveredStartupTime recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: HeapProfiling.InProcess.Enabled.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Memory.PartitionAlloc.PartitionRoot.ExtrasSize recorded 1 samples, mean = 4.0 (flags = 0x1)
+    0  ...
+    4  -O                                                                        (1 = 100.0%) {0.0%}
+    5  ...
+
+    Histogram: Mojo.EndToEndLatencyUs.ChildIOThread recorded 0 samples (flags = 0x1)
+    0 ...
+
+    Histogram: Security.GwpAsan.Activated.Malloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.GwpAsan.Activated.PartitionAlloc.Utility recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Security.JSONParser.ParsingTime recorded 61 samples, mean = 5.9 (flags = 0x1)
+    0   ...
+    2   ------------O                                                             (12 = 19.7%) {0.0%}
+    3   ----------------O                                                         (16 = 26.2%) {19.7%}
+    4   ----O                                                                     (4 = 6.6%) {45.9%}
+    5   -------O                                                                  (7 = 11.5%) {52.5%}
+    7   --------O                                                                 (8 = 13.1%) {63.9%}
+    9   ---------O                                                                (9 = 14.8%) {77.0%}
+    12  --O                                                                       (2 = 3.3%) {91.8%}
+    16  --O                                                                       (2 = 3.3%) {95.1%}
+    21  O                                                                         (0 = 0.0%) {98.4%}
+    28  -O                                                                        (1 = 1.6%) {98.4%}
+    37  ...
+
+    Histogram: Startup.LoadTime.RecordedProcessCreation recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  O                                                                         (0 = 0.0%) {100.0%}
+
+    Histogram: UMA.ChildProcess.Ping.SharedMemorySetUp recorded 1 samples, mean = 1.0 (flags = 0x1)
+    0  O                                                                         (0 = 0.0%)
+    1  -O                                                                        (1 = 100.0%) {0.0%}
+    2  ...
+
+    Histogram: V8.CFIPageSizeMismatch recorded 1 samples, mean = 0.0 (flags = 0x1)
+    0  -O                                                                        (1 = 100.0%)
+    1  ...
+
+    Histogram: Variations.Limits.VariationKeySize.Default recorded 2 samples, mean = 0.0 (flags = 0x1)
+    0  --O                                                                       (2 = 100.0%)
+    1  ...
+
+
+    [175591:175618:0113/165052.962745:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Storage/ext/nmmhkkegccagdldgiimedpiccmgmieda/def/databases": No such file or directory (2)
+    [175591:175630:0113/165052.962754:VERBOSE1:simple_index_file.cc(606)] Simple Cache Index is being restored from disk.
+    [175591:175630:0113/165052.962761:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Storage/ext/nmmhkkegccagdldgiimedpiccmgmieda/def/Code Cache/js/index-dir/the-real-index": No such file or
+    directory (2)
+    [175591:175618:0113/165052.962791:VERBOSE1:simple_index_file.cc(606)] Simple Cache Index is being restored from disk.
+    [175591:175618:0113/165052.962797:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Storage/ext/nmmhkkegccagdldgiimedpiccmgmieda/def/Code Cache/wasm/index-dir/the-real-index": No such file o
+    r directory (2)
+    [175591:175617:0113/165052.962938:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/bg/messages.json
+    [175591:175617:0113/165052.962945:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ca/messages.json
+    [175591:175617:0113/165052.962948:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/cs/messages.json
+    [175591:175617:0113/165052.962950:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/da/messages.json
+    [175591:175617:0113/165052.962954:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/de/messages.json
+    [175591:175617:0113/165052.962956:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/el/messages.json
+    [175591:175617:0113/165052.962958:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/en/messages.json
+    [175591:175617:0113/165052.962961:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/en_GB/messages.json
+    [175591:175617:0113/165052.962963:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/es/messages.json
+    [175591:175617:0113/165052.962965:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/es_419/messages.json
+    [175591:175617:0113/165052.962968:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/et/messages.json
+    [175591:175617:0113/165052.962970:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/fi/messages.json
+    [175591:175617:0113/165052.962973:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/fil/messages.json
+    [175591:175617:0113/165052.962975:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/fr/messages.json
+    [175591:175617:0113/165052.962977:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/hi/messages.json
+    [175591:175617:0113/165052.962979:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/hr/messages.json
+    [175591:175617:0113/165052.962982:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/hu/messages.json
+    [175591:175617:0113/165052.962984:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/id/messages.json
+    [175591:175617:0113/165052.962986:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/it/messages.json
+    [175591:175617:0113/165052.962989:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ja/messages.json
+    [175591:175617:0113/165052.962991:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ko/messages.json
+    [175591:175617:0113/165052.962994:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/lt/messages.json
+    [175591:175617:0113/165052.962996:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/lv/messages.json
+    [175591:175617:0113/165052.962998:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/nb/messages.json
+    [175591:175617:0113/165052.963001:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/nl/messages.json
+    [175591:175617:0113/165052.963003:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/pl/messages.json
+    [175591:175617:0113/165052.963006:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/pt_BR/messages.json
+    [175591:175617:0113/165052.963008:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/pt_PT/messages.json
+    [175591:175617:0113/165052.963010:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ro/messages.json
+    [175591:175617:0113/165052.963012:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ru/messages.json
+    [175591:175617:0113/165052.963014:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/sk/messages.json
+    [175591:175617:0113/165052.963016:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/sl/messages.json
+    [175591:175617:0113/165052.963019:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/sr/messages.json
+    [175591:175617:0113/165052.963021:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/sv/messages.json
+    [175591:175617:0113/165052.963023:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/th/messages.json
+    [175591:175617:0113/165052.963026:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/tr/messages.json
+    [175591:175617:0113/165052.963028:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/uk/messages.json
+    [175591:175617:0113/165052.963030:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/vi/messages.json
+    [175591:175617:0113/165052.963032:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/zh_CN/messages.json
+    [175591:175617:0113/165052.963035:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/zh_TW/messages.json
+    [175591:175617:0113/165052.963037:VERBOSE1:content_hash.cc(383)] content mismatch for images/icon_128.png
+    [175591:175617:0113/165052.963040:VERBOSE1:content_hash.cc(383)] content mismatch for images/icon_16.png
+    [175591:175617:0113/165052.963041:VERBOSE1:content_hash.cc(383)] content mismatch for manifest.json
+    [175591:175622:0113/165052.963392:VERBOSE1:content_verifier.cc(869)] OnFetchComplete nmmhkkegccagdldgiimedpiccmgmieda success:1
+    [175591:175591:0113/165052.964193:VERBOSE1:mutable_profile_oauth2_token_service_delegate.cc(367)] MutablePO2TS::RefreshTokenIsAvailable
+    [175641:175659:0113/165052.965193:VERBOSE1:simple_index_file.cc(606)] Simple Cache Index is being restored from disk.
+    [175641:175659:0113/165052.965203:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Storage/ext/nmmhkkegccagdldgiimedpiccmgmieda/def/Shared Dictionary/cache/index-dir/the-real-index": No suc
+    h file or directory (2)
+    [175884:1:0113/165052.966429:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175591:175591:0113/165052.968564:VERBOSE1:profile_manager.cc(1326)] RemoveKeepAlive(Default, kCrxInstaller). keep_alives=[kWaitingForFirstBrowserWindow (1), kOffTheRecordProfile (1), kExtensionUpdater (1), kRemoteDebugging (1
+    )]
+    [175591:175619:0113/165052.968596:VERBOSE1:config_dir_policy_loader.cc(123)] Skipping mandatory platform policies because no policy file was found at: /etc/opt/chrome/policies/managed
+    [175591:175619:0113/165052.968608:VERBOSE1:config_dir_policy_loader.cc(123)] Skipping recommended platform policies because no policy file was found at: /etc/opt/chrome/policies/recommended
+    [175591:175591:0113/165052.968622:VERBOSE1:profile_manager.cc(1326)] RemoveKeepAlive(Default, kExtensionUpdater). keep_alives=[kWaitingForFirstBrowserWindow (1), kOffTheRecordProfile (1), kRemoteDebugging (1)]
+    [175591:175618:0113/165052.969660:VERBOSE1:file_url_loader_factory.cc(476)] FileURLLoader::Start: file:///tmp/.com.google.Chrome.ejPCZQ/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.85.1_0/service_worker_bin_prod.js
+    [175591:175630:0113/165052.969931:VERBOSE1:simple_index_file.cc(606)] Simple Cache Index is being restored from disk.
+    [175591:175630:0113/165052.969938:VERBOSE1:file_util_posix.cc(310)] Cannot stat "/tmp/.com.google.Chrome.ejPCZQ/Default/Service Worker/ScriptCache/index-dir/the-real-index": No such file or directory (2)
+    [175591:175617:0113/165052.970371:VERBOSE1:content_hash.cc(383)] content mismatch for 128.png
+    [175591:175617:0113/165052.970377:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/af/messages.json
+    [175591:175617:0113/165052.970380:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/am/messages.json
+    [175591:175617:0113/165052.970382:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ar/messages.json
+    [175591:175617:0113/165052.970385:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/az/messages.json
+    [175591:175617:0113/165052.970387:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/bg/messages.json
+    [175591:175617:0113/165052.970389:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/bn/messages.json
+    [175591:175617:0113/165052.970392:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ca/messages.json
+    [175591:175617:0113/165052.970394:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/cs/messages.json
+    [175591:175617:0113/165052.970397:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/da/messages.json
+    [175591:175617:0113/165052.970399:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/de/messages.json
+    [175591:175617:0113/165052.970402:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/el/messages.json
+    [175591:175617:0113/165052.970404:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/en/messages.json
+    [175591:175617:0113/165052.970406:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/en_CA/messages.json
+    [175591:175617:0113/165052.970408:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/en_GB/messages.json
+    [175591:175617:0113/165052.970411:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/en_US/messages.json
+    [175591:175617:0113/165052.970413:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/es/messages.json
+    [175591:175617:0113/165052.970416:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/es_419/messages.json
+    [175591:175617:0113/165052.970418:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/et/messages.json
+    [175591:175617:0113/165052.970420:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/fa/messages.json
+    [175591:175617:0113/165052.970422:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/fi/messages.json
+    [175591:175617:0113/165052.970425:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/fil/messages.json
+    [175591:175617:0113/165052.970427:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/fr/messages.json
+    [175591:175617:0113/165052.970429:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/fr_CA/messages.json
+    [175591:175617:0113/165052.970432:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/gu/messages.json
+    [175591:175617:0113/165052.970434:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/hi/messages.json
+    [175591:175617:0113/165052.970436:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/hr/messages.json
+    [175591:175617:0113/165052.970439:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/hu/messages.json
+    [175591:175617:0113/165052.970441:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/id/messages.json
+    [175591:175617:0113/165052.970443:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/it/messages.json
+    [175591:175617:0113/165052.970445:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ja/messages.json
+    [175591:175617:0113/165052.970447:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/kn/messages.json
+    [175591:175617:0113/165052.970449:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ko/messages.json
+    [175591:175617:0113/165052.970452:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/lt/messages.json
+    [175591:175617:0113/165052.970454:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/lv/messages.json
+    [175591:175617:0113/165052.970456:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ml/messages.json
+    [175591:175617:0113/165052.970459:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/mr/messages.json
+    [175591:175617:0113/165052.970461:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ms/messages.json
+    [175591:175617:0113/165052.970463:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/nl/messages.json
+    [175591:175617:0113/165052.970466:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/nn/messages.json
+    [175591:175617:0113/165052.970468:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/no/messages.json
+    [175591:175617:0113/165052.970474:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/pl/messages.json
+    [175591:175617:0113/165052.970476:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/pt_BR/messages.json
+    [175591:175617:0113/165052.970479:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/pt_PT/messages.json
+    [175591:175617:0113/165052.970481:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ro/messages.json
+    [175591:175617:0113/165052.970483:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ru/messages.json
+    [175591:175617:0113/165052.970485:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/sk/messages.json
+    [175591:175617:0113/165052.970487:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/sl/messages.json
+    [175591:175617:0113/165052.970490:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/sr/messages.json
+    [175591:175617:0113/165052.970492:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/sv/messages.json
+    [175591:175617:0113/165052.970494:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/sw/messages.json
+    [175591:175617:0113/165052.970498:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ta/messages.json
+    [175591:175617:0113/165052.970500:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/te/messages.json
+    [175591:175617:0113/165052.970503:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/th/messages.json
+    [175591:175617:0113/165052.970505:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/tr/messages.json
+    [175591:175617:0113/165052.970508:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/uk/messages.json
+    [175591:175617:0113/165052.970510:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/ur/messages.json
+    [175591:175617:0113/165052.970512:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/vi/messages.json
+    [175591:175617:0113/165052.970514:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/zh_CN/messages.json
+    [175591:175617:0113/165052.970516:VERBOSE1:content_hash.cc(383)] content mismatch for _locales/zh_TW/messages.json
+    [175591:175617:0113/165052.970520:VERBOSE1:content_hash.cc(383)] content mismatch for manifest.json
+    [175591:175622:0113/165052.970764:VERBOSE1:content_verifier.cc(869)] OnFetchComplete ghbmnnjooekpmoecnnnilnnbdlolhkhi success:1
+    [175893:1:0113/165052.974183:VERBOSE1:sandbox_linux.cc(93)] Activated seccomp-bpf sandbox for process type: renderer.
+    [175884:1:0113/165052.976000:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           nmmhkkegccagdldgiimedpiccmgmieda
+      frame:                  0x190c0014ea40
+      URL:
+      context_type:           BLESSED_EXTENSION
+      effective extension id: nmmhkkegccagdldgiimedpiccmgmieda
+      effective context type: BLESSED_EXTENSION
+    [175884:1:0113/165052.976290:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           (none)
+      frame:                  (nil)
+      URL:
+      context_type:           UNSPECIFIED
+      effective extension id: (none)
+      effective context type: UNSPECIFIED
+    [175884:1:0113/165052.980606:VERBOSE1:dispatcher.cc(543)] Num tracked contexts: 1
+    [175591:175617:0113/165052.981211:VERBOSE1:file_url_loader_factory.cc(476)] FileURLLoader::Start: file:///tmp/.com.google.Chrome.ejPCZQ/Default/Extensions/nmmhkkegccagdldgiimedpiccmgmieda/1.0.0.6_0/craw_background.js
+    [175591:175622:0113/165052.981560:VERBOSE1:content_verifier.cc(869)] OnFetchComplete nmmhkkegccagdldgiimedpiccmgmieda success:1
+    [175893:10:0113/165052.983002:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           ghbmnnjooekpmoecnnnilnnbdlolhkhi
+      frame:                  (nil)
+      URL:
+      context_type:           BLESSED_EXTENSION
+      effective extension id: ghbmnnjooekpmoecnnnilnnbdlolhkhi
+      effective context type: BLESSED_EXTENSION
+    [175893:10:0113/165052.983291:VERBOSE1:script_context.cc(151)] Created context:
+      extension id:           (none)
+      frame:                  (nil)
+      URL:
+      context_type:           UNSPECIFIED
+      effective extension id: (none)
+      effective context type: UNSPECIFIED
+^C
+[warn] Canceling execution...
+[warn] Run canceled.
+Cancelled: run
+[error] Cancelled: run
+[error] Use 'last' for the full log.

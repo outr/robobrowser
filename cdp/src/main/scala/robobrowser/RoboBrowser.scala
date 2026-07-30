@@ -8,6 +8,7 @@ import rapid.{Forge, Task, logger}
 import reactify.{Val, Var}
 import robobrowser.dom.DOM
 import robobrowser.event.ResponseBody
+import robobrowser.fetch.RequestPattern
 import robobrowser.input.KeyFeatures
 import robobrowser.select.{Selection, Selector}
 import robobrowser.window.{Window, WindowState}
@@ -79,6 +80,22 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
       "maxResourceBufferSize" -> 5242880
     )
   ).unit
+
+  /**
+   * Authenticate an upstream proxy that requires credentials. Chrome cannot supply proxy
+   * credentials from the command line, so this enables Fetch interception with auth
+   * handling: every paused request is continued, and proxy auth challenges are answered
+   * with the supplied username/password (the standard CDP proxy-auth pattern).
+   */
+  def enableProxyAuth(username: String, password: String): Task[Unit] =
+    fetch.enable(List(RequestPattern(urlPattern = "*")), handleAuthRequests = true).map { _ =>
+      event.fetch.requestPaused.attach { evt =>
+        fetch.continueRequest(evt.requestId).sync()
+      }
+      event.fetch.authRequired.attach { evt =>
+        fetch.continueWithAuth(evt.requestId, "ProvideCredentials", Some(username), Some(password)).sync()
+      }
+    }
 
   def getResponseBody(requestId: String): Task[ResponseBody] = send(
     method = "Network.getResponseBody",
@@ -371,5 +388,9 @@ object RoboBrowser {
     _ <- rb.enableLifecycleEvents.when(config.enableLifecycleEvents)
     _ <- rb.enableDOM.when(config.enableDOMEvents)
     _ <- rb.enableNetworkEvents.when(config.enableNetworkEvents)
+    _ <- browserConfig.proxyCredentials match {
+      case Some((u, p)) => rb.enableProxyAuth(u, p)
+      case None => Task.unit
+    }
   } yield rb
 }

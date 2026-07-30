@@ -30,7 +30,7 @@ class Fetch(cm: CommunicationManager) {
         "headers" -> headers2Json(headers)
       )
     ).map { response =>
-      scribe.info(s"Response: $response")
+      scribe.trace(s"Response: $response")
     }.unit
 
   def continueWithAuth(requestId: RequestId,

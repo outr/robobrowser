@@ -39,6 +39,9 @@ case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Defau
                          windowSize: Option[(Int, Int)] = None,
                          forceDeviceScaleFactor: Option[Int] = None,
                          proxyServer: Option[(String, Int)] = None,
+                         // SOCKS5/HTTP proxy credentials, supplied via CDP Fetch auth
+                         // (Chrome cannot authenticate a proxy from the command line)
+                         proxyCredentials: Option[(String, String)] = None,
                          proxyBypassList: List[String] = Nil,
                          disableFeatures: List[String] = Nil,
                          disablePDFExtension: Boolean = true) {
