@@ -8,7 +8,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.3.7-SNAPSHOT"
+ThisBuild / version := "2.4.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.8.4"
 
@@ -46,7 +46,7 @@ val scribeVersion: String = "3.18.0"
 
 val rapidVersion: String = "2.9.9"
 
-val spiceVersion: String = "1.10.2"
+val spiceVersion: String = "1.10.9-SNAPSHOT"
 
 val jsoupVersion: String = "1.22.2"
 
@@ -55,7 +55,7 @@ val tikaVersion: String = "3.3.1"
 val scalatestVersion: String = "3.2.20"
 
 val root = project.in(file("."))
-  .aggregate(core, cdp)
+  .aggregate(core, cdp, stream)
   .settings(
     name := projectName,
     publish := {},
@@ -81,5 +81,17 @@ lazy val cdp = project.in(file("cdp"))
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "com.outr" %% "rapid-test" % rapidVersion % Test,
       "com.outr" %% "spice-client-netty" % spiceVersion % Test,
+    )
+  )
+
+lazy val stream = project.in(file("stream"))
+  .dependsOn(cdp)
+  .settings(
+    name := s"$projectName-stream",
+    libraryDependencies ++= Seq(
+      "org.freedesktop.gstreamer" % "gst1-java-core" % "1.4.0",
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "com.outr" %% "rapid-test" % rapidVersion % Test,
+      "com.outr" %% "spice-client-netty" % spiceVersion % Test
     )
   )
