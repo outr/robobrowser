@@ -4,8 +4,9 @@ import fabric.io.JsonFormatter
 import fabric._
 import fabric.dsl._
 import fabric.rw._
-import rapid.{Forge, Task, logger}
+import rapid._
 import reactify.{Val, Var}
+import robobrowser.display.{DisplayAllocator, VirtualDisplay}
 import robobrowser.dom.DOM
 import robobrowser.event.ResponseBody
 import robobrowser.fetch.RequestPattern
@@ -19,9 +20,12 @@ import java.nio.file.{Files, Path}
 import java.util.Base64
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
-class RoboBrowser private(protected val ws: WebSocket, process: Option[Process]) extends TabFeatures {
+class RoboBrowser private(protected val ws: WebSocket,
+                          process: Option[Process],
+                          val virtualDisplay: Option[VirtualDisplay]) extends TabFeatures {
   private val _url: Var[String] = Var("about:blank")
   private val _attached: Var[Boolean] = Var(true)
+  private val disposalHooks = new java.util.concurrent.ConcurrentLinkedDeque[Task[Unit]]()
 
   def url: Val[String] = _url
   def attached: Val[Boolean] = _attached
@@ -336,10 +340,26 @@ class RoboBrowser private(protected val ws: WebSocket, process: Option[Process])
 
   def disconnect(): Task[Unit] = Task(ws.disconnect())
 
-  def dispose(): Task[Unit] = disconnect().map { _ =>
-    process.foreach { p =>
-      p.destroy()
-    }
+  /** Register cleanup to run at the start of [[dispose]] (LIFO order). Features
+    * holding external resources tied to this browser (e.g. a streaming pipeline
+    * capturing its display) register here so `withBrowser` cleanup stays
+    * automatic. Hook failures are logged and don't block disposal. */
+  def onDispose(task: Task[Unit]): Unit = disposalHooks.addFirst(task)
+
+  def dispose(): Task[Unit] = {
+    import scala.jdk.CollectionConverters._
+    disposalHooks
+      .asScala
+      .toList
+      .map(_.handleError(t => Task(scribe.warn(s"Disposal hook failed: ${t.getMessage}"))))
+      .tasks
+      .flatMap(_ => disconnect())
+      .map { _ =>
+        process.foreach { p =>
+          p.destroy()
+        }
+      }
+      .flatMap(_ => virtualDisplay.map(_.dispose()).getOrElse(Task.unit))
   }
 }
 
@@ -353,13 +373,54 @@ object RoboBrowser {
     }
   }
 
-  def apply(config: RoboBrowserConfig = RoboBrowserConfig()): Task[RoboBrowser] = for {
+  def apply(config: RoboBrowserConfig = RoboBrowserConfig()): Task[RoboBrowser] = config.virtualDisplay match {
+    case Some(vd) => DisplayAllocator.allocate(vd).flatMap { display =>
+      launch(config, Some(display)).handleError { t =>
+        display.dispose().flatMap(_ => Task.error(t))
+      }
+    }
+    case None => launch(config, None)
+  }
+
+  /** Derive the launch config for a browser bound to a virtual display: headful
+    * kiosk mode filling the display exactly, so viewport pixels == display
+    * pixels (identity coordinate mapping for capture-based streaming). */
+  private[robobrowser] def deriveDisplayConfig(config: BrowserConfig, display: VirtualDisplay): BrowserConfig = {
+    if (config.headless) {
+      scribe.info("virtualDisplay is set: overriding headless=false so the browser renders to the display")
+    }
+    val scaleFactor = config.forceDeviceScaleFactor match {
+      case None => Some(1)
+      case other =>
+        if (!other.contains(1)) {
+          scribe.warn(s"forceDeviceScaleFactor=$other with a virtual display: stream consumers must scale input coordinates accordingly")
+        }
+        other
+    }
+    config.copy(
+      headless = false,
+      kiosk = true,
+      // Wayland desktops: Chrome's ozone auto-detection would follow the inherited
+      // WAYLAND_DISPLAY and ignore DISPLAY entirely, rendering to the real desktop
+      ozonePlatform = Some("x11"),
+      windowPosition = Some((0, 0)),
+      windowSize = Some((display.width, display.height)),
+      forceDeviceScaleFactor = scaleFactor,
+      env = config.env + ("DISPLAY" -> display.displayName)
+    )
+  }
+
+  private def launch(config: RoboBrowserConfig, display: Option[VirtualDisplay]): Task[RoboBrowser] = for {
     browser <- Task(config.browser.resolvePort())
     // Use a unique user data dir per instance to avoid Chrome's SingletonLock conflict
-    browserConfig = if (config.browser.port == 0) {
+    baseConfig = if (config.browser.port == 0) {
       config.browserConfig.copy(userDataDir = BrowserConfig.resolveDataDir(s"instance-${browser.port}"))
     } else {
       config.browserConfig
+    }
+    browserConfig = display match {
+      case Some(d) => deriveDisplayConfig(baseConfig, d)
+      case None => baseConfig
     }
     _ <- Task(browserConfig.prepareUserDataDir())
     process <- CDP.createProcess(browser, browserConfig)
@@ -368,7 +429,7 @@ object RoboBrowser {
     webSocketUrl = tabResults.head.webSocketDebuggerUrl
     _ <- logger.info(s"Connecting to WebSocket: $webSocketUrl")
     webSocket <- CDP.connect(webSocketUrl)
-    rb = new RoboBrowser(webSocket, Some(process))
+    rb = new RoboBrowser(webSocket, Some(process), display)
     existingTab = config.tabSelector.select(tabResults)
     _ <- existingTab match {
       case Some(tab) => rb.attachToTarget(tab.id).map { sessionId =>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RoboBrowser Stream Viewer</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #111; color: #ddd; font: 13px monospace; }
+  #wrap { display: flex; flex-direction: column; height: 100%; }
+  #status { padding: 4px 8px; background: #222; white-space: nowrap; overflow: hidden; }
+  video { flex: 1; min-height: 0; width: 100%; object-fit: contain; background: #000; outline: none; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="status">connecting…</div>
+  <video id="v" autoplay muted playsinline tabindex="0"></video>
+</div>
+<script>
+(() => {
+  const video = document.getElementById('v');
+  const status = document.getElementById('status');
+  const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/signal');
+  const pc = new RTCPeerConnection({iceServers: [{urls: 'stun:stun.l.google.com:19302'}]});
+  let input = null;            // DataChannel, server-created
+  let clockOffset = null;      // clientEpoch - serverEpoch
+  let rtt = null;
+  let latency = null;
+
+  const show = state => {
+    status.textContent = `conn: ${state} | rtt: ${rtt === null ? '—' : rtt.toFixed(0) + 'ms'}` +
+      ` | glass-to-glass: ${latency === null ? '—' : latency.toFixed(0) + 'ms'}` +
+      ` | ${video.videoWidth}x${video.videoHeight}`;
+  };
+
+  const send = msg => ws.readyState === 1 && ws.send(JSON.stringify(msg));
+
+  const log = [];
+  const handle = async msg => {
+    log.push(msg.type);
+    if (msg.type === 'offer') {
+      await pc.setRemoteDescription({type: 'offer', sdp: msg.sdp});
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      send({type: 'answer', sdp: answer.sdp});
+    } else if (msg.type === 'ice') {
+      await pc.addIceCandidate({sdpMLineIndex: msg.sdpMLineIndex, candidate: msg.candidate});
+    } else if (msg.type === 'error') {
+      status.textContent = 'server error: ' + msg.message;
+    } else if (msg.type === 'bye') {
+      pc.close(); ws.close();
+      status.textContent = 'stream ended';
+    }
+  };
+  // Serialize handling: async onmessage handlers interleave, so ICE candidates
+  // would otherwise race ahead of setRemoteDescription and be dropped.
+  let chain = Promise.resolve();
+  ws.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    chain = chain.then(() => handle(msg)).catch(err => log.push('ERR:' + msg.type + ':' + err.message));
+  };
+  ws.onclose = () => show('signaling closed');
+
+  pc.onicecandidate = e => {
+    if (e.candidate && e.candidate.candidate) {
+      send({type: 'ice', sdpMLineIndex: e.candidate.sdpMLineIndex, candidate: e.candidate.candidate});
+    }
+  };
+  pc.onconnectionstatechange = () => show(pc.connectionState);
+  pc.ontrack = e => { video.srcObject = e.streams[0]; video.focus(); };
+
+  // ---- input forwarding over the server-created DataChannel ----
+  const dcSend = msg => input && input.readyState === 'open' && input.send(JSON.stringify(msg));
+
+  // Map a mouse event to the video's intrinsic pixel space, accounting for the
+  // letterboxing object-fit:contain introduces.
+  const toStream = e => {
+    const r = video.getBoundingClientRect();
+    if (!video.videoWidth) return null;
+    const scale = Math.min(r.width / video.videoWidth, r.height / video.videoHeight);
+    const w = video.videoWidth * scale, h = video.videoHeight * scale;
+    const ox = r.left + (r.width - w) / 2, oy = r.top + (r.height - h) / 2;
+    const x = (e.clientX - ox) / scale, y = (e.clientY - oy) / scale;
+    if (x < 0 || y < 0 || x > video.videoWidth || y > video.videoHeight) return null;
+    return {x, y};
+  };
+  const mods = e => (e.altKey ? 1 : 0) | (e.ctrlKey ? 2 : 0) | (e.metaKey ? 4 : 0) | (e.shiftKey ? 8 : 0);
+  const buttonName = b => b === 1 ? 'middle' : b === 2 ? 'right' : 'left';
+
+  video.addEventListener('mousemove', e => {
+    const p = toStream(e);
+    if (p) dcSend({type: 'mousemove', x: p.x, y: p.y, buttons: e.buttons});
+  });
+  video.addEventListener('mousedown', e => {
+    const p = toStream(e);
+    if (p) dcSend({type: 'mousedown', x: p.x, y: p.y, button: buttonName(e.button), buttons: e.buttons,
+                   clickCount: e.detail || 1, modifiers: mods(e)});
+    video.focus();
+    e.preventDefault();
+  });
+  video.addEventListener('mouseup', e => {
+    const p = toStream(e);
+    if (p) dcSend({type: 'mouseup', x: p.x, y: p.y, button: buttonName(e.button), buttons: e.buttons,
+                   clickCount: e.detail || 1, modifiers: mods(e)});
+    e.preventDefault();
+  });
+  video.addEventListener('contextmenu', e => e.preventDefault());
+  video.addEventListener('wheel', e => {
+    const p = toStream(e);
+    if (p) dcSend({type: 'wheel', x: p.x, y: p.y, deltaX: e.deltaX, deltaY: e.deltaY, modifiers: mods(e)});
+    e.preventDefault();
+  }, {passive: false});
+  video.addEventListener('keydown', e => {
+    dcSend({type: 'keydown', key: e.key, code: e.code, keyCode: e.keyCode, text: '', modifiers: mods(e)});
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      dcSend({type: 'char', text: e.key, key: e.key, keyCode: e.keyCode});
+    }
+    e.preventDefault();
+  });
+  video.addEventListener('keyup', e => {
+    dcSend({type: 'keyup', key: e.key, code: e.code, keyCode: e.keyCode, text: '', modifiers: mods(e)});
+    e.preventDefault();
+  });
+
+  // ---- latency harness ----
+  // Clock offset via ping/pong; the server also stamps each ~1Hz captured
+  // frame ("frame" messages). On the next rendered frame we estimate
+  // glass-to-glass = renderTime - clockOffset - captureTime and report back.
+  pc.ondatachannel = e => {
+    input = e.channel;
+    input.onmessage = m => {
+      const msg = JSON.parse(m.data);
+      if (msg.type === 'pong') {
+        const now = Date.now();
+        rtt = now - msg.t;
+        clockOffset = ((msg.t + now) / 2) - msg.serverT;
+      } else if (msg.type === 'frame' && clockOffset !== null && video.requestVideoFrameCallback) {
+        video.requestVideoFrameCallback(() => {
+          latency = (Date.now() - clockOffset) - msg.t;
+          dcSend({type: 'latency', value: latency});
+          show(pc.connectionState);
+        });
+      }
+    };
+    input.onopen = () => setInterval(() => dcSend({type: 'ping', t: Date.now()}), 1000);
+  };
+
+  setInterval(() => show(pc.connectionState), 1000);
+
+  // Automation hooks for the E2E test harness
+  window.viewer = {
+    pc,
+    dcSend,
+    log,
+    get rtt() { return rtt; },
+    get latency() { return latency; },
+    get videoWidth() { return video.videoWidth; },
+    get frames() { return video.getVideoPlaybackQuality ? video.getVideoPlaybackQuality().totalVideoFrames : 0; }
+  };
+})();
+</script>
+</body>
+</html>

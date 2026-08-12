@@ -176,6 +176,78 @@ case), but it is also the substrate for the Spaceship browser's planned 2.0
 the work independent here is deliberate: RoboBrowser ships it as a
 general-purpose capability.
 
+## Render targets and live resize
+
+A session's resolution is a per-stream choice, independent of the virtual
+display it runs on. `StreamConfig.width`/`height` set the **render target**: the
+page lays out at exactly that size and exactly that rectangle of the display is
+captured, so any aspect ratio streams verbatim.
+
+```scala
+val session = browser.stream.start(StreamConfig(width = Some(390), height = Some(844))).sync()
+session.renderSize          // RenderSize(390, 844)
+session.resize(1280, 820).sync()
+```
+
+`maxWidth`/`maxHeight` are a separate, unchanged knob — an encode-time downscale
+of whatever was rendered, aspect preserved, never upscaling. Both apply:
+`width = 1280, height = 800, maxWidth = 640` lays the page out at 1280x800 and
+transmits 640x400.
+
+### How a target is realised
+
+1. **Layout** — CDP `Emulation.setDeviceMetricsOverride` at the target size. The
+   emulated viewport paints at exactly that many physical pixels, anchored to the
+   display's top-left, and the page sees the target as its viewport, so responsive
+   CSS resolves to the mobile breakpoints a `390x844` target implies. A target
+   equal to the display clears the override instead, leaving the kiosk window's
+   native render path untouched.
+2. **Capture** — `ximagesrc startx/starty/endx/endy` reads back that same
+   rectangle. The captured frame *is* the target, so nothing is padded and no
+   letterbox exists to remove.
+3. **Encode** — the encoder is configured from the target, with `maxWidth` /
+   `maxHeight` applied on top as before. `StreamStats.width`/`height` report the
+   result.
+
+`StreamSession.resize` runs all three again and rebuilds the pipeline, then emits
+a fresh offer on the session's existing signaling channel for the viewer to
+answer. Rebuild rather than reconfigure: `webrtcbin` owns the encoder branch's
+caps negotiation, and swapping a live capture chain's dimensions underneath it is
+far less predictable than one clean teardown behind the same session object.
+Listeners, stats, and the input DataChannel all survive; the viewer sees a
+renegotiation, not a new session.
+
+### Why the display is a bound, not a knob
+
+The virtual display's size is fixed for its lifetime. Xvfb builds the RANDR
+extension and reports geometry through it, but advertises exactly one mode — the
+framebuffer it was spawned with — and rejects `RRSetScreenSize` outright:
+
+```
+$ xrandr --display :100 --fb 390x844
+xrandr: specified screen 390x844 not large enough for output screen (1920x1080+0+0)
+X Error of failed request:  BadValue ... Minor opcode of failed request: 21 (RRSetCrtcConfig)
+```
+
+`xrandr --newmode` reports success and registers nothing, because the server has
+no `RRCreateMode`. Restarting Xvfb on the same display number is not a fallback
+either: it severs the X connection of every client on that display, and the
+browser rendering there exits with `X connection error received`.
+
+So `VirtualDisplay.resize` attempts the RandR path (select an advertised mode,
+register and select one, set the framebuffer) and verifies the result against the
+server's reported dimensions. When the server refuses it raises
+`DisplayResizeUnsupportedException`, which names both sizes and points at
+`VirtualDisplayConfig`. Rendering *smaller* than the display never reaches that
+path — that is a capture region, which needs nothing from the server. Allocate the
+display at the largest size a session will ever need.
+
+`Browser.setWindowBounds` is deliberately not part of this. Resizing the kiosk
+window means leaving fullscreen, which brings Chrome's tab strip and toolbar back
+into the captured pixels, and Chrome clamps a top-level window to a 500px minimum
+width — a `390`-wide target is unreachable that way. Device-metrics emulation has
+neither problem.
+
 ## Clean capture profiles
 
 Headful capture records everything Chrome draws, including its own UI. The reliable suppression levers on `BrowserConfig`:

@@ -28,7 +28,7 @@ object CDP {
       s"--remote-allow-origins=http://localhost:${browser.port}"
     ) ::: config.options
     scribe.info(cmd.mkString(" "))
-    val pb = Process(cmd)
+    val pb = Process(cmd, None, config.env.toSeq*)
     val logger = ProcessLogger(
       line => scribe.info(line),
       line => scribe.error(line)
