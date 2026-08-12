@@ -19,6 +19,10 @@ case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Defau
                          disablePopupBlocking: Boolean = false,
                          disableSiteIsolationTrials: Boolean = false,
                          disableWebGL: Boolean = false,
+                         // No-op on Chrome >= 76 — the flag was removed upstream.
+                         // Kept for compatibility; suppressing the automation
+                         // infobar today requires NOT sending --enable-automation
+                         // (see `passwordManager`) or sending `testType`.
                          disableInfobars: Boolean = false,
                          disableSync: Boolean = false,
                          disableSoftwareRasterizer: Boolean = false,
@@ -26,6 +30,16 @@ case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Defau
                          singleProcess: Boolean = false,
                          disableCache: Boolean = false,
                          enableAutomation: Boolean = false,
+                         // When false, writes `credentials_enable_service = false` and
+                         // `profile.password_manager_enabled = false` into the profile's
+                         // Preferences — suppressing the "Save password?" bubble WITHOUT
+                         // --enable-automation (which drags in the automation infobar).
+                         // The reliable lever for capture/kiosk sessions; --incognito
+                         // does NOT suppress the bubble.
+                         passwordManager: Boolean = true,
+                         // --test-type: suppresses the automation infobar and assorted
+                         // first-run / security prompts. Useful for capture sessions.
+                         testType: Boolean = false,
                          startMaximized: Boolean = false,
                          hideScrollbars: Boolean = false,
                          incognito: Boolean = false,
@@ -36,7 +50,16 @@ case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Defau
                          loggingVerbosity: Option[Int] = None,
                          loggingPath: Option[File] = None,
                          noSandbox: Boolean = false,
+                         kiosk: Boolean = false,
+                         // Chrome's ozone backend ("x11", "wayland", "auto"). On Wayland
+                         // desktops Chrome ignores DISPLAY unless forced to x11, which
+                         // virtual-display sessions require.
+                         ozonePlatform: Option[String] = None,
                          windowSize: Option[(Int, Int)] = None,
+                         windowPosition: Option[(Int, Int)] = None,
+                         // Extra environment variables for the browser process (e.g. DISPLAY
+                         // for per-session virtual displays)
+                         env: Map[String, String] = Map.empty,
                          forceDeviceScaleFactor: Option[Int] = None,
                          proxyServer: Option[(String, Int)] = None,
                          // SOCKS5/HTTP proxy credentials, supplied via CDP Fetch auth
@@ -44,6 +67,9 @@ case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Defau
                          proxyCredentials: Option[(String, String)] = None,
                          proxyBypassList: List[String] = Nil,
                          disableFeatures: List[String] = Nil,
+                         // Escape hatch: arbitrary Chrome switches appended after every
+                         // structured option.
+                         extraArgs: List[String] = Nil,
                          disablePDFExtension: Boolean = true) {
   private def o(b: Boolean, s: String): List[String] = if (b) {
     List(s)
@@ -84,6 +110,7 @@ case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Defau
     o(singleProcess, "--single-process"),
     o(disableCache, "--disable-cache"),
     o(enableAutomation, "--enable-automation"),
+    o(testType, "--test-type"),
     o(startMaximized, "--start-maximized"),
     o(hideScrollbars, "--hide-scrollbars"),
     o(incognito, "--incognito"),
@@ -95,18 +122,26 @@ case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Defau
     loggingPath.map(p => s"--log-net-log=${p.getAbsolutePath}").toList,
     o(noSandbox, "--no-sandbox"),
     o(disablePDFExtension, "--disable-pdf-extension"),
+    o(kiosk, "--kiosk"),
+    ozonePlatform.map(p => s"--ozone-platform=$p").toList,
     windowSize.map { case (w, h) => s"--window-size=$w,$h" }.toList,
+    windowPosition.map { case (x, y) => s"--window-position=$x,$y" }.toList,
     forceDeviceScaleFactor.map(f => s"--force-device-scale-factor=$f").toList,
     List(s"--user-data-dir=${userDataDir.getAbsolutePath}"),
     proxyServer.map { case (host, port) => s"--proxy-server=$host:$port" }.toList,
     l("--proxy-bypass-list", proxyBypassList),
-    l("--disable-features", disableFeatures)
+    l("--disable-features", disableFeatures),
+    extraArgs
   ).flatten
 
   private[robobrowser] def prepareUserDataDir(): Unit = {
     Files.createDirectories(userDataDir.toPath)
-    if (disablePDFExtension) {
-      BrowserConfig.ensurePdfPreferences(userDataDir.toPath)
+    val desired = List(
+      if (disablePDFExtension) Some(BrowserConfig.pdfPreferences) else None,
+      if (!passwordManager) Some(BrowserConfig.passwordManagerDisabledPreferences) else None
+    ).flatten
+    if (desired.nonEmpty) {
+      BrowserConfig.ensurePreferences(userDataDir.toPath, desired.reduce(_.merge(_)))
     }
   }
 }
@@ -121,7 +156,29 @@ object BrowserConfig {
   private val DefaultProfileDirectory = "Default"
   private val PreferencesFileName = "Preferences"
 
-  private def ensurePdfPreferences(userDataDir: Path): Unit = synchronized {
+  private[robobrowser] val pdfPreferences = obj(
+    "download" -> obj(
+      "open_pdf_in_system_reader" -> true,
+      "prompt_for_download" -> false
+    ),
+    "plugins" -> obj(
+      "always_open_pdf_externally" -> true,
+      "plugins_disabled" -> arr(str("Chrome PDF Viewer"))
+    )
+  )
+
+  /** Prefs that stop Chrome offering to save credentials — the bubble
+    * renders inside the content area, so capture/kiosk sessions must
+    * suppress it at the profile level (no CLI switch exists that
+    * doesn't also add the automation infobar). */
+  private[robobrowser] val passwordManagerDisabledPreferences = obj(
+    "credentials_enable_service" -> false,
+    "profile" -> obj(
+      "password_manager_enabled" -> false
+    )
+  )
+
+  private[robobrowser] def ensurePreferences(userDataDir: Path, desired: fabric.Json): Unit = synchronized {
     val profileDir = userDataDir.resolve(DefaultProfileDirectory)
     Files.createDirectories(profileDir)
     val preferencesPath = profileDir.resolve(PreferencesFileName)
@@ -131,17 +188,6 @@ object BrowserConfig {
     } else {
       obj()
     }
-
-    val desired = obj(
-      "download" -> obj(
-        "open_pdf_in_system_reader" -> true,
-        "prompt_for_download" -> false
-      ),
-      "plugins" -> obj(
-        "always_open_pdf_externally" -> true,
-        "plugins_disabled" -> arr(str("Chrome PDF Viewer"))
-      )
-    )
 
     val merged = existing.merge(desired)
     Files.writeString(preferencesPath, JsonFormatter.Compact(merged))
