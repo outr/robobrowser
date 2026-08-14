@@ -202,20 +202,28 @@ transmits 640x400.
    CSS resolves to the mobile breakpoints a `390x844` target implies. A target
    equal to the display clears the override instead, leaving the kiosk window's
    native render path untouched.
-2. **Capture** — `ximagesrc startx/starty/endx/endy` reads back that same
-   rectangle. The captured frame *is* the target, so nothing is padded and no
+2. **Capture** — `ximagesrc` always captures the whole display and a named
+   `videocrop` (`capture-crop`) carves that same rectangle out of it, anchored
+   top-left. The cropped frame *is* the target, so nothing is padded and no
    letterbox exists to remove.
-3. **Encode** — the encoder is configured from the target, with `maxWidth` /
-   `maxHeight` applied on top as before. `StreamStats.width`/`height` report the
-   result.
+3. **Encode** — a named capsfilter (`encode-caps`) pins what the encoder
+   receives: the target with `maxWidth` / `maxHeight` applied on top as before.
+   The filter is present even when the two already match, so there is always a
+   caps property to swap. `StreamStats.width`/`height` report the result.
 
-`StreamSession.resize` runs all three again and rebuilds the pipeline, then emits
-a fresh offer on the session's existing signaling channel for the viewer to
-answer. Rebuild rather than reconfigure: `webrtcbin` owns the encoder branch's
-caps negotiation, and swapping a live capture chain's dimensions underneath it is
-far less predictable than one clean teardown behind the same session object.
-Listeners, stats, and the input DataChannel all survive; the viewer sees a
-renegotiation, not a new session.
+`StreamSession.resize` runs all three again **in place**. On the session's
+GStreamer dispatcher it sets the crop insets from the display and the new target,
+swaps `encode-caps`, and pushes an upstream force-key-unit event into the encoder
+so the viewer repaints at the new resolution immediately rather than at the next
+GOP boundary. Both properties are settable while the pipeline plays.
+
+Nothing renegotiates. `webrtcbin`, its DTLS session, its ICE credentials and the
+input DataChannel are untouched, so the session emits exactly one offer for its
+whole lifetime and the viewer keeps decoding the track it already has — no black
+frame, no re-handshake. This is possible because H.264 carries resolution in-band
+(SPS/PPS on every IDR, re-injected by `h264parse config-interval=-1`) and the RTP
+caps are resolution-independent: the SDP has nothing new to say about a size
+change. A viewer's `<video>` element picks the new intrinsic size up on its own.
 
 ### Why the display is a bound, not a knob
 

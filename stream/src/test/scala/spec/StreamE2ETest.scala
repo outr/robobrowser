@@ -14,9 +14,14 @@ import scala.concurrent.duration.DurationInt
   * streamed via the demo server; a second, headless RoboBrowser acts as the
   * viewer. Asserts: WebRTC connects, video frames advance, a DataChannel click
   * lands on a page element in the streamed browser, typed keys arrive in its
-  * focused input, and the latency harness reports a plausible value.
+  * focused input, a mid-stream resize keeps the very same peer connection alive
+  * (no second offer, no state change, frames keep advancing at the new
+  * resolution), and the latency harness reports a plausible value.
   * Run: sbt "stream/Test/runMain spec.StreamE2ETest" */
 object StreamE2ETest extends RapidApp {
+  private val ResizeWidth = 960
+  private val ResizeHeight = 600
+
   private val TestPage =
     "data:text/html,<html><body style='margin:0'>" +
       "<button id='b' style='position:absolute;left:100px;top:100px;width:200px;height:80px;font-size:30px' " +
@@ -86,6 +91,7 @@ object StreamE2ETest extends RapidApp {
             _ <- waitFor(viewer, "typed text arrived in streamed input") {
               streamed.eval("return document.getElementById('i').value").map(_("result")("value").asString == "hi")
             }
+            _ <- resizeKeepsTheConnection(streamed, viewer)
             _ <- waitFor(viewer, "latency harness reporting") {
               viewer.eval("return window.viewer.latency === null ? -1 : window.viewer.latency")
                 .map { json =>
@@ -109,6 +115,46 @@ object StreamE2ETest extends RapidApp {
       // non-daemon and would keep the forked JVM alive after main completes
       Task(System.exit(0))
     }
+
+  /** A mid-stream resize reconfigures the live pipeline, so the peer connection
+    * the viewer already has is the one it keeps: no second offer to answer, no
+    * `connectionState` transition, and frames still advancing — at the new
+    * resolution, which H.264 carries in-band. */
+  private def resizeKeepsTheConnection(streamed: RoboBrowser, viewer: RoboBrowser): Task[Unit] = for {
+    _ <- viewer.eval(
+      """window.states = [];
+        |window.viewer.pc.addEventListener('connectionstatechange',
+        |  () => window.states.push(window.viewer.pc.connectionState));
+        |return true;""".stripMargin)
+    before <- viewer.eval("return window.viewer.frames").map(_("result")("value").asInt)
+    session <- Task(streamed.stream.sessions.headOption.getOrElse(
+      throw new RuntimeException("E2E: no live stream session to resize")))
+    _ <- session.resize(ResizeWidth, ResizeHeight)
+    _ <- waitFor(viewer, "frames advancing past the resize") {
+      viewer.eval("return window.viewer.frames").map(_("result")("value").asInt > before + 10)
+    }
+    _ <- waitFor(viewer, s"viewer decoding ${ResizeWidth}x$ResizeHeight") {
+      viewer.eval("return window.viewer.videoWidth").map(_("result")("value").asInt == ResizeWidth)
+    }
+    intact <- viewer.eval(
+      """return window.viewer.pc.connectionState === 'connected' &&
+        |  window.states.length === 0 &&
+        |  window.viewer.log.filter(t => t === 'offer').length === 1;""".stripMargin)
+      .map(_("result")("value").asBoolean)
+    _ <- if (intact) {
+      logger.info("E2E: resize kept the peer connection OK")
+    } else {
+      viewer.eval(
+        """return JSON.stringify({
+          |  connectionState: window.viewer.pc.connectionState,
+          |  stateTrail: window.states,
+          |  signalLog: window.viewer.log
+          |})""".stripMargin)
+        .map(_("result")("value").asString)
+        .flatMap(diagnostics => Task.error[Unit](
+          new RuntimeException(s"E2E: the resize disturbed the peer connection: $diagnostics")))
+    }
+  } yield ()
 
   private def waitFor(browser: RoboBrowser, description: String,
                       timeout: Long = 30000)(check: Task[Boolean]): Task[Unit] = {

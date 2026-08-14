@@ -4,9 +4,11 @@ import com.sun.jna.Pointer
 import fabric.Json
 import fabric.io.JsonParser
 import fabric.rw._
+import org.freedesktop.gstreamer.event.EventType
 import org.freedesktop.gstreamer.lowlevel.GstAPI.GstCallback
+import org.freedesktop.gstreamer.lowlevel.{GObjectAPI, GstEventAPI, GstStructureAPI}
 import org.freedesktop.gstreamer.webrtc.{WebRTCBin, WebRTCSDPType, WebRTCSessionDescription}
-import org.freedesktop.gstreamer.{Bus, Element, Gst, GstObject, Pipeline, Promise, SDPMessage, State, Structure}
+import org.freedesktop.gstreamer.{Bus, Caps, Element, Gst, GstObject, Pipeline, Promise, SDPMessage, State, Structure}
 import rapid._
 import reactify.{Channel, Val, Var}
 import robobrowser.RoboBrowser
@@ -49,8 +51,8 @@ class StreamSession private(browser: RoboBrowser,
   private val _stopped: Var[Boolean] = Var(false)
   def stopped: Val[Boolean] = _stopped
 
-  // Render geometry is per-pipeline state: `resize` tears the pipeline down and
-  // rebuilds it against a new target, so these move with it.
+  // Render geometry follows `resize`, which reconfigures the running pipeline's
+  // crop and encoder caps rather than rebuilding it.
   @volatile private var target: RenderSize = initialTarget
   @volatile private var encoded: RenderSize = PipelineBuilder.encodeSize(initialTarget, config)
   @volatile private var router: InputRouter = new InputRouter(browser, target, encoded, deviceScaleFactor = 1.0)
@@ -92,8 +94,8 @@ class StreamSession private(browser: RoboBrowser,
       if (negotiated.compareAndSet(false, true)) {
         webrtc.createOffer(offerCreated)
       } else {
-        // The topology is fixed for a given render size; the only legitimate
-        // renegotiation is a `resize`, which resets the flag as it rebuilds.
+        // The topology is fixed for the session's lifetime — even a resize only
+        // reconfigures elements — so there is nothing left to negotiate.
         scribe.warn("Ignoring repeat on-negotiation-needed for an unchanged pipeline")
       }
     }
@@ -292,17 +294,17 @@ class StreamSession private(browser: RoboBrowser,
    * Change the size the page is rendered and captured at, mid-session.
    *
    * The page re-lays-out at the new size (CDP device-metrics emulation, cleared
-   * when the target is the whole display again), the capture region and encoder
-   * caps follow, and a fresh offer is emitted through the same signaling channel
-   * for the viewer to answer. Any aspect ratio is honoured verbatim — a portrait
-   * target produces portrait video, not a letterboxed landscape frame.
+   * when the target is the whole display again) and the running pipeline follows
+   * it: the capture crop and the caps pinning the encoder's input are swapped
+   * while it plays. Any aspect ratio is honoured verbatim — a portrait target
+   * produces portrait video, not a letterboxed landscape frame.
    *
-   * The pipeline is rebuilt rather than reconfigured: `webrtcbin` owns the
-   * encoder branch's caps negotiation, and swapping a live capture chain's
-   * dimensions underneath it is far less predictable than one clean teardown and
-   * rebuild behind the same session object. The viewer sees a renegotiation, not
-   * a new session — [[toClient]] listeners, stats and the input DataChannel all
-   * survive.
+   * Nothing renegotiates. `webrtcbin`, its DTLS session, its ICE credentials and
+   * the input DataChannel are untouched, so no second offer is emitted and the
+   * viewer keeps decoding the track it already has. H.264 carries resolution
+   * in-band — SPS/PPS ride every IDR, re-injected by `h264parse
+   * config-interval=-1` — and the RTP caps are resolution-independent, so the
+   * SDP has nothing new to say.
    *
    * A target larger than the virtual display is attempted as a display resize
    * first and raises
@@ -318,18 +320,47 @@ class StreamSession private(browser: RoboBrowser,
       Task.unit
     } else {
       StreamSession.fitDisplay(display, requested)
-        .flatMap(_ => dispatcherTask(teardownPipeline()))
         .flatMap(_ => StreamSession.applyRenderTarget(browser, display, requested))
-        .flatMap(_ => dispatcherTask {
-          target = requested
-          encoded = PipelineBuilder.encodeSize(requested, config)
-          router = new InputRouter(browser, target, encoded, deviceScaleFactor = 1.0)
-          negotiated.set(false)
-          start(StreamSession.describe(display, config.copy(width = Some(requested.width),
-            height = Some(requested.height)), encoder))
-        })
+        .flatMap(_ => dispatcherTask(reconfigure(requested)))
     }
   }
+
+  /** Dispatcher-confined reconfiguration of the playing pipeline: crop the new
+    * target out of the display capture, re-pin what the encoder receives, then
+    * force an IDR so the viewer repaints at the new resolution immediately
+    * rather than at the next GOP boundary. */
+  private def reconfigure(requested: RenderSize): Unit = {
+    val region = CropRegion(StreamSession.displaySize(display), requested)
+    val requestedEncoded = PipelineBuilder.encodeSize(requested, config)
+    Option(pipeline.getElementByName(PipelineBuilder.CropName)).foreach { crop =>
+      crop.set("left", region.left)
+      crop.set("top", region.top)
+      crop.set("right", region.right)
+      crop.set("bottom", region.bottom)
+    }
+    Option(pipeline.getElementByName(PipelineBuilder.ScaleCapsName)).foreach { filter =>
+      // capsfilter's `caps` is a boxed GstCaps, which GObject.set doesn't
+      // marshal; g_object_set takes the pointer directly
+      GObjectAPI.GOBJECT_API.g_object_set(filter, "caps",
+        Caps.fromString(PipelineBuilder.encodeCaps(encoder, requestedEncoded)), null)
+    }
+    forceKeyframe()
+    target = requested
+    encoded = requestedEncoded
+    router = new InputRouter(browser, target, encoded, deviceScaleFactor = 1.0)
+    scribe.info(s"Stream reconfigured to $requested (encoded $encoded, crop ${region.launchArgs})")
+  }
+
+  /** The same upstream force-key-unit event webrtcbin's rtpbin synthesizes from
+    * a client PLI, sent straight at the encoder's source pad. `all-headers`
+    * makes the IDR carry a fresh SPS/PPS describing the new resolution. */
+  private def forceKeyframe(): Unit = Option(pipeline.getElementByName(PipelineBuilder.EncoderName))
+    .flatMap(element => Option(element.getStaticPad("src")))
+    .foreach { pad =>
+      val structure = GstStructureAPI.GSTSTRUCTURE_API
+        .gst_structure_from_string("GstForceKeyUnit, all-headers=(boolean)true", null)
+      pad.sendEvent(GstEventAPI.GSTEVENT_API.gst_event_new_custom(EventType.CUSTOM_UPSTREAM, structure))
+    }
 
   /** Idempotent teardown of this session's pipeline. The Xvfb display belongs
     * to the browser and is disposed by `browser.dispose()`, not here. */
@@ -349,9 +380,9 @@ class StreamSession private(browser: RoboBrowser,
     }.guarantee(Task(dispatcher.shutdown()))
   }
 
-  /** Dispatcher-confined native teardown, shared by [[stop]] and [[resize]].
-    * Blocks until the state change completes so the display capture and encoder
-    * are genuinely released before anything rebuilds on top of them. */
+  /** Dispatcher-confined native teardown. Blocks until the state change
+    * completes so the display capture and encoder are genuinely released before
+    * the session object is discarded. */
   private def teardownPipeline(): Unit = {
     channel.foreach { dc =>
       Try(dc.closeChannel())

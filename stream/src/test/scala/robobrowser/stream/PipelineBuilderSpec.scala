@@ -54,6 +54,16 @@ class PipelineBuilderSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "PipelineBuilder.encodeCaps" should {
+    "be exactly what the launch description pins, so a resize swaps in the same shape" in {
+      val config = StreamConfig(width = Some(1280), height = Some(820))
+      List("vah264enc", "vaapih264enc", "nvh264enc", "x264enc").foreach { encoder =>
+        PipelineBuilder.description(":100", fullHd, config, encoder)
+          .should(include(s"caps=${PipelineBuilder.encodeCaps(encoder, RenderSize(1280, 820))}"))
+      }
+    }
+  }
+
   "PipelineBuilder.description" should {
     val base = PipelineBuilder.description(":100", fullHd, StreamConfig(), "x264enc")
 
@@ -77,44 +87,56 @@ class PipelineBuilderSpec extends AnyWordSpec with Matchers {
         .should(include("video/x-raw,framerate=30/1"))
     }
     "map bitrate to kbit/s with zerolatency x264 settings" in {
-      base.should(include("x264enc tune=zerolatency speed-preset=ultrafast bitrate=8000 key-int-max=120 bframes=0"))
+      base.should(include("x264enc name=video-encoder tune=zerolatency speed-preset=ultrafast " +
+        "bitrate=8000 key-int-max=120 bframes=0"))
       base.should(include("video/x-h264,profile=constrained-baseline"))
     }
-    "skip the scale caps at native size" in {
-      base.shouldNot(include("width="))
-    }
-    "capture the whole display when no target is configured" in {
+    "always capture the whole display, never a region" in {
       base.shouldNot(include("startx="))
+      PipelineBuilder.description(":100", fullHd, StreamConfig(width = Some(390), height = Some(844)), "x264enc")
+        .shouldNot(include("startx="))
     }
-    "add scale caps when downscaling" in {
+    "pin the encode caps even at native size, so a resize has caps to swap" in {
+      base.should(include("capsfilter name=encode-caps caps=video/x-raw,format=I420,width=1920,height=1080"))
+    }
+    "leave the crop open at native size" in {
+      base.should(include("videocrop name=capture-crop left=0 top=0 right=0 bottom=0"))
+    }
+    "narrow the encode caps when downscaling" in {
       PipelineBuilder.description(":100", fullHd, StreamConfig(maxWidth = Some(1280)), "x264enc")
-        .should(include("video/x-raw,format=I420,width=1280,height=720"))
+        .should(include("capsfilter name=encode-caps caps=video/x-raw,format=I420,width=1280,height=720"))
     }
     "crop the capture to a portrait target and encode it at that size" in {
       val portrait = PipelineBuilder.description(":100", fullHd,
         StreamConfig(width = Some(390), height = Some(844)), "x264enc")
-      portrait.should(include("startx=0 starty=0 endx=389 endy=843"))
-      // No scale caps: the encoded frame is the captured rectangle, so a
-      // non-16:9 target is never padded out to the display's aspect
-      portrait.shouldNot(include("width="))
+      portrait.should(include("videocrop name=capture-crop left=0 top=0 right=1530 bottom=236"))
+      // The encoded frame is the cropped rectangle, so a non-16:9 target is
+      // never padded out to the display's aspect
+      portrait.should(include("capsfilter name=encode-caps caps=video/x-raw,format=I420,width=390,height=844"))
     }
     "crop to the target and still honour the encoder caps" in {
       val portrait = PipelineBuilder.description(":100", fullHd,
         StreamConfig(width = Some(390), height = Some(844), maxHeight = Some(422)), "x264enc")
-      portrait.should(include("startx=0 starty=0 endx=389 endy=843"))
-      portrait.should(include("video/x-raw,format=I420,width=194,height=422"))
+      portrait.should(include("videocrop name=capture-crop left=0 top=0 right=1530 bottom=236"))
+      portrait.should(include("capsfilter name=encode-caps caps=video/x-raw,format=I420,width=194,height=422"))
     }
     "crop for a landscape target that is not the display's aspect" in {
       PipelineBuilder.description(":100", fullHd, StreamConfig(width = Some(1280), height = Some(820)), "x264enc")
-        .should(include("startx=0 starty=0 endx=1279 endy=819"))
+        .should(include("videocrop name=capture-crop left=0 top=0 right=640 bottom=260"))
     }
     "use VAMemory caps and GPU scaling for vah264enc" in {
       val va = PipelineBuilder.description(":100", fullHd, StreamConfig(maxWidth = Some(1280)), "vah264enc")
       va.should(include("vapostproc"))
-      va.should(include("video/x-raw(memory:VAMemory),format=NV12,width=1280,height=720"))
-      va.should(include("vah264enc rate-control=cbr bitrate=8000"))
+      va.should(include("capsfilter name=encode-caps caps=video/x-raw(memory:VAMemory),format=NV12,width=1280,height=720"))
+      va.should(include("vah264enc name=video-encoder rate-control=cbr bitrate=8000"))
       va.should(include("video/x-h264,profile=constrained-baseline"))
       va.shouldNot(include("videoscale"))
+    }
+    "name the encoder on every branch so a resize can force a keyframe through it" in {
+      List("vah264enc", "vaapih264enc", "nvh264enc", "x264enc").foreach { encoder =>
+        PipelineBuilder.description(":100", fullHd, StreamConfig(), encoder)
+          .should(include(s"$encoder name=video-encoder"))
+      }
     }
     "pin a browser-compatible profile on every encoder" in {
       List("vah264enc", "nvh264enc", "x264enc").foreach { encoder =>
@@ -124,7 +146,8 @@ class PipelineBuilderSpec extends AnyWordSpec with Matchers {
     }
     "use ultra-low-latency NVENC settings" in {
       PipelineBuilder.description(":100", fullHd, StreamConfig(), "nvh264enc")
-        .should(include("nvh264enc preset=p1 tune=ultra-low-latency zerolatency=true rc-mode=cbr bitrate=8000"))
+        .should(include("nvh264enc name=video-encoder preset=p1 tune=ultra-low-latency zerolatency=true " +
+          "rc-mode=cbr bitrate=8000"))
     }
     "end at the named webrtcbin with RTP payloading" in {
       base.should(include("rtph264pay pt=96 config-interval=-1 aggregate-mode=zero-latency mtu=1200"))

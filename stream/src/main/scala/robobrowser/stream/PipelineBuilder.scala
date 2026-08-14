@@ -2,7 +2,7 @@ package robobrowser.stream
 
 /** Pure construction of the GStreamer launch description for a stream session
   * (kept side-effect free so it's testable without Gst.init). One pipeline per
-  * session: display capture -> encode -> RTP -> webrtcbin.
+  * session: display capture -> crop -> encode -> RTP -> webrtcbin.
   *
   * Design notes (element properties verified against GStreamer 1.28):
   *  - `use-damage=true`: frames are produced only when the page changes; a
@@ -15,16 +15,31 @@ package robobrowser.stream
   *    `min-force-key-unit-interval` (where available) throttles PLI storms.
   *  - Enum-valued properties are set in the launch string, not via GObject.set
   *    (GValue enum marshalling from the JVM is the flaky path).
-  *  - A render target smaller than the display becomes an `ximagesrc` region
-  *    anchored top-left, matching where CDP device-metrics emulation paints the
-  *    emulated viewport. The captured rectangle is the target exactly, so a
-  *    non-16:9 target never letterboxes. */
+  *  - The whole display is always captured and the render target is carved out
+  *    of it by a named `videocrop` anchored top-left, matching where CDP
+  *    device-metrics emulation paints the emulated viewport. The cropped
+  *    rectangle is the target exactly, so a non-16:9 target never letterboxes.
+  *  - A named capsfilter always pins the resolution the encoder receives, even
+  *    when it already matches the crop. Both the crop insets and those caps are
+  *    settable while the pipeline plays, which is what lets
+  *    [[StreamSession.resize]] reconfigure in place: webrtcbin, its DTLS
+  *    session, its ICE credentials and the input DataChannel are never
+  *    disturbed, and no second offer is emitted. */
 private[stream] object PipelineBuilder {
   val WebRTCBinName: String = "webrtc"
 
   /** Identity element after capture whose handoff signal feeds fps accounting
     * and the latency harness (a wallclock stamp per captured frame). */
   val TapName: String = "capture-tap"
+
+  /** Crops the full-display capture down to the render target. */
+  val CropName: String = "capture-crop"
+
+  /** Pins the resolution handed to the encoder. */
+  val ScaleCapsName: String = "encode-caps"
+
+  /** The H.264 encoder, named so a resize can force an IDR out of it. */
+  val EncoderName: String = "video-encoder"
 
   /** The rectangle of the display this session renders and captures: the
     * configured target when set, the whole display otherwise. */
@@ -45,6 +60,19 @@ private[stream] object PipelineBuilder {
 
   def fps(config: StreamConfig): Int = math.max(1, math.min(config.maxFps, 60))
 
+  /** The caps [[ScaleCapsName]] pins for `size`, in the memory space and pixel
+    * format its encoder branch consumes. A resize swaps the property to exactly
+    * this string, so the running pipeline and a freshly built one agree. */
+  def encodeCaps(encoder: String, size: RenderSize): String = {
+    val dimensions = s"width=${size.width},height=${size.height}"
+    encoder match {
+      case "vah264enc" => s"video/x-raw(memory:VAMemory),format=NV12,$dimensions"
+      case "vaapih264enc" => s"video/x-raw,$dimensions"
+      case "nvh264enc" => s"video/x-raw,format=NV12,$dimensions"
+      case _ => s"video/x-raw,format=I420,$dimensions"
+    }
+  }
+
   def description(displayName: String,
                   display: RenderSize,
                   config: StreamConfig,
@@ -54,9 +82,6 @@ private[stream] object PipelineBuilder {
     val frameRate = fps(config)
     val kbps = math.max(1, config.maxBitrate / 1000)
     val gop = frameRate * 2
-    val needsScale = encoded != target
-    val width = encoded.width
-    val height = encoded.height
 
     val webrtcTail = {
       val stun = config.stunServer.map(s => s" stun-server=$s").getOrElse("")
@@ -64,43 +89,34 @@ private[stream] object PipelineBuilder {
       s"webrtcbin name=$WebRTCBinName bundle-policy=max-bundle latency=40$stun$turn"
     }
 
-    val region = if (target == display) {
-      ""
-    } else {
-      s" startx=0 starty=0 endx=${target.width - 1} endy=${target.height - 1}"
-    }
-
     val head =
-      s"ximagesrc display-name=$displayName use-damage=true show-pointer=${config.showPointer}$region ! " +
+      s"ximagesrc display-name=$displayName use-damage=true show-pointer=${config.showPointer} ! " +
         s"video/x-raw,framerate=$frameRate/1 ! queue max-size-buffers=2 leaky=downstream ! " +
-        s"identity name=$TapName signal-handoffs=true silent=true"
+        s"identity name=$TapName signal-handoffs=true silent=true ! " +
+        s"videocrop name=$CropName ${CropRegion(display, target).launchArgs}"
+
+    val scaleCaps = s"capsfilter name=$ScaleCapsName caps=${encodeCaps(encoder, encoded)}"
 
     val encodeTail = encoder match {
       case "vah264enc" =>
-        val caps = if (needsScale) s",width=$width,height=$height" else ""
         // vapostproc scales on the GPU, so no videoscale on this branch
-        "videoconvert ! vapostproc ! " +
-          s"video/x-raw(memory:VAMemory),format=NV12$caps ! " +
-          s"vah264enc rate-control=cbr bitrate=$kbps cpb-size=$kbps key-int-max=$gop " +
+        s"videoconvert ! vapostproc ! $scaleCaps ! " +
+          s"vah264enc name=$EncoderName rate-control=cbr bitrate=$kbps cpb-size=$kbps key-int-max=$gop " +
           "b-frames=0 ref-frames=1 target-usage=6 min-force-key-unit-interval=500000000 ! " +
           // Without a profile pin the encoder may offer a profile the browser
           // rejects, killing the whole bundle (the video m-line carries ICE)
           "video/x-h264,profile=constrained-baseline"
       case "vaapih264enc" =>
-        val scale = if (needsScale) s"videoscale ! video/x-raw,width=$width,height=$height ! " else ""
-        s"videoconvert ! ${scale}vaapih264enc rate-control=cbr bitrate=$kbps keyframe-period=$gop max-bframes=0"
+        s"videoconvert ! videoscale ! $scaleCaps ! " +
+          s"vaapih264enc name=$EncoderName rate-control=cbr bitrate=$kbps keyframe-period=$gop max-bframes=0"
       case "nvh264enc" =>
-        val caps = if (needsScale) s",width=$width,height=$height" else ""
-        "videoconvert ! videoscale ! " +
-          s"video/x-raw,format=NV12$caps ! " +
-          s"nvh264enc preset=p1 tune=ultra-low-latency zerolatency=true rc-mode=cbr bitrate=$kbps " +
+        s"videoconvert ! videoscale ! $scaleCaps ! " +
+          s"nvh264enc name=$EncoderName preset=p1 tune=ultra-low-latency zerolatency=true rc-mode=cbr bitrate=$kbps " +
           s"gop-size=$gop bframes=0 repeat-sequence-header=true min-force-key-unit-interval=500000000 ! " +
           "video/x-h264,profile=constrained-baseline"
       case _ =>
-        val caps = if (needsScale) s",width=$width,height=$height" else ""
-        "videoconvert n-threads=4 ! videoscale ! " +
-          s"video/x-raw,format=I420$caps ! " +
-          s"x264enc tune=zerolatency speed-preset=ultrafast bitrate=$kbps key-int-max=$gop " +
+        s"videoconvert n-threads=4 ! videoscale ! $scaleCaps ! " +
+          s"x264enc name=$EncoderName tune=zerolatency speed-preset=ultrafast bitrate=$kbps key-int-max=$gop " +
           "bframes=0 vbv-buf-capacity=500 threads=4 sliced-threads=true ! " +
           "video/x-h264,profile=constrained-baseline"
     }

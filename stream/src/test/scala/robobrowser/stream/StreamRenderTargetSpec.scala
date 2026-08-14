@@ -20,8 +20,9 @@ import scala.jdk.CollectionConverters.*
  * The target is the size the page lays out at and the exact rectangle captured,
  * so a portrait target streams portrait video: the SDP's negotiated resolution
  * and the session's stats both carry it, and neither is coerced back to the
- * display's aspect. A mid-session resize rebuilds the pipeline and emits a fresh
- * offer on the same signaling channel.
+ * display's aspect. A mid-session resize reconfigures that pipeline in place and
+ * emits no second offer — the one negotiated session carries the new resolution
+ * in-band.
  *
  * Self-skips (with the reason) when the host can't stream.
  */
@@ -135,8 +136,10 @@ class StreamRenderTargetSpec extends AnyWordSpec with Matchers with BeforeAndAft
         viewportSize shouldBe "1280x820"
         mobileLayout shouldBe false
 
-        val renegotiated = awaitOffer(signals, atLeast = 2, timeoutMs = 60_000)
-        renegotiated should have size 2
+        // The resize reconfigures the live pipeline; webrtcbin, its DTLS
+        // fingerprint and its ICE credentials are untouched, so the session
+        // never offers a second time
+        awaitOffer(signals, atLeast = 2, timeoutMs = 5_000) should have size 1
 
         val landscapeStats = session.stats.sync()
         landscapeStats.width shouldBe Landscape.width
