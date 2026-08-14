@@ -256,6 +256,38 @@ into the captured pixels, and Chrome clamps a top-level window to a 500px minimu
 width — a `390`-wide target is unreachable that way. Device-metrics emulation has
 neither problem.
 
+## Native object ownership
+
+Every GStreamer handle a session touches has exactly one owner, and the session
+releases what it owns at a known point instead of leaving it to gst1-java-core's
+reference reaper — a handle freed twice corrupts the process heap, and the abort
+lands at whatever allocation comes next rather than at the mistake.
+
+The binding hands back borrowed pointers as owning handles in two places on this
+path:
+
+- **Nested structures.** `Structure.getValue` returns a boxed `GstStructure` — the
+  per-transport blocks inside webrtcbin's `get-stats` reply — as a handle owning a
+  pointer that belongs to the parent. Those blocks only exist once media is
+  flowing, so a session that never had a viewer never meets this. `stats` releases
+  each block and the reply as soon as it has read them, and disposes the promise
+  the reply hangs off within the same call.
+- **Session descriptions.** The offer passed to `create-offer`'s callback belongs
+  to the promise that carried it, while `getSDPMessage` returns a copy that does
+  not. The offer is let go of unfreed; the copy is disposed.
+
+The opposite mistake leaks: `WebRTCBin.setRemoteDescription` disowns the
+description it is handed, so the answer is applied by emitting
+`set-remote-description` directly and freeing the description — which owns the
+parsed SDP message — once webrtcbin has taken its copy.
+
+Elements fetched by name, static pads, caps built for a property and the
+force-key-unit event are all references this side owns, each released where it is
+used. Teardown disconnects the bus and webrtcbin signal handlers first, closes the
+DataChannel, brings the pipeline to NULL, and only then releases the session's
+references on elements inside it. `GST_TRACERS=leaks` reports nothing alive after
+a session stops.
+
 ## Clean capture profiles
 
 Headful capture records everything Chrome draws, including its own UI. The reliable suppression levers on `BrowserConfig`:

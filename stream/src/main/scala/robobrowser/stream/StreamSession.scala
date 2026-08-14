@@ -5,6 +5,7 @@ import fabric.Json
 import fabric.io.JsonParser
 import fabric.rw._
 import org.freedesktop.gstreamer.event.EventType
+import org.freedesktop.gstreamer.glib.Natives
 import org.freedesktop.gstreamer.lowlevel.GstAPI.GstCallback
 import org.freedesktop.gstreamer.lowlevel.{GObjectAPI, GstEventAPI, GstStructureAPI}
 import org.freedesktop.gstreamer.webrtc.{WebRTCBin, WebRTCSDPType, WebRTCSessionDescription}
@@ -72,7 +73,11 @@ class StreamSession private(browser: RoboBrowser,
 
   private var pipeline: Pipeline = scala.compiletime.uninitialized
   private var webrtc: WebRTCBin = scala.compiletime.uninitialized
+  private var tap: Option[Element] = None
   private var channel: Option[WebRTCDataChannel] = None
+  // The DataChannel exists from READY, long before the peer's SCTP association
+  // does; writing to it before `on-open` fails the channel and errors sctpenc.
+  private val channelOpen = new AtomicBoolean(false)
 
   // Listener references are session fields deliberately: the binding keys its
   // JNA callback retention on these, and a collected callback is a native crash.
@@ -100,10 +105,19 @@ class StreamSession private(browser: RoboBrowser,
       }
     }
   }
+  // The offer belongs to the promise webrtcbin replied on, and getSDPMessage
+  // hands back a copy this side owns: read the text, release the copy, and let
+  // go of the borrowed description without freeing it.
   private val offerCreated = new WebRTCBin.CREATE_OFFER {
     override def onOfferCreated(offer: WebRTCSessionDescription): Unit = {
       webrtc.setLocalDescription(offer)
-      val sdp = offer.getSDPMessage.toString
+      val message = offer.getSDPMessage
+      val sdp = try {
+        message.toString
+      } finally {
+        message.dispose()
+      }
+      offer.invalidate()
       onDispatcher {
         emit(SignalMessage.Offer(sdp))
       }
@@ -111,6 +125,12 @@ class StreamSession private(browser: RoboBrowser,
   }
   private val onChannelMessage = new WebRTCDataChannel.OnMessageString {
     override def onMessage(message: String): Unit = onDispatcher(handleChannelMessage(message))
+  }
+  private val onChannelOpen = new WebRTCDataChannel.OnOpen {
+    override def onOpen(): Unit = channelOpen.set(true)
+  }
+  private val onChannelClose = new WebRTCDataChannel.OnClose {
+    override def onClose(): Unit = channelOpen.set(false)
   }
   // Latency harness: throttled wallclock capture stamps over the DataChannel;
   // the viewer diffs them against requestVideoFrameCallback arrival (with the
@@ -122,9 +142,7 @@ class StreamSession private(browser: RoboBrowser,
       val now = System.currentTimeMillis()
       val last = lastFrameStamp.get()
       if (now - last >= 1000L && lastFrameStamp.compareAndSet(last, now)) {
-        onDispatcher {
-          channel.foreach(_.sendString(s"""{"type": "frame", "t": $now}"""))
-        }
+        onDispatcher(sendToChannel(s"""{"type": "frame", "t": $now}"""))
       }
     }
   }
@@ -136,6 +154,12 @@ class StreamSession private(browser: RoboBrowser,
     } catch {
       case t: Throwable => scribe.error(s"Stream session dispatch failure: ${t.getMessage}")
     }
+  }
+
+  /** Write to the input DataChannel, silently dropping anything produced before
+    * the peer's channel opened or after it closed. */
+  private def sendToChannel(text: String): Unit = if (channelOpen.get()) {
+    channel.foreach(_.sendString(text))
   }
 
   private def emit(message: SignalMessage): Unit = if (connected) {
@@ -177,9 +201,8 @@ class StreamSession private(browser: RoboBrowser,
     pipeline.getBus.connect(busError)
     webrtc.connect(onIce)
     webrtc.connect(onNegotiation)
-    Option(pipeline.getElementByName(PipelineBuilder.TapName)).foreach { tap =>
-      tap.connect("handoff", classOf[AnyRef], tapListener, tapHandoff)
-    }
+    tap = Option(pipeline.getElementByName(PipelineBuilder.TapName))
+    tap.foreach(_.connect("handoff", classOf[AnyRef], tapListener, tapHandoff))
     // The DataChannel must exist before PLAYING triggers negotiation so it's
     // part of the initial SDP — the fixed topology is what avoids renegotiation.
     pipeline.setState(State.READY)
@@ -188,6 +211,8 @@ class StreamSession private(browser: RoboBrowser,
       throw new RuntimeException("webrtcbin create-data-channel returned null")
     }
     dc.onMessageString(onChannelMessage)
+    dc.onOpen(onChannelOpen)
+    dc.onClose(onChannelClose)
     channel = Some(dc)
     pipeline.setState(State.PLAYING)
   }
@@ -196,9 +221,7 @@ class StreamSession private(browser: RoboBrowser,
   def fromClient(message: SignalMessage): Task[Unit] = dispatcherTask {
     message match {
       case SignalMessage.Answer(sdpText) =>
-        val sdp = new SDPMessage()
-        sdp.parseBuffer(sdpText)
-        webrtc.setRemoteDescription(new WebRTCSessionDescription(WebRTCSDPType.ANSWER, sdp))
+        applyAnswer(sdpText)
         scribe.debug("Stream: client answer applied")
       case SignalMessage.Ice(index, candidate) =>
         webrtc.addIceCandidate(index, candidate)
@@ -212,13 +235,33 @@ class StreamSession private(browser: RoboBrowser,
     }
   }
 
+  /** Apply the viewer's answer, keeping one owner for each native object the
+    * exchange allocates: the description takes the parsed SDP message, webrtcbin
+    * takes a copy of the description, and this side frees the original once the
+    * signal has been handled. `WebRTCBin.setRemoteDescription` is bypassed
+    * because it disowns the description it is handed, which would strand it. */
+  private def applyAnswer(sdpText: String): Unit = {
+    val sdp = new SDPMessage()
+    sdp.parseBuffer(sdpText)
+    val description = new WebRTCSessionDescription(WebRTCSDPType.ANSWER, sdp)
+    sdp.invalidate()
+    val promise = new Promise()
+    try {
+      webrtc.emit("set-remote-description", description, promise)
+      promise.interrupt()
+    } finally {
+      promise.dispose()
+      description.dispose()
+    }
+  }
+
   /** DataChannel traffic: input events (routed to CDP dispatch when enabled)
     * plus the measurement control messages (ping echo, latency reports). */
   private def handleChannelMessage(raw: String): Unit = Try(JsonParser(raw)).toOption match {
     case Some(json) => json.get("type").map(_.asString) match {
       case Some("ping") =>
         val t = json.get("t").map(_.asLong).getOrElse(0L)
-        channel.foreach(_.sendString(s"""{"type": "pong", "t": $t, "serverT": ${System.currentTimeMillis()}}"""))
+        sendToChannel(s"""{"type": "pong", "t": $t, "serverT": ${System.currentTimeMillis()}}""")
       case Some("latency") =>
         reportedLatency = json.get("value").map(_.asDouble.millis)
       case Some(_) if config.routeInput =>
@@ -255,39 +298,56 @@ class StreamSession private(browser: RoboBrowser,
   }
 
   /** Query webrtcbin's get-stats and extract (rtt, packetsLost, bytesSent);
-    * best-effort — missing fields simply stay empty. */
+    * best-effort — missing fields simply stay empty.
+    *
+    * The reply and every per-transport structure inside it belong to the
+    * promise. gst1-java-core hands nested structures back as owning wrappers
+    * even though the pointer is borrowed, so each one is released from this
+    * side the moment it has been read; leaving them to the binding's reaper
+    * frees memory the promise frees too. The promise itself is disposed here
+    * rather than at some later collection, so the reply's lifetime ends inside
+    * this method. */
   private def webrtcStats(): (Option[FiniteDuration], Long, Option[Long]) = Try {
     val promise = new Promise()
-    webrtc.emit("get-stats", null, promise)
-    promise.waitResult()
-    val reply = promise.getReply
-    var rtt: Option[FiniteDuration] = None
-    var lost = 0L
-    var sent: Option[Long] = None
-    if (reply != null) {
-      // Numeric fields vary in GType (packets-lost is gint64, bytes-sent
-      // guint64), so everything goes through getValue + toString; each field
-      // is guarded independently so one marshalling failure can't blank the rest
-      def long(s: Structure, field: String): Option[Long] =
-        if (s.hasField(field)) Try(s.getValue(field).toString.toDouble.toLong).toOption else None
-      def double(s: Structure, field: String): Option[Double] =
-        if (s.hasField(field)) Try(s.getValue(field).toString.toDouble).toOption else None
-      (0 until reply.getFields).foreach { i =>
-        Try(reply.getValue(reply.getName(i))).toOption.collect {
-          case s: Structure => s
-        }.foreach { s =>
-          if (s.getName == "remote-inbound-rtp") {
-            double(s, "round-trip-time").foreach(seconds => rtt = Some(seconds.seconds))
-            long(s, "packets-lost").foreach(lost += _)
-          }
-          if (s.getName == "outbound-rtp") {
-            long(s, "bytes-sent").foreach(bytes => sent = Some(bytes))
+    try {
+      webrtc.emit("get-stats", null, promise)
+      promise.waitResult()
+      val reply = promise.getReply
+      var rtt: Option[FiniteDuration] = None
+      var lost = 0L
+      var sent: Option[Long] = None
+      if (reply != null) {
+        // Numeric fields vary in GType (packets-lost is gint64, bytes-sent
+        // guint64), so everything goes through getValue + toString; each field
+        // is guarded independently so one marshalling failure can't blank the rest
+        def long(s: Structure, field: String): Option[Long] =
+          if (s.hasField(field)) Try(s.getValue(field).toString.toDouble.toLong).toOption else None
+        def double(s: Structure, field: String): Option[Double] =
+          if (s.hasField(field)) Try(s.getValue(field).toString.toDouble).toOption else None
+        (0 until reply.getFields).foreach { i =>
+          Try(reply.getValue(reply.getName(i))).toOption.collect {
+            case s: Structure => s
+          }.foreach { s =>
+            try {
+              if (s.getName == "remote-inbound-rtp") {
+                double(s, "round-trip-time").foreach(seconds => rtt = Some(seconds.seconds))
+                long(s, "packets-lost").foreach(lost += _)
+              }
+              if (s.getName == "outbound-rtp") {
+                long(s, "bytes-sent").foreach(bytes => sent = Some(bytes))
+              }
+            } finally {
+              s.invalidate()
+            }
           }
         }
+        reply.invalidate()
       }
+      (rtt, lost, sent)
+    } finally {
       promise.interrupt()
+      promise.dispose()
     }
-    (rtt, lost, sent)
   }.getOrElse((None, 0L, None))
 
   /**
@@ -332,17 +392,24 @@ class StreamSession private(browser: RoboBrowser,
   private def reconfigure(requested: RenderSize): Unit = {
     val region = CropRegion(StreamSession.displaySize(display), requested)
     val requestedEncoded = PipelineBuilder.encodeSize(requested, config)
-    Option(pipeline.getElementByName(PipelineBuilder.CropName)).foreach { crop =>
+    // Every getElementByName hands back a reference this side owns; each one is
+    // released as soon as the property is set rather than left to the reaper.
+    withElement(PipelineBuilder.CropName) { crop =>
       crop.set("left", region.left)
       crop.set("top", region.top)
       crop.set("right", region.right)
       crop.set("bottom", region.bottom)
     }
-    Option(pipeline.getElementByName(PipelineBuilder.ScaleCapsName)).foreach { filter =>
+    withElement(PipelineBuilder.ScaleCapsName) { filter =>
       // capsfilter's `caps` is a boxed GstCaps, which GObject.set doesn't
-      // marshal; g_object_set takes the pointer directly
-      GObjectAPI.GOBJECT_API.g_object_set(filter, "caps",
-        Caps.fromString(PipelineBuilder.encodeCaps(encoder, requestedEncoded)), null)
+      // marshal; g_object_set takes the pointer directly and takes its own
+      // reference, so the one built here is released after the call
+      val caps = Caps.fromString(PipelineBuilder.encodeCaps(encoder, requestedEncoded))
+      try {
+        GObjectAPI.GOBJECT_API.g_object_set(filter, "caps", caps, null)
+      } finally {
+        caps.dispose()
+      }
     }
     forceKeyframe()
     target = requested
@@ -351,16 +418,37 @@ class StreamSession private(browser: RoboBrowser,
     scribe.info(s"Stream reconfigured to $requested (encoded $encoded, crop ${region.launchArgs})")
   }
 
+  /** Run `f` against a named element of this pipeline and release the reference
+    * the lookup returned. */
+  private def withElement(name: String)(f: Element => Unit): Unit =
+    Option(pipeline.getElementByName(name)).foreach { element =>
+      try {
+        f(element)
+      } finally {
+        element.dispose()
+      }
+    }
+
   /** The same upstream force-key-unit event webrtcbin's rtpbin synthesizes from
     * a client PLI, sent straight at the encoder's source pad. `all-headers`
-    * makes the IDR carry a fresh SPS/PPS describing the new resolution. */
-  private def forceKeyframe(): Unit = Option(pipeline.getElementByName(PipelineBuilder.EncoderName))
-    .flatMap(element => Option(element.getStaticPad("src")))
-    .foreach { pad =>
-      val structure = GstStructureAPI.GSTSTRUCTURE_API
-        .gst_structure_from_string("GstForceKeyUnit, all-headers=(boolean)true", null)
-      pad.sendEvent(GstEventAPI.GSTEVENT_API.gst_event_new_custom(EventType.CUSTOM_UPSTREAM, structure))
+    * makes the IDR carry a fresh SPS/PPS describing the new resolution.
+    *
+    * The event is created with a reference the binding does not take, and
+    * sending adds one it then consumes, so the spare is dropped here. */
+  private def forceKeyframe(): Unit = withElement(PipelineBuilder.EncoderName) { element =>
+    Option(element.getStaticPad("src")).foreach { pad =>
+      try {
+        val structure = GstStructureAPI.GSTSTRUCTURE_API
+          .gst_structure_from_string("GstForceKeyUnit, all-headers=(boolean)true", null)
+        val event = GstEventAPI.GSTEVENT_API.gst_event_new_custom(EventType.CUSTOM_UPSTREAM, structure)
+        pad.sendEvent(event)
+        Natives.unref(event)
+        event.invalidate()
+      } finally {
+        pad.dispose()
+      }
     }
+  }
 
   /** Idempotent teardown of this session's pipeline. The Xvfb display belongs
     * to the browser and is disposed by `browser.dispose()`, not here. */
@@ -382,15 +470,29 @@ class StreamSession private(browser: RoboBrowser,
 
   /** Dispatcher-confined native teardown. Blocks until the state change
     * completes so the display capture and encoder are genuinely released before
-    * the session object is discarded. */
+    * the session object is discarded.
+    *
+    * Order matters: the signal handlers come off first so nothing calls back
+    * into a half-torn-down session, then the DataChannel, then the pipeline is
+    * brought to NULL, and only then are the references this session holds on
+    * elements inside it released — each exactly once, here, rather than
+    * whenever the binding's reaper next runs. */
   private def teardownPipeline(): Unit = {
+    Try(pipeline.getBus.disconnect(busError))
+    Try(webrtc.disconnect(classOf[WebRTCBin.ON_ICE_CANDIDATE], onIce))
+    Try(webrtc.disconnect(classOf[WebRTCBin.ON_NEGOTIATION_NEEDED], onNegotiation))
+    tap.foreach(element => Try(element.disconnect(classOf[AnyRef], tapListener)))
     channel.foreach { dc =>
       Try(dc.closeChannel())
       Try(dc.dispose())
     }
     channel = None
+    channelOpen.set(false)
     pipeline.setState(State.NULL)
     pipeline.getState(5, TimeUnit.SECONDS)
+    tap.foreach(element => Try(element.dispose()))
+    tap = None
+    Try(webrtc.dispose())
     pipeline.dispose()
   }
 }
