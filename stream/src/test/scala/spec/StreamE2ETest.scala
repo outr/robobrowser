@@ -1,7 +1,7 @@
 package spec
 
 import fabric.Str
-import fabric.io.JsonFormatter
+import fabric.io.{JsonFormatter, JsonParser}
 import fabric.rw._
 import rapid._
 import robobrowser.display.VirtualDisplayConfig
@@ -16,18 +16,29 @@ import scala.concurrent.duration.DurationInt
   * lands on a page element in the streamed browser, typed keys arrive in its
   * focused input, a mid-stream resize keeps the very same peer connection alive
   * (no second offer, no state change, frames keep advancing at the new
-  * resolution), and the latency harness reports a plausible value.
+  * resolution) and keeps it alive under a soak long enough for a disturbed
+  * transport to surface, and the latency harness reports a plausible value.
   * Run: sbt "stream/Test/runMain spec.StreamE2ETest" */
 object StreamE2ETest extends RapidApp {
   private val ResizeWidth = 960
   private val ResizeHeight = 600
+
+  /** Long enough to cover an SCTP association timing out after a disturbance:
+    * the failure mode this pins surfaced ~7s after a reconfigure. */
+  private val SoakDuration = 15.seconds
 
   private val TestPage =
     "data:text/html,<html><body style='margin:0'>" +
       "<button id='b' style='position:absolute;left:100px;top:100px;width:200px;height:80px;font-size:30px' " +
       "onclick=\"document.title='clicked'; document.getElementById('i').focus()\">Click me</button>" +
       "<input id='i' style='position:absolute;left:100px;top:220px;width:200px;height:40px;font-size:20px'>" +
+      "<div id='t' style='position:absolute;left:0;top:320px;font-size:40px'>0</div>" +
       "</body></html>"
+
+  /** Repaint continuously so "frames are advancing" stays a real assertion:
+    * `use-damage=true` means a static page streams almost nothing. */
+  private val Animate =
+    "window.setInterval(() => document.getElementById('t').textContent = Date.now(), 100); return true;"
 
   private def js(value: String): String = JsonFormatter.Compact(Str(value))
 
@@ -42,6 +53,7 @@ object StreamE2ETest extends RapidApp {
       for {
         _ <- streamed.navigate(TestPage)
         _ <- streamed.waitForLoaded()
+        _ <- streamed.eval(Animate)
         _ <- server.start()
         _ <- RoboBrowser.withBrowser(RoboBrowserConfig(
           browserConfig = BrowserConfig(noSandbox = true, disableGPU = true),
@@ -92,6 +104,7 @@ object StreamE2ETest extends RapidApp {
               streamed.eval("return document.getElementById('i').value").map(_("result")("value").asString == "hi")
             }
             _ <- resizeKeepsTheConnection(streamed, viewer)
+            _ <- resizeSurvivesASoak(streamed, viewer)
             _ <- waitFor(viewer, "latency harness reporting") {
               viewer.eval("return window.viewer.latency === null ? -1 : window.viewer.latency")
                 .map { json =>
@@ -153,6 +166,66 @@ object StreamE2ETest extends RapidApp {
         .map(_("result")("value").asString)
         .flatMap(diagnostics => Task.error[Unit](
           new RuntimeException(s"E2E: the resize disturbed the peer connection: $diagnostics")))
+    }
+  } yield ()
+
+  /** The reconfigure's effects on the shared WebRTC transport are not immediate:
+    * a disturbed SCTP association keeps reporting `open` and only fails once its
+    * retransmissions time out, seconds after the resize returned. So the session
+    * is left running with the capture tap writing its ~1Hz frame stamps and the
+    * viewer pinging, then everything the resize is supposed to have left alone is
+    * checked again: no pipeline error reached the bus, video still advancing, and
+    * the input DataChannel still carrying traffic in both directions — ending
+    * with a real click routed through it. */
+  private def resizeSurvivesASoak(streamed: RoboBrowser, viewer: RoboBrowser): Task[Unit] = for {
+    _ <- waitFor(viewer, "capture-tap frame stamps arriving over the DataChannel") {
+      viewer.eval("return window.viewer.frameStamps").map(_("result")("value").asInt > 0)
+    }
+    _ <- logger.info(s"E2E: soaking ${SoakDuration.toSeconds}s after the resize")
+    _ <- Task.sleep(SoakDuration)
+    _ <- viewer.eval(
+      """return JSON.stringify({
+        |  errors: window.viewer.errors,
+        |  connectionState: window.viewer.pc.connectionState,
+        |  stateTrail: window.states,
+        |  channelState: window.viewer.channelState
+        |})""".stripMargin)
+      .map(json => JsonParser(json("result")("value").asString))
+      .flatMap { state =>
+        val healthy = state("errors").asVector.isEmpty &&
+          state("connectionState").asString == "connected" &&
+          state("stateTrail").asVector.isEmpty &&
+          state("channelState").asString == "open"
+        if (healthy) {
+          logger.info("E2E: no pipeline error and the transport is intact after the soak")
+        } else {
+          Task.error[Unit](new RuntimeException(
+            s"E2E: the resize broke the session during the soak: ${JsonFormatter.Compact(state)}"))
+        }
+      }
+    marks <- viewer.eval(
+      """return JSON.stringify({
+        |  frames: window.viewer.frames,
+        |  frameStamps: window.viewer.frameStamps,
+        |  pongs: window.viewer.pongs
+        |})""".stripMargin).map(json => JsonParser(json("result")("value").asString))
+    _ <- waitFor(viewer, "video still advancing at the end of the soak", timeout = 8000) {
+      viewer.eval("return window.viewer.frames").map(_("result")("value").asInt > marks("frames").asInt + 5)
+    }
+    _ <- waitFor(viewer, "server-to-client DataChannel writes still landing", timeout = 8000) {
+      viewer.eval("return window.viewer.frameStamps").map(_("result")("value").asInt > marks("frameStamps").asInt)
+    }
+    _ <- waitFor(viewer, "DataChannel ping/pong still round-tripping", timeout = 8000) {
+      viewer.eval("return window.viewer.pongs").map(_("result")("value").asInt > marks("pongs").asInt)
+    }
+    _ <- streamed.eval("document.title = 'idle'; return true;")
+    _ <- viewer.eval(
+      """window.viewer.dcSend({type: 'mousemove', x: 200, y: 140, buttons: 0});
+        |window.viewer.dcSend({type: 'mousedown', x: 200, y: 140, button: 'left', buttons: 1, clickCount: 1, modifiers: 0});
+        |window.viewer.dcSend({type: 'mouseup', x: 200, y: 140, button: 'left', buttons: 0, clickCount: 1, modifiers: 0});
+        |return true;""".stripMargin)
+    _ <- waitFor(viewer, "post-soak click routed through the DataChannel", timeout = 10000) {
+      streamed.title.map(_ == "clicked")
     }
   } yield ()
 

@@ -25,6 +25,11 @@
   let clockOffset = null;      // clientEpoch - serverEpoch
   let rtt = null;
   let latency = null;
+  // Liveness counters for the harness: server->client writes (frame stamps) and
+  // full client->server->client round-trips (ping/pong) over the DataChannel.
+  let frameStamps = 0;
+  let pongs = 0;
+  const errors = [];
 
   const show = state => {
     status.textContent = `conn: ${state} | rtt: ${rtt === null ? '—' : rtt.toFixed(0) + 'ms'}` +
@@ -45,6 +50,7 @@
     } else if (msg.type === 'ice') {
       await pc.addIceCandidate({sdpMLineIndex: msg.sdpMLineIndex, candidate: msg.candidate});
     } else if (msg.type === 'error') {
+      errors.push(msg.message);
       status.textContent = 'server error: ' + msg.message;
     } else if (msg.type === 'bye') {
       pc.close(); ws.close();
@@ -130,15 +136,19 @@
     input.onmessage = m => {
       const msg = JSON.parse(m.data);
       if (msg.type === 'pong') {
+        pongs++;
         const now = Date.now();
         rtt = now - msg.t;
         clockOffset = ((msg.t + now) / 2) - msg.serverT;
-      } else if (msg.type === 'frame' && clockOffset !== null && video.requestVideoFrameCallback) {
-        video.requestVideoFrameCallback(() => {
-          latency = (Date.now() - clockOffset) - msg.t;
-          dcSend({type: 'latency', value: latency});
-          show(pc.connectionState);
-        });
+      } else if (msg.type === 'frame') {
+        frameStamps++;
+        if (clockOffset !== null && video.requestVideoFrameCallback) {
+          video.requestVideoFrameCallback(() => {
+            latency = (Date.now() - clockOffset) - msg.t;
+            dcSend({type: 'latency', value: latency});
+            show(pc.connectionState);
+          });
+        }
       }
     };
     input.onopen = () => setInterval(() => dcSend({type: 'ping', t: Date.now()}), 1000);
@@ -151,6 +161,10 @@
     pc,
     dcSend,
     log,
+    errors,
+    get frameStamps() { return frameStamps; },
+    get pongs() { return pongs; },
+    get channelState() { return input ? input.readyState : 'none'; },
     get rtt() { return rtt; },
     get latency() { return latency; },
     get videoWidth() { return video.videoWidth; },
