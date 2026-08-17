@@ -1,5 +1,7 @@
 package robobrowser.stream
 
+import fabric.rw._
+
 /** A pixel size — used for the virtual display's framebuffer, the render/capture
   * target within it, and the encoded video frame. */
 case class RenderSize(width: Int, height: Int) {
@@ -9,6 +11,7 @@ case class RenderSize(width: Int, height: Int) {
 }
 
 object RenderSize {
+  implicit val rw: RW[RenderSize] = RW.gen
 
   /** H.264 4:2:0 chroma subsampling requires even dimensions, so every size that
     * reaches an encoder is rounded down to the nearest even value (floored at 2). */

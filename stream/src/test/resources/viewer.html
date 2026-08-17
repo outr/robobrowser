@@ -29,6 +29,11 @@
   // full client->server->client round-trips (ping/pong) over the DataChannel.
   let frameStamps = 0;
   let pongs = 0;
+  // Where the render target sits inside the frames being decoded; the server
+  // stamps it onto the next frame message whenever it changes. On a fixed-canvas
+  // encoder branch the frame size never changes, so this is the only signal that
+  // the page inside it did.
+  let placement = null;
   const errors = [];
 
   const show = state => {
@@ -141,6 +146,10 @@
         rtt = now - msg.t;
         clockOffset = ((msg.t + now) / 2) - msg.serverT;
       } else if (msg.type === 'frame') {
+        // The stamp carries the render placement on the first one after it
+        // changes; the frame size alone can't reveal a resize on an encoder
+        // branch that keeps its canvas fixed.
+        if (msg.placement) placement = msg.placement;
         frameStamps++;
         if (clockOffset !== null && video.requestVideoFrameCallback) {
           video.requestVideoFrameCallback(() => {
@@ -156,8 +165,24 @@
 
   setInterval(() => show(pc.connectionState), 1000);
 
+  // Read one pixel of the decoded frame in its own pixel space — how the
+  // harness tells page pixels from the border a fixed encode canvas adds.
+  const sample = (x, y) => {
+    if (!video.videoWidth) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    const d = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
+    return [d[0], d[1], d[2]];
+  };
+
   // Automation hooks for the E2E test harness
   window.viewer = {
+    sample,
+    get placement() { return placement; },
+    get renderSize() { return placement ? placement.render.width + 'x' + placement.render.height : ''; },
     pc,
     dcSend,
     log,
@@ -168,6 +193,8 @@
     get rtt() { return rtt; },
     get latency() { return latency; },
     get videoWidth() { return video.videoWidth; },
+    get videoHeight() { return video.videoHeight; },
+    get videoSize() { return video.videoWidth + 'x' + video.videoHeight; },
     get frames() { return video.getVideoPlaybackQuality ? video.getVideoPlaybackQuality().totalVideoFrames : 0; }
   };
 })();

@@ -181,7 +181,7 @@ general-purpose capability.
 A session's resolution is a per-stream choice, independent of the virtual
 display it runs on. `StreamConfig.width`/`height` set the **render target**: the
 page lays out at exactly that size and exactly that rectangle of the display is
-captured, so any aspect ratio streams verbatim.
+captured, so any aspect ratio is rendered and captured verbatim.
 
 ```scala
 val session = browser.stream.start(StreamConfig(width = Some(390), height = Some(844))).sync()
@@ -204,18 +204,17 @@ transmits 640x400.
    native render path untouched.
 2. **Capture** — `ximagesrc` always captures the whole display and a named
    `videocrop` (`capture-crop`) carves that same rectangle out of it, anchored
-   top-left. The cropped frame *is* the target, so nothing is padded and no
-   letterbox exists to remove.
+   top-left. The cropped frame *is* the target, so nothing is padded.
 3. **Encode** — a named capsfilter (`encode-caps`) pins what the encoder
-   receives: the target with `maxWidth` / `maxHeight` applied on top as before.
-   The filter is present even when the two already match, so there is always a
-   caps property to swap. `StreamStats.width`/`height` report the result.
+   receives. What that is, and whether it moves when the target does, is the
+   encoder branch's `ResizeBehavior` — see below.
 
 `StreamSession.resize` runs all three again **in place**. On the session's
 GStreamer dispatcher it sets the crop insets from the display and the new target,
-swaps `encode-caps`, and pushes an upstream force-key-unit event into the encoder
-so the viewer repaints at the new resolution immediately rather than at the next
-GOP boundary. Both properties are settable while the pipeline plays.
+applies the branch's encode policy, and pushes an upstream force-key-unit event
+into the encoder so the viewer repaints the new layout immediately rather than at
+the next GOP boundary. Every property involved is settable while the pipeline
+plays.
 
 Nothing renegotiates. `webrtcbin`, its DTLS session, its ICE credentials and the
 input DataChannel are untouched, so the session emits exactly one offer for its
@@ -223,7 +222,82 @@ whole lifetime and the viewer keeps decoding the track it already has — no bla
 frame, no re-handshake. This is possible because H.264 carries resolution in-band
 (SPS/PPS on every IDR, re-injected by `h264parse config-interval=-1`) and the RTP
 caps are resolution-independent: the SDP has nothing new to say about a size
-change. A viewer's `<video>` element picks the new intrinsic size up on its own.
+change.
+
+### Two resize behaviours, one per encoder branch
+
+`PipelineBuilder.resizeBehavior` splits the encoders in two, because re-pinning a
+playing encoder is only safe on one of them.
+
+| Branch | `ResizeBehavior` | What a resize changes |
+|---|---|---|
+| `x264enc` | `Reconfigure` | crop **and** `encode-caps`; the transmitted frame becomes the new target |
+| `vah264enc`, `vaapih264enc`, `nvh264enc` | `FixedCanvas` | crop and border only; `encode-caps` never changes |
+
+**Why.** A hardware encoder allocates its surface pool per resolution, so
+re-pinning a playing one is a driver decision rather than a GStreamer one. Some
+drivers honour it. Others accept the new caps *silently* — properties set, no bus
+error, stats and pipeline accounting following the request — and keep emitting the
+resolution the pipeline was built with for the rest of the session. There is no
+diagnostic to catch it on the server side; the only observer that can see it is
+the viewer, whose `video.videoWidth` never moves. So the hardware branches simply
+never ask: `encode-caps` is pinned once, when the pipeline is built, and every
+render target is scaled into that canvas instead.
+
+**The canvas** is `PipelineBuilder.encodeCanvas`: the session's display, bounded
+per dimension by `maxWidth` / `maxHeight`. Every render target a session can reach
+is a rectangle of its display, so a canvas that size is never a downscale of any
+of them. That does mean a fixed-canvas branch encodes the canvas whatever the
+target is — a 390x844 preview on a 1920x1080 display is a 1920x1080 encode. The
+bitrate cap is unchanged (CBR), and the border compresses to nearly nothing, so
+the cost is encode pixels rather than bandwidth. A consumer that wants a cheaper
+canvas allocates a smaller virtual display or sets `maxWidth` / `maxHeight`; both
+already existed and both now bound encode cost directly.
+
+**The border** is a `videobox` (`capture-border`) sitting after the crop on those
+branches, with negative insets that square the cropped target up to the canvas's
+aspect ratio, centred. It fills with real black. Leaving the borders to the
+scaler's `add-borders` instead is *not* equivalent: the VA scaler borders with
+whatever the driver initialises its surface to, which on Mesa is a zeroed NV12
+buffer — dark green on screen. `vapostproc add-borders=true` and the
+`pixel-aspect-ratio=1/1` pin on the encode caps stay as the safety net for the
+rounding residue, so a reshaped target can never reach the encoder stretched.
+
+### Which size is which
+
+Three sizes are now distinct, and they are reported separately rather than
+conflated:
+
+- **`StreamSession.renderSize` / `StreamStats.renderSize`** — the render target.
+  The size the page laid out at and the rectangle of the display captured. This
+  is authoritative for "what was asked for", on both branches, and it is what a
+  consumer that requested a pane size should read back.
+- **`StreamSession.encodedSize` / `StreamStats.width`/`height`** — the
+  transmitted frame, which is exactly what a viewer's `video.videoWidth` /
+  `videoHeight` report. On a `Reconfigure` branch this equals the render target
+  (after `maxWidth`/`maxHeight`); on a `FixedCanvas` branch it is the canvas, and
+  it does not change for the session's lifetime.
+- **`StreamSession.placement` / `StreamStats.placement`** — a `RenderPlacement`
+  saying where the render target sits inside the transmitted frame: the content
+  sub-rectangle and its offset, with `bordered` telling you whether there is any
+  border at all. This is the crop a consumer applies to present the content
+  region alone.
+
+The session also pushes the placement to the viewer, as a `placement` field on
+the capture tap's existing throttled frame stamp — carried on the first stamp
+after it changes, and absent otherwise. On a fixed-canvas branch that field is
+the *only* signal the page behind the video changed shape, since the frame size
+deliberately does not.
+
+It rides the stamp rather than a message of its own deliberately. How many
+messages a session originates, and when, is load-bearing on this stack: an extra
+server-to-client write — at channel open, or alongside a stamp — is enough to
+disturb the SCTP association and lose viewer input. The write pattern is
+therefore exactly what it was, one throttled stamp, with a field added.
+
+Input coordinates keep arriving in transmitted-frame pixels; `InputRouter` maps
+them back through the same placement, so a click inside the content region lands
+on the page it looks like it landed on whether or not there is border around it.
 
 ### Why the display is a bound, not a knob
 

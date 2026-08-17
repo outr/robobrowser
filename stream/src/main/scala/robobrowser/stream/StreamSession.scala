@@ -1,9 +1,9 @@
 package robobrowser.stream
 
 import com.sun.jna.Pointer
-import fabric.Json
-import fabric.io.JsonParser
+import fabric.io.{JsonFormatter, JsonParser}
 import fabric.rw._
+import fabric.{Json, obj, str}
 import org.freedesktop.gstreamer.event.EventType
 import org.freedesktop.gstreamer.glib.Natives
 import org.freedesktop.gstreamer.lowlevel.GstAPI.GstCallback
@@ -53,13 +53,33 @@ class StreamSession private(browser: RoboBrowser,
   def stopped: Val[Boolean] = _stopped
 
   // Render geometry follows `resize`, which reconfigures the running pipeline's
-  // crop and encoder caps rather than rebuilding it.
+  // crop (and, on a Reconfigure branch, its encoder caps) rather than rebuilding
+  // it. The encode canvas is read once, from the display the pipeline was built
+  // against, because a FixedCanvas branch's caps are fixed for its lifetime.
+  private val behavior: ResizeBehavior = PipelineBuilder.resizeBehavior(encoder)
+  private val launchDisplay: RenderSize = StreamSession.displaySize(display)
+  private val canvas: RenderSize = PipelineBuilder.encodeCanvas(launchDisplay, config)
   @volatile private var target: RenderSize = initialTarget
-  @volatile private var encoded: RenderSize = PipelineBuilder.encodeSize(initialTarget, config)
-  @volatile private var router: InputRouter = new InputRouter(browser, target, encoded, deviceScaleFactor = 1.0)
+  @volatile private var encoded: RenderSize =
+    PipelineBuilder.encodedSize(encoder, launchDisplay, initialTarget, config)
+  @volatile private var placed: RenderPlacement = RenderPlacement.fit(target, encoded)
+  @volatile private var router: InputRouter = new InputRouter(browser, placed, deviceScaleFactor = 1.0)
 
   /** The rectangle of the display this session renders and captures. */
   def renderSize: RenderSize = target
+
+  /** The frame size this session transmits — what a viewer's video element
+    * reports. Equal to [[renderSize]] (after any encode bounds) on a
+    * [[ResizeBehavior.Reconfigure]] branch; the fixed canvas on a
+    * [[ResizeBehavior.FixedCanvas]] one, where it never changes. */
+  def encodedSize: RenderSize = encoded
+
+  /** Where [[renderSize]] sits inside [[encodedSize]]. */
+  def placement: RenderPlacement = placed
+
+  /** Whether [[encodedSize]] follows [[renderSize]] through a [[resize]] or
+    * stays put while the target is bordered into it. */
+  def resizeBehavior: ResizeBehavior = behavior
 
   private val stopping = new AtomicBoolean(false)
   private val negotiated = new AtomicBoolean(false)
@@ -78,6 +98,7 @@ class StreamSession private(browser: RoboBrowser,
   // The DataChannel exists from READY, long before the peer's SCTP association
   // does; writing to it before `on-open` fails the channel and errors sctpenc.
   private val channelOpen = new AtomicBoolean(false)
+  private val placementPending = new AtomicBoolean(true)
 
   // Listener references are session fields deliberately: the binding keys its
   // JNA callback retention on these, and a collected callback is a native crash.
@@ -142,7 +163,7 @@ class StreamSession private(browser: RoboBrowser,
       val now = System.currentTimeMillis()
       val last = lastFrameStamp.get()
       if (now - last >= 1000L && lastFrameStamp.compareAndSet(last, now)) {
-        onDispatcher(sendToChannel(s"""{"type": "frame", "t": $now}"""))
+        onDispatcher(if (channelOpen.get()) sendToChannel(JsonFormatter.Compact(stamp(now))))
       }
     }
   }
@@ -289,6 +310,8 @@ class StreamSession private(browser: RoboBrowser,
       codec = config.codec,
       width = encoded.width,
       height = encoded.height,
+      renderSize = target,
+      resizeBehavior = behavior,
       fps = fps,
       bitrate = math.max(0L, bitrate),
       rtt = rtt,
@@ -355,9 +378,17 @@ class StreamSession private(browser: RoboBrowser,
    *
    * The page re-lays-out at the new size (CDP device-metrics emulation, cleared
    * when the target is the whole display again) and the running pipeline follows
-   * it: the capture crop and the caps pinning the encoder's input are swapped
-   * while it plays. Any aspect ratio is honoured verbatim — a portrait target
-   * produces portrait video, not a letterboxed landscape frame.
+   * it: the capture crop is swapped while it plays.
+   *
+   * What reaches the viewer depends on the encoder branch's [[ResizeBehavior]].
+   * A [[ResizeBehavior.Reconfigure]] branch re-pins the caps on the encoder's
+   * input too, so the transmitted frame becomes the new target and any aspect
+   * ratio is honoured verbatim. A [[ResizeBehavior.FixedCanvas]] branch leaves
+   * those caps alone — a hardware encoder's surface pool is allocated per
+   * resolution and re-pinning a playing one is driver-dependent — and the target
+   * is scaled into the unchanging canvas instead, bordered where the aspect
+   * ratios differ. [[renderSize]] is authoritative for what was asked for either
+   * way, and [[placement]] says where it landed.
    *
    * Nothing renegotiates. `webrtcbin`, its DTLS session, its ICE credentials and
    * the input DataChannel are untouched, so no second offer is emitted and the
@@ -386,36 +417,64 @@ class StreamSession private(browser: RoboBrowser,
   }
 
   /** Dispatcher-confined reconfiguration of the playing pipeline: crop the new
-    * target out of the display capture, re-pin what the encoder receives, then
-    * force an IDR so the viewer repaints at the new resolution immediately
-    * rather than at the next GOP boundary. */
+    * target out of the display capture, re-pin what the encoder receives when
+    * this branch does that, then force an IDR so the viewer repaints the new
+    * layout immediately rather than at the next GOP boundary. */
   private def reconfigure(requested: RenderSize): Unit = {
     val region = CropRegion(StreamSession.displaySize(display), requested)
-    val requestedEncoded = PipelineBuilder.encodeSize(requested, config)
+    val requestedEncoded = PipelineBuilder.encodedSize(encoder, launchDisplay, requested, config)
     // Every getElementByName hands back a reference this side owns; each one is
     // released as soon as the property is set rather than left to the reaper.
-    withElement(PipelineBuilder.CropName) { crop =>
-      crop.set("left", region.left)
-      crop.set("top", region.top)
-      crop.set("right", region.right)
-      crop.set("bottom", region.bottom)
-    }
-    withElement(PipelineBuilder.ScaleCapsName) { filter =>
-      // capsfilter's `caps` is a boxed GstCaps, which GObject.set doesn't
-      // marshal; g_object_set takes the pointer directly and takes its own
-      // reference, so the one built here is released after the call
-      val caps = Caps.fromString(PipelineBuilder.encodeCaps(encoder, requestedEncoded))
-      try {
-        GObjectAPI.GOBJECT_API.g_object_set(filter, "caps", caps, null)
-      } finally {
-        caps.dispose()
-      }
+    withElement(PipelineBuilder.CropName)(setInsets(region))
+    PipelineBuilder.borderRegion(encoder, requested, canvas)
+      .foreach(border => withElement(PipelineBuilder.BorderName)(setInsets(border)))
+    behavior match {
+      case ResizeBehavior.Reconfigure => repinEncoderInput(requestedEncoded)
+      case ResizeBehavior.FixedCanvas => // the canvas is this pipeline's for life
     }
     forceKeyframe()
     target = requested
     encoded = requestedEncoded
-    router = new InputRouter(browser, target, encoded, deviceScaleFactor = 1.0)
-    scribe.info(s"Stream reconfigured to $requested (encoded $encoded, crop ${region.launchArgs})")
+    placed = RenderPlacement.fit(target, encoded)
+    router = new InputRouter(browser, placed, deviceScaleFactor = 1.0)
+    placementPending.set(true)
+    val border = if (placed.bordered) s", content ${placed.content} at ${placed.offsetX},${placed.offsetY}" else ""
+    scribe.info(s"Stream reconfigured to $requested (transmitting $encoded$border, crop ${region.launchArgs})")
+  }
+
+  private def setInsets(region: CropRegion)(element: Element): Unit = {
+    element.set("left", region.left)
+    element.set("top", region.top)
+    element.set("right", region.right)
+    element.set("bottom", region.bottom)
+  }
+
+  private def repinEncoderInput(size: RenderSize): Unit = withElement(PipelineBuilder.ScaleCapsName) { filter =>
+    // capsfilter's `caps` is a boxed GstCaps, which GObject.set doesn't
+    // marshal; g_object_set takes the pointer directly and takes its own
+    // reference, so the one built here is released after the call
+    val caps = Caps.fromString(PipelineBuilder.encodeCaps(encoder, size))
+    try {
+      GObjectAPI.GOBJECT_API.g_object_set(filter, "caps", caps, null)
+    } finally {
+      caps.dispose()
+    }
+  }
+
+  /** The capture tap's throttled wallclock stamp, carrying the render placement
+    * on the first one after it changes.
+    *
+    * The placement rides this message rather than one of its own deliberately.
+    * How many messages this session originates, and when, is load-bearing: an
+    * extra server-to-client write — at channel open, or alongside a stamp —
+    * destabilises the SCTP association often enough to lose viewer input
+    * entirely. So the write pattern stays exactly what it was, one throttled
+    * stamp, and the placement is a field on it. A viewer learns the geometry
+    * within a stamp interval of connecting, and within one of every resize. */
+  private def stamp(now: Long): Json = {
+    val placement =
+      if (placementPending.compareAndSet(true, false)) List("placement" -> placed.json) else Nil
+    obj(List("type" -> str("frame"), "t" -> now.json) ++ placement: _*)
   }
 
   /** Run `f` against a named element of this pipeline and release the reference

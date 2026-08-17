@@ -6,6 +6,7 @@ import fabric.rw._
 import rapid._
 import robobrowser.display.VirtualDisplayConfig
 import robobrowser.stream.Stream.stream
+import robobrowser.stream.{RenderPlacement, RenderSize, StreamSession}
 import robobrowser.{BrowserConfig, RoboBrowser, RoboBrowserConfig, TabSelector}
 
 import scala.concurrent.duration.DurationInt
@@ -14,14 +15,25 @@ import scala.concurrent.duration.DurationInt
   * streamed via the demo server; a second, headless RoboBrowser acts as the
   * viewer. Asserts: WebRTC connects, video frames advance, a DataChannel click
   * lands on a page element in the streamed browser, typed keys arrive in its
-  * focused input, a mid-stream resize keeps the very same peer connection alive
-  * (no second offer, no state change, frames keep advancing at the new
-  * resolution) and keeps it alive under a soak long enough for a disturbed
-  * transport to surface, and the latency harness reports a plausible value.
+  * focused input, a run of mid-stream resizes each reaches the viewer as the
+  * frame and the render target the session claims, all of them keeping the very
+  * same peer connection alive (no second offer, no state change) and keeping it
+  * alive under a soak long enough for a disturbed transport to surface, and the
+  * latency harness reports a plausible value.
   * Run: sbt "stream/Test/runMain spec.StreamE2ETest" */
 object StreamE2ETest extends RapidApp {
   private val ResizeWidth = 960
   private val ResizeHeight = 600
+
+  /** Shrink, aspect flip, then grow back — the shape a pane being dragged
+    * through several layouts produces, and the shape a per-resolution encoder
+    * surface pool is most likely to mishandle. */
+  private val ResizeSequence = List(
+    RenderSize(ResizeWidth, ResizeHeight),
+    RenderSize(640, 720),
+    RenderSize(1180, 720),
+    RenderSize(ResizeWidth, ResizeHeight)
+  )
 
   /** Long enough to cover an SCTP association timing out after a disturbance:
     * the failure mode this pins surfaced ~7s after a reconfigure. */
@@ -83,6 +95,11 @@ object StreamE2ETest extends RapidApp {
             _ <- waitFor(viewer, "video frames advancing") {
               viewer.eval("return window.viewer.frames").map(_("result")("value").asInt > 10)
             }
+            // dcSend drops silently until the peer's SCTP association is up, and
+            // nothing resends, so a click issued before then is simply lost
+            _ <- waitFor(viewer, "input DataChannel open") {
+              viewer.eval("return window.viewer.channelState").map(_("result")("value").asString == "open")
+            }
             // Click the streamed page's button through the DataChannel (stream
             // pixels == viewport pixels at native size, so page coords pass through)
             _ <- viewer.eval(
@@ -142,12 +159,10 @@ object StreamE2ETest extends RapidApp {
     before <- viewer.eval("return window.viewer.frames").map(_("result")("value").asInt)
     session <- Task(streamed.stream.sessions.headOption.getOrElse(
       throw new RuntimeException("E2E: no live stream session to resize")))
-    _ <- session.resize(ResizeWidth, ResizeHeight)
+    _ <- ResizeSequence.foldLeft(Task.unit)((previous, size) =>
+      previous.flatMap(_ => resizeAndVerify(session, viewer, size)))
     _ <- waitFor(viewer, "frames advancing past the resize") {
       viewer.eval("return window.viewer.frames").map(_("result")("value").asInt > before + 10)
-    }
-    _ <- waitFor(viewer, s"viewer decoding ${ResizeWidth}x$ResizeHeight") {
-      viewer.eval("return window.viewer.videoWidth").map(_("result")("value").asInt == ResizeWidth)
     }
     intact <- viewer.eval(
       """return window.viewer.pc.connectionState === 'connected' &&
@@ -168,6 +183,59 @@ object StreamE2ETest extends RapidApp {
           new RuntimeException(s"E2E: the resize disturbed the peer connection: $diagnostics")))
     }
   } yield ()
+
+  /** One resize, checked against the two things a viewer can actually observe.
+    *
+    * The frame it decodes is the size the session says it transmits — accounting
+    * alone cannot see this, because the crop, the caps and the stats all follow
+    * the request whether or not the bitstream does. And the render target it was
+    * told about is the one that was requested, which on a branch that holds its
+    * encode canvas fixed is the only thing that moves at all. Where the two
+    * differ there is border, and the border is really black while the content
+    * region really carries the page. */
+  private def resizeAndVerify(session: StreamSession, viewer: RoboBrowser, size: RenderSize): Task[Unit] = for {
+    _ <- session.resize(size.width, size.height)
+    stats <- session.stats
+    transmitted = s"${stats.width}x${stats.height}"
+    _ <- if (stats.renderSize == size) Task.unit else Task.error[Unit](new RuntimeException(
+      s"E2E: asked for $size but the session reports a render target of ${stats.renderSize}"))
+    _ <- waitFor(viewer, s"viewer receiving $transmitted after a resize to $size", timeout = 15000) {
+      viewer.eval("return window.viewer.videoSize").map(_("result")("value").asString == transmitted)
+    }.handleError { t =>
+      viewer.eval("return window.viewer.videoSize")
+        .map(_("result")("value").asString)
+        .flatMap(received => logger.error(
+          s"E2E: resized to $size — the session transmits $transmitted, the viewer still receives $received"))
+        .flatMap(_ => Task.error[Unit](t))
+    }
+    _ <- waitFor(viewer, s"viewer told the render target moved to $size", timeout = 10000) {
+      viewer.eval("return window.viewer.renderSize").map(_("result")("value").asString == size.toString)
+    }
+    _ <- verifyBorder(viewer, session.placement)
+  } yield ()
+
+  /** A bordered frame really is bordered: black where the canvas exceeds the
+    * render target, page pixels inside the content region the session named. */
+  private def verifyBorder(viewer: RoboBrowser, placement: RenderPlacement): Task[Unit] =
+    if (!placement.bordered) {
+      logger.info(s"E2E: $placement fills the transmitted frame, no border to check")
+    } else {
+      val (borderX, borderY) =
+        if (placement.offsetX > 0) (placement.offsetX / 2, placement.encoded.height / 2)
+        else (placement.encoded.width / 2, placement.offsetY / 2)
+      // Three quarters in: past the page's button, input and timestamp, so the
+      // content sample is the page's own background rather than an element
+      val contentX = placement.offsetX + placement.content.width * 3 / 4
+      val contentY = placement.offsetY + placement.content.height * 3 / 4
+      waitFor(viewer, s"black border at $borderX,$borderY and page pixels at $contentX,$contentY in $placement") {
+        viewer.eval(
+          s"""const border = window.viewer.sample($borderX, $borderY);
+             |const content = window.viewer.sample($contentX, $contentY);
+             |if (border === null || content === null) return false;
+             |return Math.max(...border) < 48 && Math.min(...content) > 160;""".stripMargin)
+          .map(_("result")("value").asBoolean)
+      }
+    }
 
   /** The reconfigure's effects on the shared WebRTC transport are not immediate:
     * a disturbed SCTP association keeps reporting `open` and only fails once its

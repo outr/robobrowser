@@ -18,11 +18,14 @@ import scala.jdk.CollectionConverters.*
  * real Xvfb display with a real encoder.
  *
  * The target is the size the page lays out at and the exact rectangle captured,
- * so a portrait target streams portrait video: the SDP's negotiated resolution
- * and the session's stats both carry it, and neither is coerced back to the
- * display's aspect. A mid-session resize reconfigures that pipeline in place and
- * emits no second offer — the one negotiated session carries the new resolution
- * in-band.
+ * so a portrait target streams portrait content: the session's stats carry the
+ * target verbatim and it is never coerced back to the display's aspect. A
+ * mid-session resize reconfigures that pipeline in place and emits no second
+ * offer. How the target reaches the wire is the encoder branch's
+ * [[ResizeBehavior]] — the frame becomes the target where the encoder is
+ * re-pinned per resize, and the target is bordered into an unchanging canvas
+ * where it is not — so the transmitted size is asserted per branch while the
+ * render target is asserted the same way on both.
  *
  * Self-skips (with the reason) when the host can't stream.
  */
@@ -106,11 +109,8 @@ class StreamRenderTargetSpec extends AnyWordSpec with Matchers with BeforeAndAft
       skipReason.foreach(reason => cancel(s"Skipping live render-target test: $reason"))
 
       val signals = new ConcurrentLinkedQueue[SignalMessage]()
-      val session = browser.stream.start(StreamConfig(
-        width = Some(Portrait.width),
-        height = Some(Portrait.height),
-        maxFps = 30
-      )).sync()
+      val config = StreamConfig(width = Some(Portrait.width), height = Some(Portrait.height), maxFps = 30)
+      val session = browser.stream.start(config).sync()
       try {
         session.connect(signals.add(_)).sync()
 
@@ -123,12 +123,22 @@ class StreamRenderTargetSpec extends AnyWordSpec with Matchers with BeforeAndAft
         offers.head should include("m=video")
         offers.head should include("m=application")
 
+        val behavior = session.resizeBehavior
+        val canvas = PipelineBuilder.encodeCanvas(Display, config)
+
         val portraitStats = session.stats.sync()
-        portraitStats.width shouldBe Portrait.width
-        portraitStats.height shouldBe Portrait.height
-        // The target's own aspect, not the display's — no letterbox padding
-        portraitStats.height should be > portraitStats.width
+        // The render target is what was asked for whichever branch is encoding,
+        // and it keeps its own aspect rather than the display's
+        portraitStats.renderSize shouldBe Portrait
+        portraitStats.placement.content.height should be > portraitStats.placement.content.width
         portraitStats.encoder should not be empty
+        // How that target is transmitted is the branch's business: the target
+        // itself where the encoder is re-pinned per resize, the fixed canvas
+        // (target bordered inside it) where it is not
+        RenderSize(portraitStats.width, portraitStats.height) shouldBe (behavior match {
+          case ResizeBehavior.Reconfigure => Portrait
+          case ResizeBehavior.FixedCanvas => canvas
+        })
 
         session.resize(Landscape.width, Landscape.height).sync()
 
@@ -142,8 +152,18 @@ class StreamRenderTargetSpec extends AnyWordSpec with Matchers with BeforeAndAft
         awaitOffer(signals, atLeast = 2, timeoutMs = 5_000) should have size 1
 
         val landscapeStats = session.stats.sync()
-        landscapeStats.width shouldBe Landscape.width
-        landscapeStats.height shouldBe Landscape.height
+        landscapeStats.renderSize shouldBe Landscape
+        behavior match {
+          case ResizeBehavior.Reconfigure =>
+            RenderSize(landscapeStats.width, landscapeStats.height) shouldBe Landscape
+          case ResizeBehavior.FixedCanvas =>
+            // The encoder was never asked to change, so the frame shape the
+            // viewer negotiated is the frame shape it keeps receiving. There is
+            // no re-pin for a per-resolution surface pool to accept silently and
+            // then ignore, which is the whole point of the fixed canvas.
+            RenderSize(landscapeStats.width, landscapeStats.height) shouldBe canvas
+            landscapeStats.placement.bordered shouldBe true
+        }
       } finally {
         session.stop().sync()
       }
