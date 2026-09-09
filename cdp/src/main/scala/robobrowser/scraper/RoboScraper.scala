@@ -92,7 +92,18 @@ case class RoboScraper(browser: RoboBrowser,
   def scrapePage(url: URL): Task[ScrapedPage] = for {
     _ <- logger.info(s"Loading $url")
     _ <- browser.navigate(url.toString())
-    _ <- browser.waitForLoaded()
+    // Not waitForLoaded() alone: a fresh tab's about:blank `load` event can
+    // arrive over the websocket AFTER navigate() resets the flag, flipping
+    // `loaded` back to true while the REAL page hasn't frame-navigated yet —
+    // the scrape then runs against the blank tab and "succeeds" with zero
+    // links (first Cloud Run scrape, 2026-09-09: load->done in 425ms).
+    // Requiring a non-blank URL rejects that stale signal; the target
+    // page's own frameNavigated resets `loaded` and the wait resumes
+    // until the actual load completes.
+    _ <- browser.waitForCondition(
+           Task(browser.loaded() && browser.url() != "about:blank"),
+           cycle = 250.millis,
+           timeout = 5.minutes)
     _ <- guardAgainstDownloadResult(url)
     page <- executeScrape()
   } yield page
