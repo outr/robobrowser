@@ -29,21 +29,38 @@ object DirectDownloader {
                         mimeType: Option[String],
                         bytes: Array[Byte])
 
-  def download(url: URL): Task[Downloaded] =
-    HttpClient.url(url).get.send().flatMap { response =>
-      if (!response.status.isSuccess)
-        Task.error(new RuntimeException(s"download failed (${response.status.code}): $url"))
+  /** Redirect hops followed before giving up — CDN-fronted files commonly
+    * 302 from the pretty URL to the storage host (Squarespace /s/… did). */
+  private val MaxRedirects = 5
+
+  def download(url: URL): Task[Downloaded] = downloadFrom(url, url, MaxRedirects)
+
+  private def downloadFrom(original: URL, current: URL, redirectsLeft: Int): Task[Downloaded] =
+    HttpClient.url(current).get.send().flatMap { response =>
+      if (response.status.code >= 300 && response.status.code < 400) {
+        val location = response.headers.first(spice.http.Headers.Response.`Location`)
+        (location, redirectsLeft) match {
+          case (Some(loc), n) if n > 0 =>
+            val next = if (loc.startsWith("http://") || loc.startsWith("https://")) URL.parse(loc)
+                       else URL.parse(s"${current.protocol.scheme}://${current.host}$loc")
+            downloadFrom(original, next, n - 1)
+          case _ =>
+            Task.error(new RuntimeException(s"download failed (${response.status.code}, redirects exhausted): $original"))
+        }
+      }
+      else if (!response.status.isSuccess)
+        Task.error(new RuntimeException(s"download failed (${response.status.code}): $original"))
       else response.content match {
-        case None => Task.error(new RuntimeException(s"download had no content: $url"))
+        case None => Task.error(new RuntimeException(s"download had no content: $original"))
         case Some(content) => content.asStream.toList.map { byteList =>
           val bytes = byteList.toArray
           val headerMime = response.headers.first(spice.http.Headers.`Content-Type`)
             .map(_.takeWhile(_ != ';').trim.toLowerCase(Locale.ROOT))
             .filterNot(m => m.isEmpty || m == "application/octet-stream")
           val disposition = response.headers.first(spice.http.Headers.Response.`Content-Disposition`)
-          val base = fileNameFor(url, disposition)
+          val base = fileNameFor(original, disposition)
           val named = ensureExtension(base, headerMime, bytes)
-          Downloaded(url, named, headerMime, bytes)
+          Downloaded(original, named, headerMime, bytes)
         }
       }
     }
