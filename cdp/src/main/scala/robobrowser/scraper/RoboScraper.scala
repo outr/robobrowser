@@ -108,33 +108,9 @@ case class RoboScraper(browser: RoboBrowser,
     page <- executeScrape()
   } yield page
 
-  /** Drop link entries whose href the URL parser rejects BEFORE the typed
-    * decode — the wild web ships hrefs no parser loves (a text-fragment
-    * anchor once failed an entire full-site crawl), and a bad link must
-    * cost that link, never the page. Dropped hrefs are logged so a
-    * legitimately-parseable URL being rejected still surfaces as a
-    * parser bug to fix. */
-  private def dropUnparseableLinks(pageJson: fabric.Json): fabric.Json =
-    pageJson.get("links") match {
-      case Some(arr: fabric.Arr) =>
-        val (ok, bad) = arr.value.partition { l =>
-          l.get("href").exists {
-            case fabric.Str(href, _) => scala.util.Try(URL.parse(href)).isSuccess
-            case _ => false
-          }
-        }
-        bad.foreach { l =>
-          val href = l.get("href").collect { case fabric.Str(v, _) => v }.getOrElse(l.toString)
-          scribe.warn(s"Dropping unparseable link on ${browser.url()}: $href")
-        }
-        if (bad.isEmpty) pageJson
-        else pageJson.merge(fabric.obj("links" -> fabric.Arr(ok)))
-      case _ => pageJson
-    }
-
   private def executeScrape(): Task[ScrapedPage] = for {
     result <- browser.executeScript("scrape_page.js")
-    page <- dropUnparseableLinks(result("result")("value").filterOne(SnakeToCamelFilter)).as[ScrapedPage] match {
+    page <- RoboScraper.dropUnparseableLinks(result("result")("value").filterOne(SnakeToCamelFilter), browser.url()).as[ScrapedPage] match {
       case p if p.textAll.contains("Verifying you are human") => logger.warn("Encountered Captcha! Waiting and trying again...")
         .sleep(30.seconds)
         .next(executeScrape())
@@ -159,4 +135,30 @@ case class RoboScraper(browser: RoboBrowser,
       case LinkAction.Nothing => throw new RuntimeException("Final action must not be Nothing")
     }
   }
+}
+
+object RoboScraper {
+  /** Drop link entries whose href the URL parser rejects BEFORE the typed
+    * decode — the wild web ships hrefs no parser loves (a text-fragment
+    * anchor and a root-anchored FQDN each failed an entire full-site
+    * crawl), and a bad link must cost that link, never the page. Dropped
+    * hrefs are logged so a legitimately-parseable URL being rejected
+    * still surfaces as a parser bug to fix. */
+  def dropUnparseableLinks(pageJson: fabric.Json, pageUrl: => String): fabric.Json =
+    pageJson.get("links") match {
+      case Some(arr: fabric.Arr) =>
+        val (ok, bad) = arr.value.partition { l =>
+          l.get("href").exists {
+            case fabric.Str(href, _) => scala.util.Try(URL.parse(href)).isSuccess
+            case _ => false
+          }
+        }
+        bad.foreach { l =>
+          val href = l.get("href").collect { case fabric.Str(v, _) => v }.getOrElse(l.toString)
+          scribe.warn(s"Dropping unparseable link on $pageUrl: $href")
+        }
+        if (bad.isEmpty) pageJson
+        else pageJson.merge(fabric.obj("links" -> fabric.Arr(ok)))
+      case _ => pageJson
+    }
 }
