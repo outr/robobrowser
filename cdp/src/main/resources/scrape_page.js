@@ -59,10 +59,15 @@ anchors.forEach(a => {
   const hrefRaw = a.getAttribute('href');
   if (!hrefRaw) return;
 
-  const href = abs(hrefRaw);
+  let href = abs(hrefRaw);
   if (!href) return;
   // skip junk schemes
   if (/^(javascript:|mailto:|tel:|sms:|#)/i.test(hrefRaw)) return;
+  // Fragments are client-side state: useless to a crawler, a dedupe
+  // hazard (#a/#b variants of one page), and modern text-fragments
+  // (#:~:text=...) defeat URL parsers.
+  href = href.split('#')[0];
+  if (!href) return;
 
   const text = (a.innerText || a.textContent || '')
     .replace(/\s+/g, ' ')
