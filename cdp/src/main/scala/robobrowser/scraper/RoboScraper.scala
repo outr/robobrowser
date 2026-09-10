@@ -101,7 +101,12 @@ case class RoboScraper(browser: RoboBrowser,
     // page's own frameNavigated resets `loaded` and the wait resumes
     // until the actual load completes.
     _ <- browser.waitForCondition(
-           Task(browser.loaded() && browser.url() != "about:blank"),
+           Task {
+             // A crashed target never finishes loading — abort the wait NOW
+             // instead of burning the full timeout against a dead tab.
+             browser.crashed.foreach(reason => throw new robobrowser.comm.TargetCrashedException(reason))
+             browser.loaded() && browser.url() != "about:blank"
+           },
            cycle = 250.millis,
            timeout = 5.minutes)
     _ <- guardAgainstDownloadResult(url)

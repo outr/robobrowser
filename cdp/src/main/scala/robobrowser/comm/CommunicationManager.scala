@@ -26,6 +26,27 @@ trait CommunicationManager extends EventManager {
   private val idGenerator = new AtomicInteger(0)
   private val callbacks = new ConcurrentHashMap[Int, Completable[WSResponse]]
 
+  /** Set once the target dies. A CDP request against a dead target never
+    * gets a response, so without this every pending `send` waits FOREVER —
+    * a production crawl once hung two hours on the request that followed an
+    * `Inspector.targetCrashed` nobody was listening for. */
+  @volatile private var crashedReason: Option[String] = None
+
+  /** The infrastructure-fatal events: the target is gone and no pending or
+    * future request on this session can ever answer. */
+  private val FatalMethods = Set("Inspector.targetCrashed", "Target.targetCrashed", "Inspector.detached")
+
+  /** True once the target has crashed / detached; the browser (or at least
+    * this tab's session) must be recreated. */
+  def crashed: Option[String] = crashedReason
+
+  private def failEverything(reason: String): Unit = {
+    crashedReason = Some(reason)
+    callbacks.keySet().asScala.toList.foreach { id =>
+      Option(callbacks.remove(id)).foreach(_.failure(new TargetCrashedException(reason)))
+    }
+  }
+
   ws.receive.text.attach { s =>
     if (debug) scribe.info(s"Received: $s")
     try {
@@ -41,13 +62,21 @@ trait CommunicationManager extends EventManager {
 
   override def fire(response: WSResponse): Unit = response.id match {
     case Some(id) => retrieve(id, response)
-    case None => super.fire(response)
+    case None =>
+      response.method.filter(FatalMethods.contains).foreach { method =>
+        scribe.error(s"CDP target lost ($method) — failing ${callbacks.size()} pending request(s)")
+        failEverything(method)
+      }
+      super.fire(response)
   }
 
   def send(method: String,
            params: Obj = Obj.empty,
            errorThrowsException: Boolean = true,
            clearNulls: Boolean = true): Task[WSResponse] = Task {
+    // Fail fast once the target is gone — a request to a dead target never
+    // answers, and callers must see an error, not an infinite wait.
+    crashedReason.foreach(reason => throw new TargetCrashedException(reason))
     val id = idGenerator.incrementAndGet()
     val request = WSRequest(
       id = id,
