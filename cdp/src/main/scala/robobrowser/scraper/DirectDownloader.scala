@@ -33,6 +33,42 @@ object DirectDownloader {
     * 302 from the pretty URL to the storage host (Squarespace /s/… did). */
   private val MaxRedirects = 5
 
+  /** What a HEAD request says about a URL, without downloading it. The
+    * basis for incremental crawling: compare [[validator]] with the one seen
+    * last time, and skip the fetch when they match. */
+  case class Probe(status: Int,
+                   location: Option[String],
+                   etag: Option[String],
+                   lastModified: Option[String]) {
+    /** The strongest change signal the server offers, or None when it offers
+      * nothing trustworthy (the caller should then fetch).
+      *
+      * A redirect's Location wins outright. CDN-fronted files often redirect
+      * a stable pretty URL to a CONTENT-VERSIONED storage URL (Squarespace's
+      * `/s/name.pdf` points at `.../<assetId>/<epochMillis>/name.pdf`, cached
+      * for years), so a changed file means a changed Location, and that is
+      * more reliable than any ETag the storage host might send. */
+    def validator: Option[String] =
+      if (status >= 300 && status < 400) location.filter(_.nonEmpty).map(l => s"location:$l")
+      else if (status >= 200 && status < 300)
+        etag.filter(_.nonEmpty).map(e => s"etag:$e")
+          .orElse(lastModified.filter(_.nonEmpty).map(m => s"modified:$m"))
+      else None
+  }
+
+  /** HEAD `url` WITHOUT following redirects, so a redirect's Location stays
+    * visible as a change signal. Never fails: a server that rejects HEAD or
+    * errors yields a Probe with no validator, and the caller simply fetches. */
+  def probe(url: URL): Task[Probe] =
+    HttpClient.url(url).method(spice.http.HttpMethod.Head).send().map { r =>
+      Probe(
+        status       = r.status.code,
+        location     = r.headers.first(spice.http.Headers.Response.`Location`),
+        etag         = r.headers.first(spice.http.Headers.Response.`ETag`),
+        lastModified = r.headers.first(spice.http.Headers.Response.`Last-Modified`)
+      )
+    }.handleError(_ => Task.pure(Probe(0, None, None, None)))
+
   def download(url: URL): Task[Downloaded] = downloadFrom(url, url, MaxRedirects)
 
   private def downloadFrom(original: URL, current: URL, redirectsLeft: Int): Task[Downloaded] =

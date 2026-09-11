@@ -8,7 +8,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.4.6-SNAPSHOT"
+ThisBuild / version := "2.4.7-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.8.4"
 
