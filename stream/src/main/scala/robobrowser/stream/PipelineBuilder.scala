@@ -32,6 +32,9 @@ package robobrowser.stream
 private[stream] object PipelineBuilder {
   val WebRTCBinName: String = "webrtc"
 
+  /** The display capture, named so its Xlib connection can be guarded against display loss. */
+  val CaptureName: String = "capture-source"
+
   /** Identity element after capture whose handoff signal feeds fps accounting
     * and the latency harness (a wallclock stamp per captured frame). */
   val TapName: String = "capture-tap"
@@ -146,7 +149,7 @@ private[stream] object PipelineBuilder {
     }
 
     val head =
-      s"ximagesrc display-name=$displayName use-damage=true show-pointer=${config.showPointer} ! " +
+      s"ximagesrc display-name=$displayName use-damage=true show-pointer=${config.showPointer} name=$CaptureName ! " +
         s"video/x-raw,framerate=$frameRate/1 ! queue max-size-buffers=2 leaky=downstream ! " +
         s"identity name=$TapName signal-handoffs=true silent=true ! " +
         s"videocrop name=$CropName ${CropRegion(display, target).launchArgs}" +

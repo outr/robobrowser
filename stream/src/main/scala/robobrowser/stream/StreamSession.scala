@@ -14,7 +14,7 @@ import rapid._
 import reactify.{Channel, Val, Var}
 import robobrowser.RoboBrowser
 import robobrowser.display.VirtualDisplay
-import robobrowser.stream.gst.WebRTCDataChannel
+import robobrowser.stream.gst.{WebRTCDataChannel, XDisplayLossGuard}
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import java.util.concurrent.{Executors, TimeUnit}
@@ -96,6 +96,7 @@ class StreamSession private(browser: RoboBrowser,
   private var pipeline: Pipeline = scala.compiletime.uninitialized
   private var webrtc: WebRTCBin = scala.compiletime.uninitialized
   private var tap: Option[Element] = None
+  private var displayGuard: Option[Long] = None
   private var channel: Option[WebRTCDataChannel] = None
   // The DataChannel exists from READY, long before the peer's SCTP association
   // does; writing to it before `on-open` fails the channel and errors sctpenc.
@@ -238,6 +239,16 @@ class StreamSession private(browser: RoboBrowser,
     dc.onClose(onChannelClose)
     channel = Some(dc)
     pipeline.setState(State.PLAYING)
+    // The capture opened its display during that state change; guard the connection so losing the
+    // display ends this stream rather than the process.
+    displayGuard = Option(pipeline.getElementByName(PipelineBuilder.CaptureName)).flatMap { capture =>
+      XDisplayLossGuard.install(capture, display.displayName, () => onDispatcher {
+        emit(SignalMessage.Error(s"capture display ${display.displayName} was lost"))
+      })
+    }
+    if (displayGuard.isEmpty) {
+      scribe.warn(s"Stream: display ${display.displayName} is not guarded; losing it will exit the process")
+    }
   }
 
   /** Feed a message from the viewer (answer / ice / bye). */
@@ -549,6 +560,8 @@ class StreamSession private(browser: RoboBrowser,
     * elements inside it released — each exactly once, here, rather than
     * whenever the binding's reaper next runs. */
   private def teardownPipeline(): Unit = {
+    displayGuard.foreach(XDisplayLossGuard.release)
+    displayGuard = None
     Try(pipeline.getBus.disconnect(busError))
     Try(webrtc.disconnect(classOf[WebRTCBin.ON_ICE_CANDIDATE], onIce))
     Try(webrtc.disconnect(classOf[WebRTCBin.ON_NEGOTIATION_NEEDED], onNegotiation))
