@@ -82,6 +82,8 @@ class StreamSession private(browser: RoboBrowser,
   def resizeBehavior: ResizeBehavior = behavior
 
   private val stopping = new AtomicBoolean(false)
+  // Completed when the first stop's teardown finishes; every later caller waits on it.
+  private val teardown = Task.completable[Unit]
   private val negotiated = new AtomicBoolean(false)
 
   // Frame/latency accounting (fed by the identity tap and viewer reports)
@@ -509,21 +511,31 @@ class StreamSession private(browser: RoboBrowser,
     }
   }
 
-  /** Idempotent teardown of this session's pipeline. The Xvfb display belongs
-    * to the browser and is disposed by `browser.dispose()`, not here. */
+  /** Idempotent teardown of this session's pipeline. Every caller's Task
+    * completes only once the pipeline is at NULL — a concurrent caller waits
+    * for the teardown already running rather than returning early — so the
+    * display can safely be disposed after it. The Xvfb display belongs to the
+    * browser and is disposed by `browser.dispose()`, not here. */
   def stop(): Task[Unit] = Task.defer {
     if (stopping.compareAndSet(false, true)) {
-      doStop()
+      doStop().attempt.flatMap { result =>
+        teardown.complete(result)
+        result.fold(Task.error, _ => Task.unit)
+      }
     } else {
-      Task.unit
+      teardown
     }
   }
 
+  // `Bye` goes out after the pipeline is at NULL: a listener that treats it as
+  // "this session is gone" may release the display the capture reads from.
   private def doStop(): Task[Unit] = {
     dispatcherTask {
-      Try(emit(SignalMessage.Bye))
-      teardownPipeline()
-      _stopped @= true
+      try teardownPipeline()
+      finally {
+        _stopped @= true
+        Try(emit(SignalMessage.Bye))
+      }
     }.guarantee(Task(dispatcher.shutdown()))
   }
 
