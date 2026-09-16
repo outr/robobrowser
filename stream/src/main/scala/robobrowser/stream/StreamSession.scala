@@ -251,8 +251,17 @@ class StreamSession private(browser: RoboBrowser,
     }
   }
 
-  /** Feed a message from the viewer (answer / ice / bye). */
-  def fromClient(message: SignalMessage): Task[Unit] = dispatcherTask {
+  /** Feed a message from the viewer (answer / ice / bye). Ignored once the
+    * session is stopping: the peer's in-flight reply routinely lands just after
+    * a teardown, and the natives it would touch are already disposed. */
+  def fromClient(message: SignalMessage): Task[Unit] = Task.defer {
+    if (stopping.get()) {
+      scribe.debug(s"Stream: ignoring $message for a stopped session")
+      Task.unit
+    } else dispatch(message)
+  }
+
+  private def dispatch(message: SignalMessage): Task[Unit] = dispatcherTask {
     message match {
       case SignalMessage.Answer(sdpText) =>
         applyAnswer(sdpText)
