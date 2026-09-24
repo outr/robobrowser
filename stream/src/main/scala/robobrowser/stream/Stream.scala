@@ -61,6 +61,13 @@ class Stream private(browser: RoboBrowser) {
         Stream.this.synchronized {
           _sessions = session :: _sessions
         }
+        // A stopped session leaves the list, so a browser that streams for a
+        // long time does not hold every session it ever had.
+        session.stopped.attach { stopped =>
+          if (stopped) Stream.this.synchronized {
+            _sessions = _sessions.filterNot(_ eq session)
+          }
+        }
         browser.onDispose(session.stop())
         session
       }

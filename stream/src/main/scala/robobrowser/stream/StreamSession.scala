@@ -315,6 +315,15 @@ class StreamSession private(browser: RoboBrowser,
     case None => scribe.warn("Ignoring unparseable DataChannel message")
   }
 
+  /** Where the peer connection stands, read on the dispatcher; [[PeerConnectionState.Closed]] once the
+    * session is stopping. A session whose viewer never answered stays [[PeerConnectionState.New]], and
+    * one whose viewer went away without a bye reads [[PeerConnectionState.Disconnected]] or
+    * [[PeerConnectionState.Failed]] — the observable a reaper tears such sessions down on. */
+  def connectionState: Task[PeerConnectionState] = Task.defer {
+    if (stopping.get()) Task.pure(PeerConnectionState.Closed)
+    else dispatcherTask(PeerConnectionState.fromGst(webrtc.getConnectionState)).handleError(_ => Task.pure(PeerConnectionState.Closed))
+  }
+
   /** Point-in-time stats; fps/bitrate are rates since the previous call. */
   def stats: Task[StreamStats] = dispatcherTask {
     val now = System.currentTimeMillis()
@@ -554,6 +563,7 @@ class StreamSession private(browser: RoboBrowser,
       try teardownPipeline()
       finally {
         _stopped @= true
+        scribe.info(s"Stream pipeline stopped: display ${display.displayName}")
         Try(emit(SignalMessage.Bye))
       }
     }.guarantee(Task(dispatcher.shutdown()))
