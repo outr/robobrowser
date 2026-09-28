@@ -123,7 +123,16 @@ object RequestPattern {
 sealed trait ResourceType
 
 object ResourceType {
-  implicit val rw: RW[ResourceType] = RW.gen
+  /** Every ResourceType, by the name the protocol gives it. */
+  val all: List[ResourceType] = List(
+    Document, Stylesheet, Image, Media, Font, Script, TextTrack, XHR, Fetch, Prefetch, EventSource,
+    WebSocket, Manifest, SignedExchange, Ping, CSPViolationReport, Preflight, FedCM, Other
+  )
+
+  implicit val rw: RW[ResourceType] = RW.string(
+    asString = _.toString,
+    fromString = s => all.find(_.toString == s).getOrElse(throw new IllegalArgumentException(s"Unknown ResourceType: $s"))
+  )
 
   case object Document extends ResourceType
   case object Stylesheet extends ResourceType
@@ -149,7 +158,13 @@ object ResourceType {
 sealed trait RequestStage
 
 object RequestStage {
-  implicit val rw: RW[RequestStage] = RW.gen
+  /** Every RequestStage, by the name the protocol gives it. */
+  val all: List[RequestStage] = List(Request, Response)
+
+  implicit val rw: RW[RequestStage] = RW.string(
+    asString = _.toString,
+    fromString = s => all.find(_.toString == s).getOrElse(throw new IllegalArgumentException(s"Unknown RequestStage: $s"))
+  )
 
   case object Request extends RequestStage
   case object Response extends RequestStage
@@ -158,7 +173,17 @@ object RequestStage {
 sealed trait ErrorReason
 
 object ErrorReason {
-  implicit val rw: RW[ErrorReason] = RW.gen
+  /** Every ErrorReason, by the name the protocol gives it. */
+  val all: List[ErrorReason] = List(
+    Failed, Aborted, TimedOut, AccessDenied, ConnectionClosed, ConnectionReset, ConnectionRefused,
+    ConnectionAborted, ConnectionFailed, NameNotResolved, InternetDisconnected, AddressUnreachable,
+    BlockedByClient, BlockedByResponse
+  )
+
+  implicit val rw: RW[ErrorReason] = RW.string(
+    asString = _.toString,
+    fromString = s => all.find(_.toString == s).getOrElse(throw new IllegalArgumentException(s"Unknown ErrorReason: $s"))
+  )
 
   case object Failed extends ErrorReason
   case object Aborted extends ErrorReason
