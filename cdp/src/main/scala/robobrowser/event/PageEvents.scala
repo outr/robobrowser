@@ -25,4 +25,5 @@ case class PageEvents(e: Events) {
   val navigatedWithinDocument: Channel[NavigatedWithinDocumentEvent] = e.channel("Page.navigatedWithinDocument")
   val windowOpen: Channel[WindowOpenEvent] = e.channel("Page.windowOpen")
   val screencastFrame: Channel[ScreencastFrameEvent] = e.channel("Page.screencastFrame")
+  val fileChooserOpened: Channel[FileChooserOpenedEvent] = e.channel("Page.fileChooserOpened")
 }

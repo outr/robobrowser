@@ -43,6 +43,19 @@ class Mouse(browser: RoboBrowser) {
       "clickCount" -> NumInt(clickCount.toLong)
     )).unit
 
+  /** A click at (x, y): the pointer moves there, then presses and releases `button` (`left`, `right` or `middle`).
+    * `clickCount = 2` makes it a double click. */
+  def click(x: Double, y: Double, button: String = "left", clickCount: Int = 1): Task[Unit] = {
+    val held = button match {
+      case "right" => 2
+      case "middle" => 4
+      case _ => 1
+    }
+    (1 to clickCount).foldLeft(move(x, y)) { (acc, n) =>
+      acc.flatMap(_ => press(x, y, button, buttons = held, clickCount = n)).flatMap(_ => release(x, y, button, clickCount = n))
+    }
+  }
+
   /** Scroll wheel at (x, y). `deltaY > 0` scrolls the page down. */
   def wheel(x: Double, y: Double, deltaX: Double, deltaY: Double): Task[Unit] =
     browser.send("Input.dispatchMouseEvent", obj(

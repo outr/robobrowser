@@ -3,6 +3,7 @@ package robobrowser.event
 import fabric.io.JsonFormatter
 import rapid._
 import rapid.logger._
+import reactify.Channel
 import robobrowser.comm.WSResponse
 
 trait EventManager {
@@ -12,8 +13,17 @@ trait EventManager {
 
   val event: Events = Events(this)
 
-  def fire(response: WSResponse): Unit = channels.get(response.method.get) match {
-    case Some(c) => Task(c.fire(response.params)).logErrors.start()
-    case None => scribe.warn(s"No channel associated with method: ${response.method.get}\n${JsonFormatter.Default(response.params)}")
+  /** Every protocol event the browser sends, typed channel or not, so an event this library does not model yet can
+    * still be observed (filter on `method`, read `params`). */
+  val anyEvent: Channel[WSResponse] = Channel[WSResponse]
+
+  def fire(response: WSResponse): Unit = {
+    anyEvent @= response
+    channels.get(response.method.get) match {
+      case Some(c) => Task(c.fire(response.params)).logErrors.start()
+      case None if anyEvent.reactions().isEmpty =>
+        scribe.warn(s"No channel associated with method: ${response.method.get}\n${JsonFormatter.Default(response.params)}")
+      case None => ()
+    }
   }
 }

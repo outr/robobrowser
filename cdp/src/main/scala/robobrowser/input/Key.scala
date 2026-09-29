@@ -71,6 +71,35 @@ object Key {
   case object F11 extends Key { val id: Int = 122 }
   case object F12 extends Key { val id: Int = 123 }
 
+  private val FunctionKeys: List[Key] = List(F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12)
+
+  private val Named: List[(String, Key)] = List(
+    "Enter" -> Enter, "Tab" -> Tab, "Backspace" -> Backspace, "Escape" -> Escape, "Delete" -> Delete,
+    "Insert" -> Insert, "Home" -> Home, "End" -> End, "PageUp" -> PageUp, "PageDown" -> PageDown,
+    "ArrowUp" -> ArrowUp, "ArrowDown" -> ArrowDown, "ArrowLeft" -> ArrowLeft, "ArrowRight" -> ArrowRight,
+    "Shift" -> Shift, "Control" -> Control, "Alt" -> Alt, "Meta" -> Meta, "Space" -> Space
+  ) ++ FunctionKeys.zipWithIndex.map { case (k, i) => s"F${i + 1}" -> k }
+
+  /** The key a name stands for: a DOM key name ("Enter", "ArrowLeft", "F5", "Escape" — case ignored, "Esc" too) or a
+    * single character. */
+  def named(name: String): Option[Key] =
+    Named.collectFirst { case (n, k) if n.equalsIgnoreCase(name) => k }
+      .orElse(Option.when(name.equalsIgnoreCase("Esc"))(Escape))
+      .orElse(Option.when(name.length == 1)(scala.util.Try(text(name).head).toOption).flatten)
+
+  /** The DOM `key` and `code` values a browser reports for `key`, as `Input.dispatchKeyEvent` takes them. */
+  def domNames(key: Key): (String, String) = key match {
+    case Letter(c) => (c.toString, s"Key${c.toUpper}")
+    case Digit(d) => (d.toString, s"Digit$d")
+    case Space => (" ", "Space")
+    case Punctuation(c) => (c.toString, "")
+    case Shift => ("Shift", "ShiftLeft")
+    case Control => ("Control", "ControlLeft")
+    case Alt => ("Alt", "AltLeft")
+    case Meta => ("Meta", "MetaLeft")
+    case other => Named.collectFirst { case (n, k) if k == other => (n, n) }.getOrElse(("", ""))
+  }
+
   // Converts a string into a list of keys
   def text(text: String): List[Key] = text.toList.map {
     case c if c.isDigit => Digit(c.asDigit)
