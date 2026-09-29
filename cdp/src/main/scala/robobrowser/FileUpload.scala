@@ -1,6 +1,7 @@
 package robobrowser
 
 import fabric.{Arr, Bool, NumInt, Str, obj}
+import fabric.io.JsonFormatter
 import rapid.Task
 import robobrowser.event.FileChooserOpenedEvent
 
@@ -22,6 +23,23 @@ class FileUpload(browser: RoboBrowser) {
       "files" -> Arr(paths.map(p => Str(p.toAbsolutePath.normalize().toString)).toVector),
       "backendNodeId" -> NumInt(backendNodeId.toLong)
     )).unit
+
+  /** Set the files of the file input `selector` matches — hidden or not, no chooser involved. `false`, with nothing
+    * set, when the first match is not a file input. */
+  def setInputFiles(selector: String, paths: List[Path]): Task[Boolean] = {
+    val find = s"(() => { const el = document.querySelector(${JsonFormatter.Compact(Str(selector))}); " +
+      "return el instanceof HTMLInputElement && el.type === 'file' ? el : null; })()"
+    browser.send("Runtime.evaluate", obj("expression" -> Str(find), "returnByValue" -> Bool(false))).flatMap { response =>
+      response.result.get("result").flatMap(_.get("objectId")) match {
+        case Some(objectId) =>
+          browser.send("DOM.setFileInputFiles", obj(
+            "files" -> Arr(paths.map(p => Str(p.toAbsolutePath.normalize().toString)).toVector),
+            "objectId" -> objectId
+          )).map(_ => true)
+        case None => Task.pure(false)
+      }
+    }
+  }
 
   /** Upload `paths` through whatever file chooser `trigger` opens — the click on the page's "attach" button, by
     * selector or by coordinates. Fails when no chooser opens within `timeout`, when the chooser is not a file input,

@@ -87,6 +87,20 @@ class InputAndUploadSpec extends AsyncWordSpec with AsyncTaskSpec with Matchers 
       }
     }
 
+    "fill a hidden file input by selector, and refuse an element that is not one" in {
+      val c = Files.createTempFile("upload-c-", ".txt")
+      Files.writeString(c, "abc")
+      for {
+        filled <- browser.files.setInputFiles("#f", List(c))
+        notInput <- browser.files.setInputFiles("#t", List(c))
+        picked <- value("window.picked")
+      } yield {
+        filled shouldBe true
+        notInput shouldBe false
+        picked shouldBe s"${c.getFileName}:3"
+      }
+    }
+
     "say so when the trigger opens no chooser" in {
       browser.files.upload(List(Files.createTempFile("none-", ".txt")), timeout = scala.concurrent.duration.DurationInt(1).second)(
         browser.mouse.click(250, 300)).attempt.map(_.failed.get.getMessage should include("No file chooser opened"))
