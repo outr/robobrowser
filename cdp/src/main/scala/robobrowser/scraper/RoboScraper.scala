@@ -102,9 +102,9 @@ case class RoboScraper(browser: RoboBrowser,
     // until the actual load completes.
     _ <- browser.waitForCondition(
            Task {
-             // A crashed target never finishes loading — abort the wait NOW
+             // A closed session never finishes loading — abort the wait NOW
              // instead of burning the full timeout against a dead tab.
-             browser.crashed.foreach(reason => throw new robobrowser.comm.TargetCrashedException(reason))
+             browser.closed.foreach(c => throw c.exception)
              browser.loaded() && browser.url() != "about:blank"
            },
            cycle = 250.millis,

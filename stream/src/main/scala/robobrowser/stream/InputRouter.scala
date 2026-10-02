@@ -4,6 +4,7 @@ import fabric.io.JsonParser
 import fabric.rw._
 import rapid._
 import robobrowser.RoboBrowser
+import robobrowser.comm.SessionClosedException
 
 /** Maps DataChannel [[InputMessage]] JSON onto the existing CDP input dispatch
   * ([[robobrowser.Mouse]], [[robobrowser.input.KeyFeatures.dispatch]]).
@@ -27,7 +28,10 @@ private[stream] class InputRouter(browser: RoboBrowser,
   private def pageY(streamY: Double): Double = (streamY - placement.offsetY) * scaleY
 
   def route(raw: String): Unit = try {
-    dispatch(JsonParser(raw).as[InputMessage]).start()
+    dispatch(JsonParser(raw).as[InputMessage]).handleError {
+      case _: SessionClosedException => Task.unit // input racing the browser's disposal has nowhere to go
+      case t => Task.error(t)
+    }.start()
   } catch {
     case t: Throwable => scribe.warn(s"Ignoring unparseable input message: ${t.getMessage}")
   }

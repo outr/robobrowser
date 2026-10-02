@@ -7,6 +7,7 @@ import fabric.rw._
 import rapid._
 import reactify.{Val, Var}
 import robobrowser.display.{DisplayAllocator, VirtualDisplay}
+import robobrowser.comm.{SessionCloseCause, SessionClosed, SessionClosedException}
 import robobrowser.dom.DOM
 import robobrowser.event.ResponseBody
 import robobrowser.fetch.RequestPattern
@@ -30,6 +31,9 @@ class RoboBrowser private(protected val ws: WebSocket,
   def url: Val[String] = _url
   def attached: Val[Boolean] = _attached
   def loaded: Val[Boolean] = _loaded
+
+  /** A closed session is detached: [[waitForDetach]] returns rather than waiting on a dead tab. */
+  override protected def sessionClosed(closed: SessionClosed): Unit = _attached @= false
 
   event.inspector.detached.on {
     _attached @= false
@@ -319,8 +323,13 @@ class RoboBrowser private(protected val ws: WebSocket,
       }
   }
 
+  /** Wait for the page to load; fails with the [[SessionClosedException]] once the session closes, since a closed
+    * session never loads. */
   def waitForLoaded(cycle: FiniteDuration = 250.millis,
-                    timeout: FiniteDuration = 5.minutes): Task[Boolean] = waitForCondition(Task(loaded()), cycle, timeout)
+                    timeout: FiniteDuration = 5.minutes): Task[Boolean] = waitForCondition(Task {
+    closed.foreach(c => throw c.exception)
+    loaded()
+  }, cycle, timeout)
 
   def waitForDetach(cycle: FiniteDuration = 1.second): Task[Boolean] = waitForCondition(Task(!attached()), cycle, 7.days)
 
@@ -354,19 +363,23 @@ class RoboBrowser private(protected val ws: WebSocket,
 
   def disconnect(): Task[Unit] = Task(ws.disconnect())
 
-  /** Register cleanup to run at the start of [[dispose]] (LIFO order). Features
-    * holding external resources tied to this browser (e.g. a streaming pipeline
-    * capturing its display) register here so `withBrowser` cleanup stays
-    * automatic. Hook failures are logged and don't block disposal. */
+  /** Register cleanup to run in [[dispose]] (LIFO order), after the session has closed: a hook cannot send CDP
+    * requests. Features holding external resources tied to this browser (e.g. a streaming pipeline capturing its
+    * display) register here so `withBrowser` cleanup stays automatic. Hook failures are logged and don't block
+    * disposal. */
   def onDispose(task: Task[Unit]): Unit = disposalHooks.addFirst(task)
 
+  /** Close the session first, so a request pending or sent from here on fails with a [[SessionClosedException]]
+    * ([[SessionCloseCause.Disposed]]) instead of waiting; then run the [[onDispose]] hooks, disconnect, and end the
+    * process and display. */
   def dispose(): Task[Unit] = {
     import scala.jdk.CollectionConverters._
-    disposalHooks
+    val hooks = disposalHooks
       .asScala
       .toList
       .map(_.handleError(t => Task(scribe.warn(s"Disposal hook failed: ${t.getMessage}"))))
-      .tasks
+    Task(closeSession(SessionCloseCause.Disposed, "browser disposed"))
+      .flatMap(_ => hooks.tasks)
       .flatMap(_ => disconnect())
       .map { _ =>
         process.foreach { p =>

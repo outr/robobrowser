@@ -9,10 +9,10 @@ import rapid.task.*
 import robobrowser.event.EventManager
 import robobrowser.fetch.Fetch
 import spice.UserException
-import spice.http.WebSocket
+import spice.http.{ConnectionStatus, WebSocket}
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import scala.annotation.tailrec
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.CollectionHasAsScala
@@ -26,25 +26,53 @@ trait CommunicationManager extends EventManager {
   private val idGenerator = new AtomicInteger(0)
   private val callbacks = new ConcurrentHashMap[Int, Completable[WSResponse]]
 
-  /** Set once the target dies. A CDP request against a dead target never
-    * gets a response, so without this every pending `send` waits FOREVER —
-    * a production crawl once hung two hours on the request that followed an
-    * `Inspector.targetCrashed` nobody was listening for. */
-  @volatile private var crashedReason: Option[String] = None
+  /** Set once, by the first close: a CDP request on a closed session never gets a response, so every pending `send`
+    * is failed and every later one fails at once rather than waiting forever. */
+  private val closedState = new AtomicReference[Option[SessionClosed]](None)
 
   /** The infrastructure-fatal events: the target is gone and no pending or
     * future request on this session can ever answer. */
-  private val FatalMethods = Set("Inspector.targetCrashed", "Target.targetCrashed", "Inspector.detached")
+  private val FatalMethods = Map(
+    "Inspector.targetCrashed" -> SessionCloseCause.Crashed,
+    "Target.targetCrashed" -> SessionCloseCause.Crashed,
+    "Inspector.detached" -> SessionCloseCause.Detached
+  )
 
-  /** True once the target has crashed / detached; the browser (or at least
-    * this tab's session) must be recreated. */
-  def crashed: Option[String] = crashedReason
+  /** Why this session closed, once it has: crashed, detached, disposed, or its socket closed. */
+  def closed: Option[SessionClosed] = closedState.get()
 
-  private def failEverything(reason: String): Unit = {
-    crashedReason = Some(reason)
-    callbacks.keySet().asScala.toList.foreach { id =>
-      Option(callbacks.remove(id)).foreach(_.failure(new TargetCrashedException(reason)))
+  /** What closed the session, unless its owner disposed it: the browser (or at least this tab's session) must be
+    * recreated. */
+  def crashed: Option[String] = closed.filter(_.cause != SessionCloseCause.Disposed).map(_.detail)
+
+  /** Close the session for `cause`, failing every pending request. The first close wins; a later one (the socket
+    * closing under a dispose) only fails what is still pending. Returns whether this call closed it. */
+  protected def closeSession(cause: SessionCloseCause, detail: String): Boolean = {
+    val closing = SessionClosed(cause, detail)
+    val first = closedState.compareAndSet(None, Some(closing))
+    if (first && cause != SessionCloseCause.Disposed) {
+      scribe.error(s"CDP session closed ($cause: $detail) — failing ${callbacks.size()} pending request(s)")
     }
+    if (first) sessionClosed(closing)
+    failPending()
+    first
+  }
+
+  /** Called once, when the session closes. */
+  protected def sessionClosed(closed: SessionClosed): Unit = ()
+
+  private def failPending(): Unit = closed.foreach { c =>
+    callbacks.keySet().asScala.toList.foreach { id =>
+      Option(callbacks.remove(id)).foreach(_.failure(c.exception))
+    }
+  }
+
+  ws.status.attach {
+    case ConnectionStatus.Closed => closeSession(SessionCloseCause.SocketClosed, "DevTools WebSocket closed"): Unit
+    case _ => ()
+  }
+  ws.error.attach { t =>
+    closeSession(SessionCloseCause.SocketClosed, s"DevTools WebSocket error: ${t.getMessage}"): Unit
   }
 
   ws.receive.text.attach { s =>
@@ -63,9 +91,8 @@ trait CommunicationManager extends EventManager {
   override def fire(response: WSResponse): Unit = response.id match {
     case Some(id) => retrieve(id, response)
     case None =>
-      response.method.filter(FatalMethods.contains).foreach { method =>
-        scribe.error(s"CDP target lost ($method) — failing ${callbacks.size()} pending request(s)")
-        failEverything(method)
+      response.method.foreach { method =>
+        FatalMethods.get(method).foreach(cause => closeSession(cause, method))
       }
       super.fire(response)
   }
@@ -74,9 +101,8 @@ trait CommunicationManager extends EventManager {
            params: Obj = Obj.empty,
            errorThrowsException: Boolean = true,
            clearNulls: Boolean = true): Task[WSResponse] = Task {
-    // Fail fast once the target is gone — a request to a dead target never
-    // answers, and callers must see an error, not an infinite wait.
-    crashedReason.foreach(reason => throw new TargetCrashedException(reason))
+    // A request on a closed session never answers: callers see an error, not an infinite wait.
+    closed.foreach(c => throw c.exception)
     val id = idGenerator.incrementAndGet()
     val request = WSRequest(
       id = id,
@@ -87,6 +113,8 @@ trait CommunicationManager extends EventManager {
     val callback = Task.completable[WSResponse]
     scribe.debug(s"$method waiting for callback: $id")
     callbacks.put(id, callback)
+    // A close between the check above and the put has already drained the callbacks: this one is failed here.
+    if (closed.nonEmpty) failPending()
 
     val json = request.json.filterOne(RemoveNullsFilter)
     val jsonString = JsonFormatter.Compact(json)

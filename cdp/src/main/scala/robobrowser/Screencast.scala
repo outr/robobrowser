@@ -2,6 +2,7 @@ package robobrowser
 
 import fabric.{NumInt, Str, obj}
 import rapid.Task
+import robobrowser.comm.SessionClosedException
 import robobrowser.event.ScreencastFrameEvent
 
 /** Live screen streaming over CDP `Page.startScreencast`.
@@ -27,7 +28,10 @@ class Screencast(browser: RoboBrowser) {
     if (!attached) {
       attached = true
       browser.event.page.screencastFrame.attach { frame =>
-        browser.send("Page.screencastFrameAck", obj("sessionId" -> NumInt(frame.sessionId))).start()
+        browser.send("Page.screencastFrameAck", obj("sessionId" -> NumInt(frame.sessionId))).handleError {
+          case _: SessionClosedException => Task.unit
+          case t => Task.error(t)
+        }.start()
         callback.foreach(cb => cb(frame))
       }
     }

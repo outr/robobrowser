@@ -52,7 +52,7 @@ cdp source is under `cdp/src/main/scala/robobrowser/` with tests in `cdp/src/tes
 
 ### Communication
 
-`CommunicationManager` handles the WebSocket connection to CDP. It serializes JSON requests via the `fabric` library, assigns incrementing integer IDs, and routes responses back through a `ConcurrentHashMap` of pending callbacks.
+`CommunicationManager` handles the WebSocket connection to CDP. It serializes JSON requests via the `fabric` library, assigns incrementing integer IDs, and routes responses back through a `ConcurrentHashMap` of pending callbacks. Once the session closes (target crashed or detached, `dispose()`, or the DevTools WebSocket closed or errored) every pending request fails, and every later `send` fails at once, with a `SessionClosedException` carrying a `SessionClosed(cause: SessionCloseCause, detail)` (`TargetCrashedException` for a crash or detach); `closed` reports it.
 
 ### Tab Operations
 

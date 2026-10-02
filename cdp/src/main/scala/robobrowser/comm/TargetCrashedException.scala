@@ -1,9 +1,13 @@
 package robobrowser.comm
 
-/** The CDP target crashed or detached (`Inspector.targetCrashed`,
-  * `Target.targetCrashed`, `Inspector.detached`): every pending request is
-  * failed with this, and every subsequent `send` throws it immediately.
-  * The browser (or at least this tab's session) must be recreated —
-  * without this, a request against the dead target waits forever. */
-class TargetCrashedException(val reason: String)
-  extends RuntimeException(s"CDP target lost ($reason) — the browser session is dead and must be recreated")
+/** The CDP target crashed or detached (`Inspector.targetCrashed`, `Target.targetCrashed`, `Inspector.detached`):
+  * the [[SessionClosedException]] for [[SessionCloseCause.Crashed]] and [[SessionCloseCause.Detached]]. */
+class TargetCrashedException(closed: SessionClosed)
+  extends SessionClosedException(closed, s"CDP target lost (${closed.detail}) — the browser session is dead and must be recreated") {
+  def this(reason: String) = this(SessionClosed(TargetCrashedException.causeOf(reason), reason))
+}
+
+object TargetCrashedException {
+  private def causeOf(method: String): SessionCloseCause =
+    if (method == "Inspector.detached") SessionCloseCause.Detached else SessionCloseCause.Crashed
+}
