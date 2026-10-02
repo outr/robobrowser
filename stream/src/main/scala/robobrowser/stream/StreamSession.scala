@@ -14,12 +14,12 @@ import rapid._
 import reactify.{Channel, Val, Var}
 import robobrowser.RoboBrowser
 import robobrowser.display.VirtualDisplay
-import robobrowser.stream.gst.{WebRTCDataChannel, XDisplayLossGuard}
+import robobrowser.stream.gst.{NativeHold, WebRTCDataChannel, XDisplayLossGuard}
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import java.util.concurrent.{Executors, TimeUnit}
 import scala.concurrent.duration.{DurationDouble, DurationLong, FiniteDuration}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /** One WebRTC stream of a browser's virtual display to one viewer.
   *
@@ -31,7 +31,9 @@ import scala.util.Try
   * single-thread dispatcher, never on GStreamer/libnice internal threads —
   * consumers may block briefly in a `toClient` listener without stalling the
   * media pipeline (reactify fires listeners synchronously on the firing
-  * thread). */
+  * thread). Bringing the pipeline up and down runs on a second thread of the
+  * session's own, and callers wait on it at most
+  * [[StreamConfig.startTimeout]] and [[StreamConfig.teardownTimeout]]. */
 class StreamSession private(browser: RoboBrowser,
                             display: VirtualDisplay,
                             val config: StreamConfig,
@@ -42,6 +44,7 @@ class StreamSession private(browser: RoboBrowser,
     t.setDaemon(true)
     t
   })
+  private val native = new NativeLane(s"robobrowser-stream-native-${display.displayName}")
 
   val toClient: Channel[SignalMessage] = Channel[SignalMessage]
   // The offer fires from webrtcbin moments after PLAYING — often before the
@@ -93,11 +96,15 @@ class StreamSession private(browser: RoboBrowser,
   private val lastStatsTime = new AtomicLong(System.currentTimeMillis())
   @volatile private var reportedLatency: Option[FiniteDuration] = None
 
-  private var pipeline: Pipeline = scala.compiletime.uninitialized
-  private var webrtc: WebRTCBin = scala.compiletime.uninitialized
-  private var tap: Option[Element] = None
-  private var displayGuard: Option[Long] = None
-  private var channel: Option[WebRTCDataChannel] = None
+  // Written on the native thread, read on the dispatcher.
+  @volatile private var pipeline: Pipeline = scala.compiletime.uninitialized
+  @volatile private var webrtc: WebRTCBin = scala.compiletime.uninitialized
+  @volatile private var tap: Option[Element] = None
+  @volatile private var displayGuard: Option[Long] = None
+  @volatile private var channel: Option[WebRTCDataChannel] = None
+  @volatile private var releasing: Boolean = false
+  private val nativesDisposed = new AtomicBoolean(false)
+  private val byeSent = new AtomicBoolean(false)
   // The DataChannel exists from READY, long before the peer's SCTP association
   // does; writing to it before `on-open` fails the channel and errors sctpenc.
   private val channelOpen = new AtomicBoolean(false)
@@ -556,47 +563,91 @@ class StreamSession private(browser: RoboBrowser,
     }
   }
 
-  // `Bye` goes out after the pipeline is at NULL: a listener that treats it as
-  // "this session is gone" may release the display the capture reads from.
   private def doStop(): Task[Unit] = {
-    dispatcherTask {
-      try teardownPipeline()
-      finally {
-        _stopped @= true
-        scribe.info(s"Stream pipeline stopped: display ${display.displayName}")
-        Try(emit(SignalMessage.Bye))
-      }
-    }.guarantee(Task(dispatcher.shutdown()))
+    val timeout = config.teardownTimeout
+    dispatcherTask(detach()).timeout(timeout).handleError { t =>
+      Task(scribe.warn(s"Stream: detaching from the pipeline did not finish (${t.getMessage}); releasing it anyway"))
+    }.flatMap(_ => native.run(timeout)(release())).flatMap {
+      case Some(_) => Task.unit
+      case None => Task(abandon(timeout))
+    }.guarantee(finish(timeout))
   }
 
-  /** Dispatcher-confined native teardown. Blocks until the state change
-    * completes so the display capture and encoder are genuinely released before
-    * the session object is discarded.
-    *
-    * Order matters: the signal handlers come off first so nothing calls back
-    * into a half-torn-down session, then the DataChannel, then the pipeline is
-    * brought to NULL, and only then are the references this session holds on
-    * elements inside it released — each exactly once, here, rather than
-    * whenever the binding's reaper next runs. */
-  private def teardownPipeline(): Unit = {
-    displayGuard.foreach(XDisplayLossGuard.release)
-    displayGuard = None
-    Try(pipeline.getBus.disconnect(busError))
-    Try(webrtc.disconnect(classOf[WebRTCBin.ON_ICE_CANDIDATE], onIce))
-    Try(webrtc.disconnect(classOf[WebRTCBin.ON_NEGOTIATION_NEEDED], onNegotiation))
+  /** Dispatcher-confined: the signal handlers come off first so nothing calls
+    * back into a half-torn-down session, then the DataChannel closes. */
+  private def detach(): Unit = {
+    Option(pipeline).foreach(p => Try(p.getBus.disconnect(busError)))
+    Option(webrtc).foreach { w =>
+      Try(w.disconnect(classOf[WebRTCBin.ON_ICE_CANDIDATE], onIce))
+      Try(w.disconnect(classOf[WebRTCBin.ON_NEGOTIATION_NEEDED], onNegotiation))
+    }
     tap.foreach(element => Try(element.disconnect(classOf[AnyRef], tapListener)))
+    closeChannel()
+  }
+
+  private def closeChannel(): Unit = {
     channel.foreach { dc =>
       Try(dc.closeChannel())
       Try(dc.dispose())
     }
     channel = None
     channelOpen.set(false)
-    pipeline.setState(State.NULL)
-    pipeline.getState(5, TimeUnit.SECONDS)
+  }
+
+  /** Native-thread teardown: brings the pipeline to NULL, blocking until the
+    * state change completes so the display capture and encoder are genuinely
+    * released, then releases the references this session holds — each exactly
+    * once, here, rather than whenever the binding's reaper next runs. The
+    * state change runs under a [[NativeHold]], so [[abandon]] may dispose the
+    * pipeline's wrapper while it is still blocked. */
+  private def release(): Unit = {
+    displayGuard.foreach(XDisplayLossGuard.release)
+    displayGuard = None
+    Option(pipeline).foreach { p =>
+      releasing = true
+      NativeHold(p) {
+        p.setState(State.NULL)
+        p.getState(5, TimeUnit.SECONDS)
+      }
+    }
+    disposeNatives()
+  }
+
+  private def disposeNatives(): Unit = if (nativesDisposed.compareAndSet(false, true)) {
+    closeChannel()
     tap.foreach(element => Try(element.dispose()))
     tap = None
-    Try(webrtc.dispose())
-    pipeline.dispose()
+    Option(webrtc).foreach(w => Try(w.dispose()))
+    Option(pipeline).foreach(p => Try(p.dispose()))
+  }
+
+  /** The release did not finish within `timeout`. Blocked bringing the
+    * pipeline to NULL, the references are disposed now and the native object
+    * is freed when that call returns; blocked behind a start that has not
+    * returned, the queued release disposes them once it does. */
+  private def abandon(timeout: FiniteDuration): Unit = if (releasing) {
+    scribe.error(s"Stream pipeline on display ${display.displayName} did not reach NULL within $timeout; " +
+      s"its references are disposed and the state change is left running on ${native.name}")
+    disposeNatives()
+  } else {
+    scribe.error(s"Stream pipeline on display ${display.displayName} was still starting after the teardown " +
+      s"waited $timeout; it is released on ${native.name} once its start returns")
+  }
+
+  // `Bye` goes out after the pipeline is released: a listener that treats it as
+  // "this session is gone" may release the display the capture reads from.
+  private def finish(timeout: FiniteDuration): Task[Unit] = Task {
+    _stopped @= true
+    scribe.info(s"Stream pipeline stopped: display ${display.displayName}")
+  }.flatMap(_ => dispatcherTask(sendBye(toClientDirectly = false)).timeout(timeout))
+    .handleError(_ => Task(sendBye(toClientDirectly = true)))
+    .guarantee(Task {
+      dispatcher.shutdown()
+      native.shutdown()
+    })
+
+  private def sendBye(toClientDirectly: Boolean): Unit = if (byeSent.compareAndSet(false, true)) {
+    Try(if (toClientDirectly) toClient @= SignalMessage.Bye else emit(SignalMessage.Bye))
   }
 }
 
@@ -608,10 +659,14 @@ private[stream] object StreamSession {
     val target = PipelineBuilder.targetSize(displaySize(display), config)
     fitDisplay(display, target)
       .flatMap(_ => applyRenderTarget(browser, display, target))
-      .map { _ =>
+      .flatMap { _ =>
         val session = new StreamSession(browser, display, config, encoder, target)
-        session.start(describe(display, config, encoder))
-        session
+        session.native.run(config.startTimeout)(session.start(describe(display, config, encoder))).attempt.flatMap {
+          case Success(Some(_)) => Task.pure(session)
+          case Success(None) =>
+            session.stop().attempt.flatMap(_ => Task.error(StreamStartTimeoutException(config.startTimeout)))
+          case Failure(t) => session.stop().attempt.flatMap(_ => Task.error(t))
+        }
       }
   }
 

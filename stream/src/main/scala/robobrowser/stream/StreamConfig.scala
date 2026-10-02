@@ -1,5 +1,7 @@
 package robobrowser.stream
 
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
+
 /** Configuration for a WebRTC stream of a browser's virtual display.
   *
   * `width`/`height` and `maxWidth`/`maxHeight` are different knobs and both
@@ -38,7 +40,14 @@ package robobrowser.stream
   * @param encoderOverride force a specific GStreamer encoder element (e.g.
   *                        "x264enc") instead of the hardware-first probe order
   * @param routeInput      automatically dispatch DataChannel input events into
-  *                        the browser via CDP */
+  *                        the browser via CDP
+  * @param startTimeout    how long starting waits for the pipeline to reach
+  *                        PLAYING before the session is stopped and the start
+  *                        fails with [[StreamStartTimeoutException]]
+  * @param teardownTimeout how long stopping waits for the pipeline to reach
+  *                        NULL; past it the stop completes, the native
+  *                        teardown keeps running on the session's own thread
+  *                        and the error is logged */
 case class StreamConfig(codec: Codec = Codec.H264,
                         maxBitrate: Int = 8_000_000,
                         maxFps: Int = 60,
@@ -50,7 +59,9 @@ case class StreamConfig(codec: Codec = Codec.H264,
                         stunServer: Option[String] = Some("stun://stun.l.google.com:19302"),
                         turnServers: List[String] = Nil,
                         encoderOverride: Option[String] = None,
-                        routeInput: Boolean = true) {
+                        routeInput: Boolean = true,
+                        startTimeout: FiniteDuration = 30.seconds,
+                        teardownTimeout: FiniteDuration = 10.seconds) {
 
   /** The requested render target, when either dimension was set. A partial
     * request inherits the missing dimension from the display. */
