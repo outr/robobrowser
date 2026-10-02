@@ -185,6 +185,8 @@
     get renderSize() { return placement ? placement.render.width + 'x' + placement.render.height : ''; },
     pc,
     dcSend,
+    // Close only the input DataChannel, leaving the peer connection up.
+    closeChannel: () => input && input.close(),
     log,
     errors,
     get frameStamps() { return frameStamps; },

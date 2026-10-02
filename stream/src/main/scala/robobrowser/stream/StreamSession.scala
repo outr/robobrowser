@@ -17,8 +17,8 @@ import robobrowser.display.VirtualDisplay
 import robobrowser.stream.gst.{NativeHold, WebRTCDataChannel, XDisplayLossGuard}
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
-import java.util.concurrent.{Executors, TimeUnit}
-import scala.concurrent.duration.{DurationDouble, DurationLong, FiniteDuration}
+import java.util.concurrent.{Executors, RejectedExecutionException, TimeUnit}
+import scala.concurrent.duration.{Duration, DurationDouble, DurationInt, DurationLong, FiniteDuration}
 import scala.util.{Failure, Success, Try}
 
 /** One WebRTC stream of a browser's virtual display to one viewer.
@@ -54,6 +54,10 @@ class StreamSession private(browser: RoboBrowser,
   private var pending: List[SignalMessage] = Nil
   private val _stopped: Var[Boolean] = Var(false)
   def stopped: Val[Boolean] = _stopped
+  @volatile private var _endReason: Option[StreamEndReason] = None
+
+  /** Why the session ended, set as its teardown begins; None while it runs. */
+  def endReason: Option[StreamEndReason] = _endReason
 
   // Render geometry follows `resize`, which reconfigures the running pipeline's
   // crop (and, on a Reconfigure branch, its encoder caps) rather than rebuilding
@@ -107,18 +111,21 @@ class StreamSession private(browser: RoboBrowser,
   private val byeSent = new AtomicBoolean(false)
   // The DataChannel exists from READY, long before the peer's SCTP association
   // does; writing to it before `on-open` fails the channel and errors sctpenc.
-  private val channelOpen = new AtomicBoolean(false)
+  // Writing after the viewer left does the same, so writes follow the watch.
+  private val watch = new PeerWatch(StreamSession.DisconnectGrace, viewerGone)
   private val placementPending = new AtomicBoolean(true)
 
   // Listener references are session fields deliberately: the binding keys its
   // JNA callback retention on these, and a collected callback is a native crash.
   private val busError = new Bus.ERROR {
     override def errorMessage(source: GstObject, code: Int, message: String): Unit = {
-      scribe.error(s"Stream pipeline error from ${source.getName}: $message")
-      onDispatcher {
-        emit(SignalMessage.Error(message))
-      }
+      val name = source.getName
+      onDispatcher(pipelineFailure(name, message))
     }
+  }
+  private object connectionStateListener
+  private val onConnectionState = new GstCallback {
+    def callback(bin: Pointer, property: Pointer, userData: Pointer): Unit = onDispatcher(readTransport())
   }
   private val onIce = new WebRTCBin.ON_ICE_CANDIDATE {
     override def onIceCandidate(sdpMLineIndex: Int, candidate: String): Unit = onDispatcher {
@@ -158,10 +165,10 @@ class StreamSession private(browser: RoboBrowser,
     override def onMessage(message: String): Unit = onDispatcher(handleChannelMessage(message))
   }
   private val onChannelOpen = new WebRTCDataChannel.OnOpen {
-    override def onOpen(): Unit = channelOpen.set(true)
+    override def onOpen(): Unit = watch.channelOpened()
   }
   private val onChannelClose = new WebRTCDataChannel.OnClose {
-    override def onClose(): Unit = channelOpen.set(false)
+    override def onClose(): Unit = watch.channelClosed()
   }
   // Latency harness: throttled wallclock capture stamps over the DataChannel;
   // the viewer diffs them against requestVideoFrameCallback arrival (with the
@@ -173,24 +180,78 @@ class StreamSession private(browser: RoboBrowser,
       val now = System.currentTimeMillis()
       val last = lastFrameStamp.get()
       if (now - last >= 1000L && lastFrameStamp.compareAndSet(last, now)) {
-        onDispatcher(if (channelOpen.get()) sendToChannel(JsonFormatter.Compact(stamp(now))))
+        onDispatcher(if (watch.writable) sendToChannel(JsonFormatter.Compact(stamp(now))))
       }
     }
   }
   private object tapListener
 
-  private def onDispatcher(f: => Unit): Unit = dispatcher.execute { () =>
-    try {
-      f
-    } catch {
-      case t: Throwable => scribe.error(s"Stream session dispatch failure: ${t.getMessage}")
+  private def onDispatcher(f: => Unit): Unit = try {
+    dispatcher.execute { () =>
+      try {
+        f
+      } catch {
+        case t: Throwable => scribe.error(s"Stream session dispatch failure: ${t.getMessage}")
+      }
     }
+  } catch {
+    case _: RejectedExecutionException => // the session has finished; nothing is left to notify
   }
 
   /** Write to the input DataChannel, silently dropping anything produced before
-    * the peer's channel opened or after it closed. */
-  private def sendToChannel(text: String): Unit = if (channelOpen.get()) {
-    channel.foreach(_.sendString(text))
+    * the peer's channel opened or after the viewer left. The channel's own state
+    * is read first: the association can be gone before `on-close` fires. */
+  private def sendToChannel(text: String): Unit = channel.foreach { dc =>
+    if (watch.writable) {
+      if (Try(dc.isClosed).getOrElse(false)) watch.channelClosed() else dc.sendString(text)
+    }
+  }
+
+  /** Dispatcher-confined: bring the watch up to date with webrtcbin's connection
+    * state and the DataChannel's ready state. */
+  private def readTransport(): Unit = if (!stopping.get()) {
+    Option(webrtc).flatMap(w => Try(PeerConnectionState.fromGst(w.getConnectionState)).toOption).foreach { state =>
+      scribe.debug(s"Stream: peer connection $state on display ${display.displayName}")
+      watch.peer(state)
+    }
+    channel.foreach(dc => if (Try(dc.isClosed).getOrElse(false)) watch.channelClosed())
+  }
+
+  /** Dispatcher-confined handling of a pipeline error. One that arrives after
+    * the viewer's transport went down is the viewer leaving: logged at INFO, it
+    * ends the session as a `bye` would. One whose transport still reads up is
+    * looked at again for [[StreamSession.FailureSettle]], since a write can fail
+    * on a dead association before the channel and connection report it; only
+    * one whose transport stays up is a fault, logged at ERROR and sent to the
+    * viewer as an `error`. */
+  private def pipelineFailure(source: String, message: String, settling: FiniteDuration = StreamSession.FailureSettle): Unit =
+    if (stopping.get()) {
+      scribe.info(s"Stream pipeline error from $source while the session ends: $message")
+    } else {
+      readTransport()
+      watch.classify match {
+        case PipelineFailure.PeerGone =>
+          scribe.info(s"Stream pipeline error from $source after the viewer left: $message")
+          watch.failed(s"$source: $message")
+        case PipelineFailure.Fault if settling > Duration.Zero =>
+          val step = StreamSession.SettleStep.min(settling)
+          Task.sleep(step).map(_ => onDispatcher(pipelineFailure(source, message, settling - step))).start()
+        case PipelineFailure.Fault =>
+          scribe.error(s"Stream pipeline error from $source: $message")
+          emit(SignalMessage.Error(message))
+      }
+    }
+
+  /** Report a pipeline error as the bus would, classified on the dispatcher. */
+  private[stream] def failure(source: String, message: String): Task[Unit] =
+    dispatcherTask(pipelineFailure(source, message))
+
+  /** The viewer went away without a bye: end the session exactly as its bye would. */
+  private def viewerGone(reason: String): Unit = if (!stopping.get()) onDispatcher {
+    if (!stopping.get()) {
+      scribe.info(s"Stream: viewer left ($reason); ending the session on display ${display.displayName}")
+      end(StreamEndReason.PeerGone).start()
+    }
   }
 
   private def emit(message: SignalMessage): Unit = if (connected) {
@@ -232,6 +293,7 @@ class StreamSession private(browser: RoboBrowser,
     pipeline.getBus.connect(busError)
     webrtc.connect(onIce)
     webrtc.connect(onNegotiation)
+    webrtc.connect("notify::connection-state", classOf[AnyRef], connectionStateListener, onConnectionState)
     tap = Option(pipeline.getElementByName(PipelineBuilder.TapName))
     tap.foreach(_.connect("handoff", classOf[AnyRef], tapListener, tapHandoff))
     // The DataChannel must exist before PLAYING triggers negotiation so it's
@@ -277,7 +339,7 @@ class StreamSession private(browser: RoboBrowser,
         webrtc.addIceCandidate(index, candidate)
         scribe.debug(s"Stream: client ICE candidate added (mline $index)")
       case SignalMessage.Bye =>
-        stop().start()
+        end(StreamEndReason.Bye).start()
       case SignalMessage.Error(error) =>
         scribe.warn(s"Stream client error: $error")
       case SignalMessage.Offer(_) =>
@@ -323,9 +385,8 @@ class StreamSession private(browser: RoboBrowser,
   }
 
   /** Where the peer connection stands, read on the dispatcher; [[PeerConnectionState.Closed]] once the
-    * session is stopping. A session whose viewer never answered stays [[PeerConnectionState.New]], and
-    * one whose viewer went away without a bye reads [[PeerConnectionState.Disconnected]] or
-    * [[PeerConnectionState.Failed]] — the observable a reaper tears such sessions down on. */
+    * session is stopping. A session whose viewer never answered stays [[PeerConnectionState.New]]. One whose
+    * viewer went away without a bye ends itself, with [[StreamEndReason.PeerGone]]. */
   def connectionState: Task[PeerConnectionState] = Task.defer {
     if (stopping.get()) Task.pure(PeerConnectionState.Closed)
     else dispatcherTask(PeerConnectionState.fromGst(webrtc.getConnectionState)).handleError(_ => Task.pure(PeerConnectionState.Closed))
@@ -552,8 +613,11 @@ class StreamSession private(browser: RoboBrowser,
     * for the teardown already running rather than returning early — so the
     * display can safely be disposed after it. The Xvfb display belongs to the
     * browser and is disposed by `browser.dispose()`, not here. */
-  def stop(): Task[Unit] = Task.defer {
+  def stop(): Task[Unit] = end(StreamEndReason.Stopped)
+
+  private def end(reason: StreamEndReason): Task[Unit] = Task.defer {
     if (stopping.compareAndSet(false, true)) {
+      _endReason = Some(reason)
       doStop().attempt.flatMap { result =>
         teardown.complete(result)
         result.fold(Task.error, _ => Task.unit)
@@ -580,6 +644,7 @@ class StreamSession private(browser: RoboBrowser,
     Option(webrtc).foreach { w =>
       Try(w.disconnect(classOf[WebRTCBin.ON_ICE_CANDIDATE], onIce))
       Try(w.disconnect(classOf[WebRTCBin.ON_NEGOTIATION_NEEDED], onNegotiation))
+      Try(w.disconnect(classOf[AnyRef], connectionStateListener))
     }
     tap.foreach(element => Try(element.disconnect(classOf[AnyRef], tapListener)))
     closeChannel()
@@ -591,7 +656,6 @@ class StreamSession private(browser: RoboBrowser,
       Try(dc.dispose())
     }
     channel = None
-    channelOpen.set(false)
   }
 
   /** Native-thread teardown: brings the pipeline to NULL, blocking until the
@@ -652,6 +716,16 @@ class StreamSession private(browser: RoboBrowser,
 }
 
 private[stream] object StreamSession {
+  /** How long a peer connection may read disconnected before its viewer is
+    * taken as gone. ICE recovers from a brief network drop within this window
+    * on its own; past it the viewer has almost always left. */
+  val DisconnectGrace: FiniteDuration = 10.seconds
+
+  /** How long a pipeline error is looked at again before it is taken as a
+    * fault rather than the viewer leaving. */
+  val FailureSettle: FiniteDuration = 3.seconds
+  private[stream] val SettleStep: FiniteDuration = 250.millis
+
   def start(browser: RoboBrowser,
             display: VirtualDisplay,
             config: StreamConfig,

@@ -330,6 +330,58 @@ into the captured pixels, and Chrome clamps a top-level window to a 500px minimu
 width — a `390`-wide target is unreachable that way. Device-metrics emulation has
 neither problem.
 
+## Signaling and session end
+
+A session's signaling is `offer` / `answer` / `ice` in both directions, plus
+`error` and `bye` (`SignalMessage`). Whatever ends a session, it takes one
+teardown path — signal handlers off, DataChannel closed, pipeline to NULL — and
+the signaling listener's last message is a `Bye`, sent only once the pipeline is
+down. `StreamSession.endReason` says why, as a `StreamEndReason`:
+
+| Reason | How it ends |
+|---|---|
+| `Stopped` | `stop()` was called: by the application, or by the browser's disposal |
+| `Bye` | the viewer sent `bye` |
+| `PeerGone` | the viewer went away without a `bye` |
+
+### A viewer leaving is not an error
+
+Most viewers never say bye: a closed tab, a reload, a suspended tab or a lost
+network just stops answering. The session watches the WebRTC transport to notice,
+and ends as `PeerGone`, logged at INFO:
+
+- webrtcbin's `connection-state` reads **failed** or **closed**: at once;
+- it reads **disconnected** and does not get back to connected within **10
+  seconds** (`StreamSession.DisconnectGrace`): ICE recovers from a short network
+  drop on its own well inside that, so a blip survives, while a viewer that is
+  really gone is released promptly rather than when the association finally
+  times out;
+- the input DataChannel **closes**, or reads closing, after having opened: the
+  topology is fixed and nothing reopens it.
+
+The session's own DataChannel writes — the throttled capture stamp and `pong`s —
+stop as soon as any of those reads down, and each write checks the channel's
+`ready-state` first, so the stamp does not keep writing into a dead association.
+
+A write can still fail on an association that has died before webrtcbin reports
+it: `sctpenc` posts `Could not write to resource.` while the connection still
+reads connected and the channel still open, and on-close follows a moment later.
+So a pipeline error is classified against the transport:
+
+- if the viewer has already been found gone, or the connection reads
+  disconnected, failed or closed, or the channel closed after opening, the error
+  is the viewer leaving: logged at INFO, it ends the session as `PeerGone` and no
+  `error` is sent;
+- otherwise it is looked at again every 250 ms for up to **3 seconds**
+  (`StreamSession.FailureSettle`); one whose transport goes down in that time is
+  the viewer leaving as above;
+- one whose transport stays up is a real fault: logged at ERROR and sent to the
+  viewer as an `error`, as before. The session does not stop itself on it; that
+  stays the application's call. An error before the viewer ever connected is a
+  fault too.
+
+An error that arrives while the session is already ending is logged at INFO.
+
 ## Native object ownership
 
 Every GStreamer handle a session touches has exactly one owner, and the session

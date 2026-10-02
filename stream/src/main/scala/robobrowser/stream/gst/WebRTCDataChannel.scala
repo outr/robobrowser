@@ -27,6 +27,12 @@ class WebRTCDataChannel(init: NativeObject.Initializer) extends GObject(init) {
 
   def label: String = get("label").asInstanceOf[String]
 
+  /** Whether the channel's `ready-state` reads closing or closed. */
+  def isClosed: Boolean = get("ready-state") match {
+    case state: Integer => state.intValue >= ReadyStateClosing
+    case _ => false
+  }
+
   def onMessageString(listener: OnMessageString): Unit =
     connect("on-message-string", classOf[OnMessageString], listener, new GstCallback {
       def callback(channel: Pointer, message: String): Unit = listener.onMessage(message)
@@ -50,6 +56,9 @@ class WebRTCDataChannel(init: NativeObject.Initializer) extends GObject(init) {
 }
 
 object WebRTCDataChannel {
+  // GST_WEBRTC_DATA_CHANNEL_STATE_CLOSING; CLOSED follows it
+  private val ReadyStateClosing = 3
+
   trait OnMessageString {
     def onMessage(message: String): Unit
   }
