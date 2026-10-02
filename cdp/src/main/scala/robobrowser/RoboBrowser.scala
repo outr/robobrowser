@@ -425,6 +425,18 @@ object RoboBrowser {
     }
     _ <- Task(browserConfig.prepareUserDataDir())
     process <- CDP.createProcess(browser, browserConfig)
+    // A launch that fails, or is cancelled, once Chrome is running leaves no browser for anyone to dispose: the
+    // process is ended here, or it outlives the launch with its display.
+    rb <- connected(config, browserConfig, browser, process, display).handleError { t =>
+      Task(endProcess(process)).flatMap(_ => Task.error(t))
+    }
+  } yield rb
+
+  private def connected(config: RoboBrowserConfig,
+                        browserConfig: BrowserConfig,
+                        browser: Browser,
+                        process: Process,
+                        display: Option[VirtualDisplay]): Task[RoboBrowser] = for {
     _ <- Task.sleep(500.millis)   // Give the browser time to launch
     tabResults <- CDP.query(browser)
     webSocketUrl = tabResults.head.webSocketDebuggerUrl
@@ -455,4 +467,7 @@ object RoboBrowser {
       case None => Task.unit
     }
   } yield rb
+
+  /** End a browser process; the processes it started exit with it. */
+  private def endProcess(process: Process): Unit = process.destroy()
 }

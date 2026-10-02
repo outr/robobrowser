@@ -28,6 +28,21 @@ class DisplayAllocatorSpec extends AnyWordSpec with Matchers {
         DisplayAllocator.isDisplayTaken(100, tmp).should(be(true))
       }
     }
+    "consider a display whose lock names a live process taken" in {
+      withFakeTmp { tmp =>
+        Files.writeString(tmp.resolve(".X100-lock"), s"${ProcessHandle.current().pid()}\n")
+        DisplayAllocator.isDisplayTaken(100, tmp).should(be(true))
+      }
+    }
+    "consider a display free when its lock names a process that is gone, whatever its socket" in {
+      withFakeTmp { tmp =>
+        val gone = new ProcessBuilder("true").start()
+        gone.waitFor()
+        Files.writeString(tmp.resolve(".X100-lock"), s"${gone.pid()}\n")
+        Files.createFile(tmp.resolve(".X11-unix").resolve("X100"))
+        DisplayAllocator.isDisplayTaken(100, tmp).should(be(false))
+      }
+    }
     "consider a display with a socket taken" in {
       withFakeTmp { tmp =>
         Files.createFile(tmp.resolve(".X11-unix").resolve("X100"))

@@ -72,8 +72,20 @@ object DisplayAllocator {
     live.remove(number)
   }
 
-  private[display] def isDisplayTaken(number: Int, tmpDir: Path = Paths.get("/tmp")): Boolean =
-    Files.exists(tmpDir.resolve(s".X$number-lock")) || Files.exists(socketPath(number, tmpDir))
+  /** Whether display `number` is in use: its lock names a live process, or it has a socket and no lock. A lock left by
+    * a process that is gone (a container restarted) does not hold the number: Xvfb replaces a stale lock itself. */
+  private[display] def isDisplayTaken(number: Int, tmpDir: Path = Paths.get("/tmp")): Boolean = {
+    val lock = tmpDir.resolve(s".X$number-lock")
+    if (Files.exists(lock)) lockHolderAlive(lock)
+    else Files.exists(socketPath(number, tmpDir))
+  }
+
+  /** Whether the process a display lock names is alive; true when the lock cannot be read, as the safe answer. */
+  private def lockHolderAlive(lock: Path): Boolean =
+    scala.util.Try(new String(Files.readAllBytes(lock)).trim.toLong).toOption match {
+      case Some(pid) => java.lang.ProcessHandle.of(pid).map[Boolean](_.isAlive).orElse(false)
+      case None => true
+    }
 
   private def socketPath(number: Int, tmpDir: Path = Paths.get("/tmp")): Path =
     tmpDir.resolve(".X11-unix").resolve(s"X$number")
