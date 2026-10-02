@@ -94,11 +94,17 @@ class RoboBrowser private(protected val ws: WebSocket,
    */
   def enableProxyAuth(username: String, password: String): Task[Unit] =
     fetch.enable(List(RequestPattern(urlPattern = "*")), handleAuthRequests = true).map { _ =>
+      // Continuing a paused request is best-effort: a requestId can go stale (the request was
+      // cancelled, or its frame navigated) before we get to it, which throws "Invalid
+      // InterceptionId". Under heavy load (a page pulling many subresources) that must not
+      // crash the session, so stale continues are swallowed.
       event.fetch.requestPaused.attach { evt =>
-        fetch.continueRequest(evt.requestId).sync()
+        try fetch.continueRequest(evt.requestId).sync()
+        catch { case t: Throwable => scribe.trace(s"Fetch.continueRequest(${evt.requestId}) ignored: ${t.getMessage}") }
       }
       event.fetch.authRequired.attach { evt =>
-        fetch.continueWithAuth(evt.requestId, "ProvideCredentials", Some(username), Some(password)).sync()
+        try fetch.continueWithAuth(evt.requestId, "ProvideCredentials", Some(username), Some(password)).sync()
+        catch { case t: Throwable => scribe.trace(s"Fetch.continueWithAuth(${evt.requestId}) ignored: ${t.getMessage}") }
       }
     }
 

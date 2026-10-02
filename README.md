@@ -27,7 +27,20 @@ RoboBrowser.withBrowser(RoboBrowserConfig(
 }
 ```
 
-Then run your process against a virtual display so no window appears.
+**Per-session virtual displays (recommended):** RoboBrowser can manage Xvfb for
+you — set `RoboBrowserConfig.virtualDisplay` and each browser gets its own
+dedicated display (`:100+`), launched kiosk-fullscreen on it and cleaned up on
+dispose. This is also the substrate for WebRTC live streaming (see below):
+
+```scala
+RoboBrowser.withBrowser(RoboBrowserConfig(
+  virtualDisplay = Some(VirtualDisplayConfig(width = 1920, height = 1080))
+)) { browser =>
+  // headful, invisible, viewport == 1920x1080
+}
+```
+
+Alternatively, run your whole process against a shared virtual display manually:
 
 **1. Install Xvfb**
 
@@ -82,6 +95,54 @@ minimize or cover — which is one more reason to prefer it for unattended autom
 - `xvfb-run` is a convenience wrapper that does steps 2–3 in one command
   (`xvfb-run --auto-servernum sbt "runMain ..."`), where packaged — it ships with
   Debian/Ubuntu's `xvfb` but not with Arch's `xorg-server-xvfb`.
+
+## Live streaming (WebRTC)
+
+The `robobrowser-stream` module streams a virtual-display browser over WebRTC
+with hardware H.264 encoding — 1080p60 with single-digit-millisecond
+glass-to-glass latency on a LAN, a different class of experience from the CDP
+screencast's ~10–20 fps JPEG stream (which remains available as
+`browser.screencast`, dependency-free). Input (mouse/keyboard/scroll) flows back
+over a WebRTC DataChannel straight into CDP input dispatch, so remote
+interaction feels native.
+
+Requirements: GStreamer 1.x (base/good/bad plugin sets) and Xvfb. Hardware
+encoders are probed in order — VAAPI (`vah264enc`), NVENC (`nvh264enc`) — with
+automatic fallback to software `x264enc`.
+
+```scala
+import robobrowser.stream.*
+import robobrowser.stream.Stream.stream
+
+RoboBrowser.withBrowser(RoboBrowserConfig(
+  virtualDisplay = Some(VirtualDisplayConfig(width = 1920, height = 1080))
+)) { browser =>
+  browser.stream.availability match {
+    case None =>
+      browser.stream.start().flatMap { session =>
+        // Bridge signaling over any transport you already have:
+        session.connect(msg => sendToViewer(msg.json))        // server -> viewer
+        // viewer -> server: session.fromClient(json.as[SignalMessage])
+        // session.stats: encoder, fps, bitrate, RTT, glass-to-glass latency
+        ...
+      }
+    case Some(reason) =>
+      // No GStreamer / no display: fall back to browser.screencast
+      ...
+  }
+}
+```
+
+The server creates the WebRTC offer and an `input` DataChannel; a minimal
+browser viewer is ~100 lines (see `stream/src/test/resources/viewer.html`). Try
+it: `sbt "stream/Test/runMain spec.TestStreamDemo"` and open
+http://localhost:8888. Each connecting viewer gets an independent session;
+multiple browsers stream concurrently from separate displays with no
+cross-session bleed.
+
+Current limitations: bitrate is fixed at `StreamConfig.maxBitrate` (congestion-
+driven adaptation via `rtpgccbwe` is a planned follow-up); DRM (Widevine)
+content may render black in captures.
 
 ## Captcha solving
 

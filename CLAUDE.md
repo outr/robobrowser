@@ -23,17 +23,24 @@ sbt "testOnly spec.RoboBrowserSpec"
 
 # Run a specific test class
 sbt "testOnly spec.SomeSpec"
+
+# Manual streaming demo (open http://localhost:8888 in a browser)
+sbt "stream/Test/runMain spec.TestStreamDemo"
+
+# Automated streaming end-to-end acceptance (needs GStreamer + Xvfb)
+sbt "stream/Test/runMain spec.StreamE2ETest"
 ```
 
-**Requirements:** JDK 25 (Zulu distribution used in CI), SBT 1.12.0. A Chrome/Chromium browser must be installed for tests.
+**Requirements:** JDK 25 (Zulu distribution used in CI), SBT 1.12.0. A Chrome/Chromium browser must be installed for tests. The `stream` module additionally needs GStreamer 1.x with the base/good/bad plugin sets (`ximagesrc`, `webrtcbin`, an H.264 encoder) and Xvfb at runtime — unit tests skip cleanly without them.
 
 ## Module Structure
 
-- **root** - Aggregates `core` and `cdp`
+- **root** - Aggregates `core`, `cdp`, and `stream`
 - **core/** - Core module (dependency for cdp, currently has no source files)
-- **cdp/** - All source code lives here. Chrome DevTools Protocol implementation
+- **cdp/** - Main source. Chrome DevTools Protocol implementation (includes `robobrowser.display` Xvfb management)
+- **stream/** - `robobrowser-stream`: WebRTC live streaming of virtual-display browsers (GStreamer via gst1-java-core)
 
-All source is under `cdp/src/main/scala/robobrowser/`. Tests are in `cdp/src/test/scala/spec/`.
+cdp source is under `cdp/src/main/scala/robobrowser/` with tests in `cdp/src/test/scala/`. Stream source is under `stream/src/main/scala/robobrowser/stream/`.
 
 ## Architecture
 
