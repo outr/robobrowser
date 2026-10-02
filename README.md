@@ -3,6 +3,21 @@
 
 Headless Browser wrapper library providing lots of features for API-access
 
+## Browser identity
+
+A RoboBrowser is meant to be treated like a person browsing, so it never announces headless mode. Headless Chrome
+normally sends `HeadlessChrome/<version>` in its User-Agent and names "HeadlessChrome" in its client hints
+(`Sec-CH-UA` headers and `navigator.userAgentData`); search engines and bot walls block on either. By default
+RoboBrowser presents the ordinary desktop browser instead:
+
+- at launch, `--user-agent` is set to the reduced UA real Chrome sends for the installed major version, which covers
+  every target including popups and workers;
+- on every tab, `Emulation.setUserAgentOverride` sets the same string plus matching client hints (brands, full
+  version, platform).
+
+Set `BrowserConfig(userAgent = Some(...))` to present a different User-Agent, or call `browser.setUserAgent(ua,
+metadata)` on a tab.
+
 ## Running a real (non-headless) browser with no visible window
 
 Chrome's headless mode is fingerprintable, and some sites — anything behind

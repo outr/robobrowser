@@ -70,7 +70,11 @@ case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Defau
                          // Escape hatch: arbitrary Chrome switches appended after every
                          // structured option.
                          extraArgs: List[String] = Nil,
-                         disablePDFExtension: Boolean = true) {
+                         disablePDFExtension: Boolean = true,
+                         // The User-Agent every tab sends. None (the default) is the ordinary desktop
+                         // browser's own, never headless Chrome's "HeadlessChrome/<v>": RoboBrowser is
+                         // meant to be treated like a person browsing. See `UserAgent`.
+                         userAgent: Option[String] = None) {
   private def o(b: Boolean, s: String): List[String] = if (b) {
     List(s)
   } else {
@@ -131,6 +135,7 @@ case class BrowserConfig(userDataDir: File = BrowserConfig.resolveDataDir("Defau
     proxyServer.map { case (host, port) => s"--proxy-server=$host:$port" }.toList,
     l("--proxy-bypass-list", proxyBypassList),
     l("--disable-features", disableFeatures),
+    userAgent.map(ua => s"--user-agent=$ua").toList,
     extraArgs
   ).flatten
 

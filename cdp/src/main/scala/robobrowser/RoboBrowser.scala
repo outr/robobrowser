@@ -158,6 +158,13 @@ class RoboBrowser private(protected val ws: WebSocket,
     )
   ).unit
 
+  /** Present `userAgent` from this tab, with `metadata` as its client hints (`Sec-CH-UA` headers and
+    * `navigator.userAgentData`); see [[UserAgent.metadata]]. Applied to every tab at launch. */
+  def setUserAgent(userAgent: String, metadata: Option[Json] = None): Task[Unit] = send(
+    method = "Emulation.setUserAgentOverride",
+    params = obj("userAgent" -> userAgent, "userAgentMetadata" -> metadata.getOrElse(Null))
+  ).unit
+
   /** Clear device metrics override, restoring default viewport. */
   def clearViewportOverride(): Task[Unit] = send(
     method = "Emulation.clearDeviceMetricsOverride"
@@ -425,15 +432,25 @@ object RoboBrowser {
     } else {
       config.browserConfig
     }
+    product <- Task(UserAgent.product(browser))
+    // Headless Chrome names itself "HeadlessChrome" in its User-Agent; the ordinary browser's is set at launch so
+    // every request from every target (popups and workers included) carries it.
+    identified = baseConfig.userAgent match {
+      case None => product.filter(_.chromiumVersioned).flatMap(_.major) match {
+        case Some(major) => baseConfig.copy(userAgent = Some(UserAgent.ordinary(major)))
+        case None => baseConfig
+      }
+      case Some(_) => baseConfig
+    }
     browserConfig = display match {
-      case Some(d) => deriveDisplayConfig(baseConfig, d)
-      case None => baseConfig
+      case Some(d) => deriveDisplayConfig(identified, d)
+      case None => identified
     }
     _ <- Task(browserConfig.prepareUserDataDir())
     process <- CDP.createProcess(browser, browserConfig)
     // A launch that fails, or is cancelled, once Chrome is running leaves no browser for anyone to dispose: the
     // process is ended here, or it outlives the launch with its display.
-    rb <- connected(config, browserConfig, browser, process, display).handleError { t =>
+    rb <- connected(config, browserConfig, browser, product, process, display).handleError { t =>
       Task(endProcess(process)).flatMap(_ => Task.error(t))
     }
   } yield rb
@@ -441,6 +458,7 @@ object RoboBrowser {
   private def connected(config: RoboBrowserConfig,
                         browserConfig: BrowserConfig,
                         browser: Browser,
+                        product: Option[UserAgent.Product],
                         process: Process,
                         display: Option[VirtualDisplay]): Task[RoboBrowser] = for {
     _ <- Task.sleep(500.millis)   // Give the browser time to launch
@@ -463,6 +481,13 @@ object RoboBrowser {
         rb.sessionId = sessionId
       }
     }
+    // The launch flag covers only the string; the client hints still name "HeadlessChrome" until overridden here.
+    // A browser whose version couldn't be read at launch reports its own, unheadlessed.
+    userAgent <- browserConfig.userAgent match {
+      case Some(ua) => Task.pure(ua)
+      case None => rb.send(method = "Browser.getVersion").map(r => UserAgent.unheadless(r.result("userAgent").asString))
+    }
+    _ <- rb.setUserAgent(userAgent, UserAgent.metadata(userAgent, product))
     _ <- rb.enablePage.when(config.enablePageEvents)
     _ <- rb.enableRuntime.when(config.enableRuntime)
     _ <- rb.enableLifecycleEvents.when(config.enableLifecycleEvents)
