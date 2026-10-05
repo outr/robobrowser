@@ -9,7 +9,15 @@ import scala.util.Try
   *
   * `Version.of(1, 18)` is the highest version gst1-java-core 1.4.0 knows;
   * requesting it unlocks the webrtc-era API (plain `init()` requests the 1.8
-  * baseline and gates features). Newer runtimes satisfy the check. */
+  * baseline and gates features). Newer runtimes satisfy the check.
+  *
+  * GStreamer's segfault trap is disabled: while a plugin loads it installs a
+  * process-wide SIGSEGV handler that prints "Caught a segmentation fault while
+  * loading plugin file" and exits, and the JVM raises SIGSEGV itself in normal
+  * operation (safepoint polls, implicit null checks) on any thread. A plugin
+  * whose load is slow (nvcodec compiles CUDA kernels in its init) then kills the
+  * process whenever another thread reaches a safepoint during it. A genuine
+  * fault in a plugin still crashes the JVM, with an hs_err report. */
 object GstEngine {
   /** Hardware encoders first; `vaapih264enc` is the pre-1.22 VAAPI element name
     * kept for older systems; `x264enc` is the universal software fallback. */
@@ -20,7 +28,7 @@ object GstEngine {
   /** Left(error) when the native libraries fail to load/initialize. */
   lazy val initResult: Either[String, Unit] = Try {
     if (!Gst.isInitialized) {
-      Gst.init(Version.of(1, 18), "robobrowser")
+      Gst.init(Version.of(1, 18), "robobrowser", "--gst-disable-segtrap")
     }
   }.toEither.left.map(t => Option(t.getMessage).getOrElse(t.getClass.getName))
 
