@@ -53,7 +53,7 @@ ThisBuild / resolvers += "GitHub Packages outr/spice" at "https://maven.pkg.gith
 ThisBuild / credentials ++= sys.env.get("GITHUB_TOKEN").map(token =>
   Credentials("GitHub Package Registry", "maven.pkg.github.com", sys.env.getOrElse("GITHUB_ACTOR", "outr"), token)).toList
 
-val jsoupVersion: String = "1.22.2"
+val jsoupVersion: String = "1.23.2"
 
 val tikaVersion: String = "3.3.1"
 
