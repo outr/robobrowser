@@ -46,7 +46,12 @@ val scribeVersion: String = "3.18.0"
 
 val rapidVersion: String = "2.9.9"
 
-val spiceVersion: String = "1.10.9-SNAPSHOT2"
+val spiceVersion: String = "1.10.9-SNAPSHOT6"
+
+// The current Spice snapshot is published to GitHub Packages.
+ThisBuild / resolvers += "GitHub Packages outr/spice" at "https://maven.pkg.github.com/outr/spice"
+ThisBuild / credentials ++= sys.env.get("GITHUB_TOKEN").map(token =>
+  Credentials("GitHub Package Registry", "maven.pkg.github.com", sys.env.getOrElse("GITHUB_ACTOR", "outr"), token)).toList
 
 val jsoupVersion: String = "1.22.2"
 
