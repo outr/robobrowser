@@ -10,7 +10,7 @@ name := projectName
 ThisBuild / organization := org
 ThisBuild / version := "2.4.9-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.8.4"
+ThisBuild / scalaVersion := "3.10.0"
 
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
