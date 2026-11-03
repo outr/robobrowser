@@ -11,8 +11,9 @@ import scala.sys.process.{Process, ProcessLogger}
 /** Allocates per-session Xvfb displays (`:100 + n`) so each browser's pixels can
   * be captured independently. Display numbers are claimed against both the
   * host's X lock files/sockets and a JVM-local claim set (atomic for concurrent
-  * in-JVM allocations); a cross-process race is detected when Xvfb exits before
-  * its socket appears, and the next number is tried. A JVM shutdown hook kills
+  * in-JVM allocations); a cross-process race is detected when the display's lock
+  * names another process's X server or Xvfb exits before its socket appears,
+  * and the next number is tried. A JVM shutdown hook kills
   * any Xvfb processes still alive so abrupt exits don't leak displays. */
 object DisplayAllocator {
   private val MaxAttempts = 50
@@ -90,7 +91,7 @@ object DisplayAllocator {
   private def socketPath(number: Int, tmpDir: Path = Paths.get("/tmp")): Path =
     tmpDir.resolve(".X11-unix").resolve(s"X$number")
 
-  private def spawn(number: Int, config: VirtualDisplayConfig): Process = {
+  private[display] def spawn(number: Int, config: VirtualDisplayConfig): Process = {
     val cmd = List(
       "Xvfb",
       s":$number",
@@ -114,16 +115,31 @@ object DisplayAllocator {
     }
   }
 
-  /** Wait for the display's X socket to appear. Returns false if it never does —
-    * either Xvfb died (cross-process race for the number) or it hung. */
-  private def awaitReady(number: Int, process: Process, config: VirtualDisplayConfig): Boolean = {
+  /** Wait until display `number` is this Xvfb's: its socket is up and its lock names this process (or a process under
+    * it). A socket alone proves nothing — an Xvfb that lost a cross-process race for the number sees the winner's
+    * socket until it exits. Returns false when the display never becomes this Xvfb's: it died, another process's X
+    * server holds the number (this Xvfb is then ended, so the caller tries the next number), or it hung. */
+  private[display] def awaitReady(number: Int, process: Process, config: VirtualDisplayConfig, tmpDir: Path = Paths.get("/tmp")): Boolean = {
     val deadline = System.currentTimeMillis() + config.startTimeout.toMillis
-    val socket = socketPath(number)
-    var ready = Files.exists(socket)
-    while (!ready && System.currentTimeMillis() < deadline && process.isAlive()) {
-      Thread.sleep(50)
-      ready = Files.exists(socket)
+    val socket = socketPath(number, tmpDir)
+    val lock = tmpDir.resolve(s".X$number-lock")
+    def holder: Option[Long] = scala.util.Try(new String(Files.readAllBytes(lock)).trim.toLong).toOption
+    def ours(pid: Long): Boolean = java.lang.ProcessHandle.current().descendants().anyMatch(_.pid() == pid)
+    def alive(pid: Long): Boolean = java.lang.ProcessHandle.of(pid).map[Boolean](_.isAlive).orElse(false)
+    var outcome: Option[Boolean] = None
+    while (outcome.isEmpty && System.currentTimeMillis() < deadline) {
+      if (Files.exists(socket)) holder match {
+        case Some(pid) if ours(pid) => outcome = Some(true)
+        case Some(pid) if alive(pid) => outcome = Some(false)
+        case _ => ()
+      }
+      if (outcome.isEmpty && !process.isAlive()) outcome = Some(false)
+      if (outcome.isEmpty) Thread.sleep(50)
     }
-    ready
+    if (outcome.contains(false) && process.isAlive()) {
+      process.destroy()
+      process.exitValue()
+    }
+    outcome.getOrElse(false)
   }
 }
