@@ -23,7 +23,9 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 class RoboBrowser private(protected val ws: WebSocket,
                           process: Option[Process],
-                          val virtualDisplay: Option[VirtualDisplay]) extends TabFeatures {
+                          val virtualDisplay: Option[VirtualDisplay],
+                          val userDataDir: java.io.File,
+                          freshProfile: Boolean) extends TabFeatures {
   private val _url: Var[String] = Var("about:blank")
   private val _attached: Var[Boolean] = Var(true)
   private val disposalHooks = new java.util.concurrent.ConcurrentLinkedDeque[Task[Unit]]()
@@ -371,7 +373,7 @@ class RoboBrowser private(protected val ws: WebSocket,
 
   /** Close the session first, so a request pending or sent from here on fails with a [[SessionClosedException]]
     * ([[SessionCloseCause.Disposed]]) instead of waiting; then run the [[onDispose]] hooks, disconnect, and end the
-    * process and display. */
+    * process (deleting a [[RoboBrowserConfig.freshProfile]] profile once it has exited) and display. */
   def dispose(): Task[Unit] = {
     import scala.jdk.CollectionConverters._
     val hooks = disposalHooks
@@ -385,6 +387,7 @@ class RoboBrowser private(protected val ws: WebSocket,
         process.foreach { p =>
           p.destroy()
         }
+        if (freshProfile) RoboBrowser.removeProfile(userDataDir, process)
       }
       .flatMap(_ => virtualDisplay.map(_.dispose()).getOrElse(Task.unit))
   }
@@ -437,13 +440,23 @@ object RoboBrowser {
     )
   }
 
-  private def launch(config: RoboBrowserConfig, display: Option[VirtualDisplay]): Task[RoboBrowser] = for {
+  private def launch(config: RoboBrowserConfig, display: Option[VirtualDisplay]): Task[RoboBrowser] =
+    Task(Option.when(config.freshProfile)(Files.createTempDirectory("robobrowser-profile-").toFile)).flatMap { fresh =>
+      launchWith(config, display, fresh).handleError { t =>
+        // A failure before Chrome started; one after it ended the process and removed the profile already.
+        Task(fresh.foreach(removeProfile(_, None))).flatMap(_ => Task.error(t))
+      }
+    }
+
+  private def launchWith(config: RoboBrowserConfig, display: Option[VirtualDisplay], fresh: Option[java.io.File]): Task[RoboBrowser] = for {
     browser <- Task(config.browser.resolvePort())
-    // Use a unique user data dir per instance to avoid Chrome's SingletonLock conflict
-    baseConfig = if (config.browser.port == 0) {
-      config.browserConfig.copy(userDataDir = BrowserConfig.resolveDataDir(s"instance-${browser.port}"))
-    } else {
-      config.browserConfig
+    // A fresh profile is this launch's own; otherwise a unique user data dir per instance avoids Chrome's
+    // SingletonLock conflict
+    baseConfig = fresh match {
+      case Some(dir) => config.browserConfig.copy(userDataDir = dir)
+      case None if config.browser.port == 0 =>
+        config.browserConfig.copy(userDataDir = BrowserConfig.resolveDataDir(s"instance-${browser.port}"))
+      case None => config.browserConfig
     }
     product <- Task(UserAgent.product(browser))
     // Headless Chrome names itself "HeadlessChrome" in its User-Agent; the ordinary browser's is set at launch so
@@ -464,7 +477,7 @@ object RoboBrowser {
     // A launch that fails, or is cancelled, once Chrome is running leaves no browser for anyone to dispose: the
     // process is ended here, or it outlives the launch with its display.
     rb <- connected(config, browserConfig, browser, product, process, display).handleError { t =>
-      Task(endProcess(process)).flatMap(_ => Task.error(t))
+      Task { endProcess(process); fresh.foreach(removeProfile(_, Some(process))) }.flatMap(_ => Task.error(t))
     }
   } yield rb
 
@@ -479,7 +492,7 @@ object RoboBrowser {
     webSocketUrl = tabResults.head.webSocketDebuggerUrl
     _ <- logger.info(s"Connecting to WebSocket: $webSocketUrl")
     webSocket <- CDP.connect(webSocketUrl)
-    rb = new RoboBrowser(webSocket, Some(process), display)
+    rb = new RoboBrowser(webSocket, Some(process), display, browserConfig.userDataDir, config.freshProfile)
     existingTab = config.tabSelector.select(tabResults)
     _ <- existingTab match {
       case Some(tab) => rb.attachToTarget(tab.id).map { sessionId =>
@@ -514,4 +527,20 @@ object RoboBrowser {
 
   /** End a browser process; the processes it started exit with it. */
   private def endProcess(process: Process): Unit = process.destroy()
+
+  /** Delete a fresh profile, once the browser `process` (already ended) has exited — at most 10 s on — so Chrome is
+    * not writing into it. Best effort: what cannot be deleted is logged. */
+  private[robobrowser] def removeProfile(dir: java.io.File, process: Option[Process]): Unit = {
+    val deadline = System.currentTimeMillis() + 10000L
+    while (process.exists(_.isAlive()) && System.currentTimeMillis() < deadline) Thread.sleep(50)
+    def delete(): Boolean = scala.util.Try {
+      if (Files.exists(dir.toPath)) {
+        val s = Files.walk(dir.toPath)
+        try s.sorted(java.util.Comparator.reverseOrder()).forEach(p => Files.deleteIfExists(p))
+        finally s.close()
+      }
+    }.isSuccess && !Files.exists(dir.toPath)
+    // Chrome's helpers can still be closing files in it just after the browser exits.
+    if (!delete() && { Thread.sleep(500); !delete() }) scribe.warn(s"Fresh profile $dir could not be deleted")
+  }
 }
