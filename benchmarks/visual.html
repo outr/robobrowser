@@ -1,0 +1,4 @@
+<!doctype html><html><head><title>Browser transport measurement</title></head><body style="margin:0;font:24px sans-serif;background:white;color:black"><div id="clock" style="display:flex;height:12px;width:384px"></div><h1>Browser transport measurement</h1><input id="field"><p id="count">0</p><script>
+const clock=document.querySelector('#clock');for(let i=0;i<32;i++){const cell=document.createElement('div');cell.id='bit'+i;cell.style.cssText='width:12px;height:12px;flex:none';clock.append(cell)}
+function tick(){const time=Date.now()>>>0;for(let i=0;i<32;i++)clock.children[i].style.backgroundColor=(time&(1<<i))?'white':'black';document.querySelector('#count').textContent=String(time)}tick();setInterval(tick,100);
+</script></body></html>

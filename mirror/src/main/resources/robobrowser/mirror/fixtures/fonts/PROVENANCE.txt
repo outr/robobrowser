@@ -1,0 +1,2 @@
+Unmodified Abel test font from https://github.com/google/fonts/tree/9437b806936896fa1a8c812e561067a5f30f5933/ofl/abel
+Licensed under SIL Open Font License 1.1; see OFL.txt.

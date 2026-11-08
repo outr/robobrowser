@@ -84,12 +84,12 @@ class AntiCaptchaSolver(apiKey: String,
     post("/createTask", createBody).flatMap { resp =>
       if (resp.get("errorId").map(_.asInt).getOrElse(0) != 0)
         throw new RuntimeException(s"Anti-Captcha createTask failed: ${errorText(resp)}")
-      val taskId = resp("taskId").asInt
+      val taskId = resp("taskId").asLong
       poll(taskId, System.currentTimeMillis())
     }
   }
 
-  private def poll(taskId: Int, start: Long): Task[CaptchaSolution] =
+  private def poll(taskId: Long, start: Long): Task[CaptchaSolution] =
     post("/getTaskResult", obj("clientKey" -> Str(apiKey), "taskId" -> NumInt(taskId.toLong))).flatMap { resp =>
       if (resp.get("errorId").map(_.asInt).getOrElse(0) != 0)
         throw new RuntimeException(s"Anti-Captcha getTaskResult failed: ${errorText(resp)}")

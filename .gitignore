@@ -10,3 +10,7 @@ debug/
 .vscode/
 cdp/scrape_test/
 metals.sbt
+.robobrowser-demo/
+
+__pycache__/
+*.py[cod]

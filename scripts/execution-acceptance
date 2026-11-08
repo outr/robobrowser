@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""Run isolated local-executor acceptance and retain evidence outside cleanable build output."""
+import argparse
+import datetime
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--public', action='store_true', help='include public GitHub, Facebook and Wikipedia')
+parser.add_argument('--endurance-seconds', type=int, default=0, help='optional 10-3600 second mounted navigation run')
+args = parser.parse_args()
+if args.endurance_seconds and not 10 <= args.endurance_seconds <= 3600:
+    parser.error('endurance-seconds must be zero or between 10 and 3600')
+root = Path(__file__).resolve().parent.parent
+stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+out = root / '.robobrowser-demo' / 'execution-acceptance' / stamp
+out.mkdir(parents=True, exist_ok=False)
+
+def manifest():
+    paths = subprocess.check_output(['rg', '--files', 'core/src', 'mirror/src'], cwd=root, text=True).splitlines()
+    paths += ['build.sbt', 'scripts/execution-acceptance', 'scripts/execution-live-check.mjs']
+    return {p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in sorted(paths)}
+
+before = manifest()
+(out / 'source-hashes.json').write_text(json.dumps(before, indent=2))
+commands = [
+    'mirror/test',
+    'mirror/Test/runMain spec.ExecutionProfileAcceptance',
+    'mirror/Test/runMain spec.ExecutionStorageAcceptance',
+    'mirror/Test/runMain spec.ExecutionSocketAcceptance',
+    'mirror/Test/runMain spec.ExecutionMediaSwitchAcceptance',
+    'mirror/Test/runMain spec.ExecutionFilesAcceptance',
+    'mirror/Test/runMain spec.ExecutionPopupAcceptance',
+    'mirror/Test/runMain spec.ExecutionFormsAcceptance',
+    'mirror/Test/runMain spec.ExecutionFramesAcceptance',
+    'mirror/Test/runMain spec.ExecutionMediaRetryAcceptance',
+    'mirror/Test/runMain spec.ExecutionShadowAcceptance',
+    'mirror/Test/runMain spec.ExecutionHandshakeAcceptance',
+    'mirror/Test/runMain spec.ExecutionProgressiveAcceptance',
+    'mirror/Test/runMain spec.SingleExecutionAcceptance' + (' public' if args.public else ''),
+]
+if args.endurance_seconds:
+    commands.append(f'mirror/Test/runMain spec.ExecutionEndurance {args.endurance_seconds}' + (' public' if args.public else ''))
+print('Evidence:', out, flush=True)
+print('The managed port-8898 demo is not restarted by this command.', flush=True)
+# Prevent a stopped suite from copying passing artifacts from an earlier run.
+for name in ['single-execution', 'execution-profiles', 'execution-storage', 'execution-sockets', 'execution-media-switch', 'execution-files', 'execution-popups', 'execution-forms', 'execution-frames', 'execution-media-retry', 'execution-shadow', 'execution-handshake', 'execution-progressive', 'execution-endurance']:
+    previous = root / 'mirror' / 'target' / name
+    if previous.exists():
+        shutil.rmtree(previous)
+with (out / 'acceptance.log').open('w') as log:
+    code = subprocess.run(['sbt', *commands], cwd=root, stdout=log, stderr=subprocess.STDOUT).returncode
+for name in ['single-execution', 'execution-profiles', 'execution-storage', 'execution-sockets', 'execution-media-switch', 'execution-files', 'execution-popups', 'execution-forms', 'execution-frames', 'execution-media-retry', 'execution-shadow', 'execution-handshake', 'execution-progressive'] + (['execution-endurance'] if args.endurance_seconds else []):
+    source = root / 'mirror' / 'target' / name
+    if source.exists():
+        shutil.copytree(source, out / name)
+unchanged = manifest() == before
+status = 'passed' if code == 0 and unchanged else 'failed'
+(out / 'result.json').write_text(json.dumps({
+    'status': status, 'exitCode': code, 'sourceUnchanged': unchanged,
+    'public': args.public, 'enduranceSeconds': args.endurance_seconds,
+    'commands': commands, 'scope': 'Local-executor acceptance; not autonomous remote-CDP or universal-site certification'
+}, indent=2))
+print(status.upper(), '-', out, flush=True)
+raise SystemExit(0 if status == 'passed' else 1)

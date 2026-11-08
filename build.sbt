@@ -8,7 +8,7 @@ val developerURL: String = "https://matthicks.com"
 
 name := projectName
 ThisBuild / organization := org
-ThisBuild / version := "2.4.9-SNAPSHOT"
+ThisBuild / version := "2.5.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.8.4"
 
@@ -60,7 +60,7 @@ val tikaVersion: String = "3.3.1"
 val scalatestVersion: String = "3.2.20"
 
 val root = project.in(file("."))
-  .aggregate(core, cdp, stream)
+  .aggregate(core, cdp, stream, mirror)
   .settings(
     name := projectName,
     publish := {},
@@ -69,7 +69,17 @@ val root = project.in(file("."))
 
 lazy val core = project.in(file("core"))
   .settings(
-    name := s"$projectName-core"
+    name := s"$projectName-core",
+    // The JDK supplies java.time; cross-platform replacements duplicate JDK classes in native-image.
+    excludeDependencies ++= Seq(
+      ExclusionRule("io.github.cquiroz","scala-java-time_3"),
+      ExclusionRule("io.github.cquiroz","scala-java-time-tzdb_3")
+    ),
+    libraryDependencies ++= Seq(
+      "com.outr" %% "rapid-core" % rapidVersion,
+      "com.outr" %% "scribe" % "3.19.0",
+      "org.typelevel" %% "fabric-io" % "1.30.3"
+    )
   )
 
 lazy val cdp = project.in(file("cdp"))
@@ -98,5 +108,17 @@ lazy val stream = project.in(file("stream"))
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "com.outr" %% "rapid-test" % rapidVersion % Test,
       "com.outr" %% "spice-client-netty" % spiceVersion % Test
+    )
+  )
+
+lazy val mirror = project.in(file("mirror"))
+  .dependsOn(core)
+  .settings(
+    name := s"$projectName-mirror",
+    libraryDependencies ++= Seq(
+      "org.jsoup" % "jsoup" % jsoupVersion,
+      "com.squareup.okhttp3" % "okhttp-jvm" % "5.5.1",
+      "com.squareup.okhttp3" % "mockwebserver" % "5.5.1" % Test,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test
     )
   )

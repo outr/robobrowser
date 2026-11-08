@@ -100,7 +100,14 @@ trait CommunicationManager extends EventManager {
   def send(method: String,
            params: Obj = Obj.empty,
            errorThrowsException: Boolean = true,
-           clearNulls: Boolean = true): Task[WSResponse] = Task {
+           clearNulls: Boolean = true): Task[WSResponse] =
+    sendImpl(method, params, errorThrowsException, clearNulls, Option(sessionId))
+
+  private[robobrowser] def sendSession(method: String, params: Obj, targetSession: Option[String]): Task[WSResponse] =
+    sendImpl(method, params, true, true, targetSession)
+
+  private def sendImpl(method: String, params: Obj, errorThrowsException: Boolean,
+                       clearNulls: Boolean, targetSession: Option[String]): Task[WSResponse] = Task {
     // A request on a closed session never answers: callers see an error, not an infinite wait.
     closed.foreach(c => throw c.exception)
     val id = idGenerator.incrementAndGet()
@@ -108,7 +115,7 @@ trait CommunicationManager extends EventManager {
       id = id,
       method = method,
       params = params.filterOne(RemoveNullsFilter),
-      sessionId = Option(sessionId)
+      sessionId = targetSession
     )
     val callback = Task.completable[WSResponse]
     scribe.debug(s"$method waiting for callback: $id")

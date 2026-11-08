@@ -3,6 +3,12 @@
 
 Headless Browser wrapper library providing lots of features for API-access
 
+## Local browser execution
+
+The [`mirror` module](mirror/README.md) runs website JavaScript in one frontend document,
+with a resource gateway, agent relay, and persisted storage checkpoints. Agent execution
+requires a connected frontend; there is no DOM-projection or image-fallback renderer.
+
 ## Browser identity
 
 A RoboBrowser is meant to be treated like a person browsing, so it never announces headless mode. Headless Chrome
@@ -161,7 +167,7 @@ content may render black in captures.
 
 ## Captcha solving
 
-`robobrowser.Captcha` provides universal captcha detection and solving (reCAPTCHA
+`robobrowser.Captcha` provides captcha detection and solving (reCAPTCHA
 v2/v3, hCaptcha, Cloudflare Turnstile) via a pluggable `CaptchaSolver`
 ([`AntiCaptchaSolver`](cdp/src/main/scala/robobrowser/Captcha.scala) is the default):
 
@@ -175,3 +181,18 @@ It first waits briefly for the browser to self-issue a token (Turnstile/reCAPTCH
 "managed" mode often passes real browsers for free), and only calls the paid solver
 if none appears. Note the headless caveat above: for Turnstile-gated content a
 solved token still requires a *real* browser to render the result.
+
+For visual reCAPTCHA challenges, use the in-browser coordinate solver:
+
+```scala
+import robobrowser.VisualCaptcha.*
+
+browser.solveRecaptchaVisually(antiCaptchaApiKey) // existing RoboBrowser
+managedTab.solveRecaptchaVisually(antiCaptchaApiKey) // BrowserHost's BrowserTab
+```
+
+The visual path discovers nested, sandboxed and out-of-process frames, maps scaled frame coordinates into the top-level viewport, and checks response tokens within child documents. Only a cropped challenge image is sent to the provider. Images are bounded to 500 pixels per side, with provider coordinates mapped back to the original frame. See the [provider image-coordinate limits](https://anti-captcha.com/apidoc/task-types/ImageToCoordinatesTask). Device scale factor must be 1; rotated frames require human handling. Invalid coordinates and answers for a navigated or moved frame are rejected. Attempts are bounded; a solver result does not prove the website accepted the login or remove a subsequent 2FA requirement.
+
+The minimal core API is `FrameCaptcha.forTab(tab).solve(coordinateSolver, maxRounds)`. Applications can supply their own `CoordinateCaptchaSolver` without depending on a provider implementation. `mirror/Test/runMain spec.FrameCaptchaAcceptance` and `cdp/Test/runMain spec.LegacyFrameCaptchaAcceptance` exercise this path with local fixtures and fake providers, without paid requests.
+
+The browser experience now uses one local JavaScript executor; DOM projection and dual-copy rendering are removed in `2.5.0-SNAPSHOT`. See [local execution and integration boundaries](mirror/README.md). Run `scripts/execution-acceptance --public` for isolated checks. The managed demo stays on port 8898 (`scripts/mirror-demo start`). Agent execution requires the frontend to remain connected.

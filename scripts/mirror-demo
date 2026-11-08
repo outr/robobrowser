@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+"""Manage the local mirror demo at one stable URL. Restart disconnects executing pages."""
+import fcntl
+import json
+import os
+from pathlib import Path
+import signal
+import socket
+import subprocess
+import sys
+import time
+import urllib.request
+import uuid
+
+ROOT = Path(__file__).resolve().parent.parent
+STATE = ROOT / '.robobrowser-demo'
+PORT = 8898
+STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
+os.chmod(STATE, 0o700)
+lock = (STATE / 'manager.lock').open('w')
+fcntl.flock(lock, fcntl.LOCK_EX)
+
+def identity(pid):
+    try:
+        fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
+        return None if fields[0] == 'Z' else fields[19]
+    except FileNotFoundError:
+        return None
+
+def running():
+    try:
+        state = json.loads((STATE / 'process.json').read_text())
+        return state if identity(state['pid']) == state['start'] else None
+    except FileNotFoundError:
+        return None
+
+def stop():
+    state = running()
+    if state:
+        os.kill(state['pid'], signal.SIGTERM)
+        deadline = time.monotonic() + 30
+        while identity(state['pid']) == state['start'] and time.monotonic() < deadline:
+            time.sleep(.2)
+        if identity(state['pid']) == state['start']:
+            sys.exit('Demo did not stop cleanly; inspect .robobrowser-demo/server.log.')
+    (STATE / 'process.json').unlink(missing_ok=True)
+
+legacy = ROOT / 'mirror/target/demo'
+for name in ('token', 'process.json', 'server.pid'):
+    destination = STATE / name
+    if not destination.exists() and (legacy / name).exists():
+        destination.write_bytes((legacy / name).read_bytes())
+        os.chmod(destination, 0o600)
+
+action = sys.argv[1] if len(sys.argv) == 2 else 'help'
+if action not in ('start', 'restart', 'stop', 'status'):
+    sys.exit('Usage: scripts/mirror-demo start|restart|stop|status')
+token_path = STATE / 'token'
+if not token_path.exists():
+    fd = os.open(token_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, 'w') as f:
+        f.write(str(uuid.uuid4()))
+url = f'http://127.0.0.1:{PORT}/#{token_path.read_text().strip()}'
+if action == 'status':
+    print(('Running: ' + url) if running() else 'Stopped')
+    sys.exit(0)
+if action in ('restart', 'stop'):
+    stop()
+if action == 'stop':
+    print('Demo stopped; execution sessions were closed.')
+    sys.exit(0)
+if running():
+    print('Already running: ' + url)
+    sys.exit(0)
+with socket.socket() as sock:
+    if sock.connect_ex(('127.0.0.1', PORT)) == 0:
+        sys.exit(f'Port {PORT} is occupied by an unmanaged process; no process was stopped.')
+pid_path = STATE / 'server.pid'
+pid_path.unlink(missing_ok=True)
+with (STATE / 'server.log').open('w') as log:
+    launch = subprocess.Popen(['sbt', f'mirror/Test/runMain spec.ExecutionDemo 8898 {token_path} {pid_path}'], cwd=ROOT,
+                              stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+print('Building and starting demo on port 8898...', flush=True)
+for attempt in range(180):
+    if pid_path.exists():
+        pid = int(pid_path.read_text())
+        stamp = identity(pid)
+        if stamp:
+            (STATE / 'process.json').write_text(json.dumps({'pid': pid, 'start': stamp}))
+            try:
+                with urllib.request.urlopen(f'http://127.0.0.1:{PORT}/', timeout=2) as response:
+                    if response.status == 200:
+                        print(url)
+                        print('Refresh this same URL after each restart. Execution sessions reset.')
+                        sys.exit(0)
+            except OSError:
+                pass
+    if launch.poll() is not None:
+        sys.exit('Startup failed; see .robobrowser-demo/server.log.')
+    if attempt and attempt % 20 == 0:
+        print('Still building; see .robobrowser-demo/server.log.', flush=True)
+    time.sleep(1)
+sys.exit('Startup timed out; check .robobrowser-demo/server.log before retrying.')
