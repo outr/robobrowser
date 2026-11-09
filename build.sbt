@@ -78,7 +78,7 @@ lazy val core = project.in(file("core"))
     libraryDependencies ++= Seq(
       "com.outr" %% "rapid-core" % rapidVersion,
       "com.outr" %% "scribe" % "3.19.0",
-      "org.typelevel" %% "fabric-io" % "1.30.3"
+      "org.typelevel" %% "fabric-io" % "1.30.4"
     )
   )
 
