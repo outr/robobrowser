@@ -46,7 +46,7 @@ val scribeVersion: String = "3.18.0"
 
 val rapidVersion: String = "2.9.9"
 
-val spiceVersion: String = "1.10.9-SNAPSHOT6"
+val spiceVersion: String = "1.10.11"
 
 // The current Spice snapshot is published to GitHub Packages.
 ThisBuild / resolvers += "GitHub Packages outr/spice" at "https://maven.pkg.github.com/outr/spice"
